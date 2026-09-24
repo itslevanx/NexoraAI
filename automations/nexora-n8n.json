@@ -1,0 +1,136 @@
+{
+  "name": "NEXORA AI - Centro de automatizaciones",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexora",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-nexora",
+      "name": "Entrada NEXORA",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-700, 20],
+      "webhookId": "nexora"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.body ?? $json;\nconst allowed = ['sheet', 'email', 'whatsapp'];\nif (!allowed.includes(p.action)) throw new Error('Acción no válida');\nif (!String(p.content ?? '').trim()) throw new Error('El contenido está vacío');\nreturn [{ json: { action: p.action, recipient: String(p.recipient ?? ''), subject: String(p.subject ?? 'Mensaje NEXORA'), content: String(p.content), source: 'NEXORA AI', receivedAt: new Date().toISOString() } }];"
+      },
+      "id": "validate-payload",
+      "name": "Validar y normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-470, 20]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+                "conditions": [{"leftValue": "={{ $json.action }}", "rightValue": "sheet", "operator": {"type": "string", "operation": "equals"}}],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Google Sheets"
+            },
+            {
+              "conditions": {
+                "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+                "conditions": [{"leftValue": "={{ $json.action }}", "rightValue": "email", "operator": {"type": "string", "operation": "equals"}}],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Email"
+            },
+            {
+              "conditions": {
+                "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
+                "conditions": [{"leftValue": "={{ $json.action }}", "rightValue": "whatsapp", "operator": {"type": "string", "operation": "equals"}}],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WhatsApp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "route-action",
+      "name": "Enrutar acción",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [-220, 20]
+    },
+    {
+      "parameters": {
+        "assignments": {"assignments": [{"id": "status-sheet", "name": "result", "value": "DEMO: registro listo para Google Sheets", "type": "string"}]},
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "demo-sheet",
+      "name": "DEMO - Google Sheets",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [40, -160]
+    },
+    {
+      "parameters": {
+        "assignments": {"assignments": [{"id": "status-email", "name": "result", "value": "DEMO: correo preparado correctamente", "type": "string"}]},
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "demo-email",
+      "name": "DEMO - Enviar email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [40, 20]
+    },
+    {
+      "parameters": {
+        "assignments": {"assignments": [{"id": "status-whatsapp", "name": "result", "value": "DEMO: mensaje preparado para WhatsApp", "type": "string"}]},
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "demo-whatsapp",
+      "name": "DEMO - WhatsApp",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [40, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, app: 'NEXORA AI', action: $json.action, message: $json.result, receivedAt: $json.receivedAt } }}",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Confirmar a la app",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [320, 20]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Entrada NEXORA": {"main": [[{"node": "Validar y normalizar", "type": "main", "index": 0}]]},
+    "Validar y normalizar": {"main": [[{"node": "Enrutar acción", "type": "main", "index": 0}]]},
+    "Enrutar acción": {"main": [
+      [{"node": "DEMO - Google Sheets", "type": "main", "index": 0}],
+      [{"node": "DEMO - Enviar email", "type": "main", "index": 0}],
+      [{"node": "DEMO - WhatsApp", "type": "main", "index": 0}]
+    ]},
+    "DEMO - Google Sheets": {"main": [[{"node": "Confirmar a la app", "type": "main", "index": 0}]]},
+    "DEMO - Enviar email": {"main": [[{"node": "Confirmar a la app", "type": "main", "index": 0}]]},
+    "DEMO - WhatsApp": {"main": [[{"node": "Confirmar a la app", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "a1f33791-5b9f-4669-b71a-9d16fe903a17",
+  "meta": {"templateCredsSetupCompleted": false},
+  "tags": []
+}
