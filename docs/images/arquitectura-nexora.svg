@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <rect width="1600" height="900" fill="#080808"/>
+  <style>.t{fill:#fff;font-family:Arial,sans-serif}.m{fill:#a8a8a8;font-family:Arial,sans-serif}.b{fill:#111;stroke:#3a3a3a;stroke-width:2}.a{stroke:#fff;stroke-width:4;fill:none;marker-end:url(#x)}</style>
+  <defs><marker id="x" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0 0l12 6-12 6z" fill="#fff"/></marker></defs>
+  <text x="90" y="105" class="t" font-size="52" font-weight="700">Arquitectura de NEXORA AI</text>
+  <text x="90" y="155" class="m" font-size="24">Dos interfaces, una capa segura de API y automatización local</text>
+  <rect x="90" y="260" width="290" height="320" rx="30" class="b"/><text x="135" y="330" class="t" font-size="30" font-weight="700">PERSONA</text><text x="135" y="385" class="m" font-size="24">Texto</text><text x="135" y="430" class="m" font-size="24">Voz</text><text x="135" y="475" class="m" font-size="24">Audio</text><text x="135" y="520" class="m" font-size="24">Imágenes</text>
+  <rect x="500" y="210" width="360" height="190" rx="30" class="b"/><text x="545" y="285" class="t" font-size="30" font-weight="700">VERCEL</text><text x="545" y="335" class="m" font-size="23">HTML · CSS · JavaScript</text><text x="545" y="370" class="m" font-size="23">Funciones serverless · HTTPS</text>
+  <rect x="500" y="500" width="360" height="190" rx="30" class="b"/><text x="545" y="575" class="t" font-size="30" font-weight="700">STREAMLIT</text><text x="545" y="625" class="m" font-size="23">Aplicación Python local</text><text x="545" y="660" class="m" font-size="23">Sesión y API key en memoria</text>
+  <rect x="990" y="210" width="470" height="190" rx="30" class="b"/><text x="1035" y="275" class="t" font-size="30" font-weight="700">OPENAI PLATFORM</text><text x="1035" y="325" class="m" font-size="22">Responses · Realtime · Transcriptions</text><text x="1035" y="360" class="m" font-size="22">Vision · Images · Speech · Moderation</text>
+  <rect x="990" y="500" width="470" height="190" rx="30" class="b"/><text x="1035" y="565" class="t" font-size="30" font-weight="700">n8n LOCAL</text><text x="1035" y="615" class="m" font-size="22">5 workflows · Docker Desktop</text><text x="1035" y="650" class="m" font-size="22">Bitácoras JSONL · aprobación humana</text>
+  <path d="M380 350H500" class="a"/><path d="M380 500H500" class="a"/><path d="M860 305H990" class="a"/><path d="M860 595H990" class="a"/>
+  <text x="90" y="800" class="m" font-size="22">La clave de OpenAI nunca se envía a n8n. Vercel requiere HTTPS; localhost permanece dentro de la Mac.</text>
+</svg>

@@ -20,7 +20,7 @@ NEXORA AI es una suite académica multimodal que integra conversación, herramie
 | Transcripción | Implementado | Acepta grabación directa y archivos compatibles; 25 MB en Streamlit y 4 MB en Vercel |
 | Resumen de audio | Implementado | Convierte la transcripción en ideas, decisiones y pendientes |
 | Exportación | Implementado | Permite descargar la transcripción en formato TXT |
-| Automatización n8n local | Implementado | Valida, prioriza, registra en JSONL y construye resultados útiles |
+| Ecosistema n8n local | Implementado | Cinco workflows publicados: centro local, estudio, reuniones, privacidad y métricas |
 | Acciones externas reales | Requiere credenciales | Los borradores exigen revisión antes de conectar correo, WhatsApp o calendario |
 | Pruebas de humo | Implementado | Verifican archivos esenciales y validez del workflow |
 
@@ -67,7 +67,7 @@ La experiencia publicada conserva también el chat contextual, la grabación o c
 
 ### Automatizaciones con n8n
 
-- Envía solicitudes HTTP mediante un webhook configurable.
+- Ejecuta cinco workflows independientes mediante webhooks locales.
 - Ofrece seis acciones: `sheet`, `email`, `whatsapp`, `task`, `study` y `calendar`.
 - Detecta prioridad alta, media o normal según el contenido.
 - Guarda cada solicitud en `n8n-local/nexora-events.jsonl` dentro de la Mac.
@@ -75,7 +75,20 @@ La experiencia publicada conserva también el chat contextual, la grabación o c
 - Marca email, WhatsApp y calendario como pendientes de aprobación humana.
 - Valida y normaliza el contenido antes de procesarlo.
 - Mantiene las credenciales de servicios externos dentro de n8n.
-- Incluye un workflow importable en `automations/nexora-n8n.json`.
+- Incluye un coach que crea bloques de estudio, preguntas y repaso espaciado.
+- Convierte transcripciones de reuniones en actas con acuerdos, tareas y riesgos.
+- Detecta y oculta correos, teléfonos, documentos, números financieros y claves API sin guardar el contenido sensible.
+- Consolida toda la actividad en un panel de impacto local.
+
+| Workflow | Webhook | Resultado destacado |
+|---|---|---|
+| Centro local | `POST /webhook/nexora` | Seis acciones, prioridad, bitácora y borradores seguros |
+| Coach de estudio adaptativo | `POST /webhook/nexora-study-coach` | Sesión por bloques, conceptos, preguntas y repaso espaciado |
+| Laboratorio de reuniones | `POST /webhook/nexora-meeting-lab` | Resumen, decisiones, responsables, tareas y riesgos |
+| Guardián de privacidad | `POST /webhook/nexora-privacy-guardian` | Puntaje de riesgo y versión redactada sin persistir secretos |
+| Panel de impacto local | `GET /webhook/nexora-impact-dashboard` | Totales, alertas, aprobaciones y actividad reciente |
+
+![Mapa de los cinco workflows n8n](docs/images/mapa-workflows-n8n.png)
 
 ### Experiencia visual
 
@@ -139,10 +152,11 @@ NexoraAI/
 ├── vercel.json                         # Configuración de despliegue
 ├── assets/nexora-logo.svg              # Logo vectorial principal
 ├── assets/nexora-icon.png              # Versión PNG para Streamlit y Word
-├── automations/nexora-n8n.json         # Workflow importable de n8n
+├── automations/                        # Cinco workflows importables de n8n
 ├── n8n-local/.gitkeep                   # Carpeta local para la bitácora ignorada por Git
 ├── docs/
 │   ├── DOCUMENTACION_COMPLETA.md       # Fuente del informe académico
+│   ├── images/                         # Cuatro láminas técnicas en SVG y PNG
 │   └── Documentacion_NEXORA_AI.docx    # Documento Word final
 ├── tests/test_smoke.py                 # Pruebas básicas
 ├── scripts/build_documentation.py      # Generador del Word académico
@@ -250,14 +264,26 @@ La arquitectura de voz sigue la recomendación oficial: el navegador usa WebRTC 
 docker compose up -d
 ```
 
-El contenedor queda disponible en `http://localhost:5678` y conserva su configuración en el volumen `n8n_data`. El workflow se importa desde `automations/nexora-n8n.json` y la bitácora se guarda en `n8n-local/nexora-events.jsonl`.
+El contenedor queda disponible en `http://localhost:5678` y conserva su configuración en el volumen `n8n_data`. Los cinco workflows se importan desde `automations/` y sus bitácoras ignoradas por Git se guardan dentro de `n8n-local/`.
 
 Para importar y publicar manualmente desde la terminal:
 
 ```bash
-docker cp automations/nexora-n8n.json teng-n8n-1:/tmp/nexora-n8n.json
+docker compose cp automations/nexora-n8n.json n8n:/tmp/nexora-n8n.json
+docker compose cp automations/nexora-coach-estudio.json n8n:/tmp/nexora-coach-estudio.json
+docker compose cp automations/nexora-laboratorio-reuniones.json n8n:/tmp/nexora-laboratorio-reuniones.json
+docker compose cp automations/nexora-guardian-privacidad.json n8n:/tmp/nexora-guardian-privacidad.json
+docker compose cp automations/nexora-panel-impacto.json n8n:/tmp/nexora-panel-impacto.json
 docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-n8n.json
+docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-coach-estudio.json
+docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-laboratorio-reuniones.json
+docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-guardian-privacidad.json
+docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-panel-impacto.json
 docker compose exec -T n8n n8n publish:workflow --id=nexoraLocalV2
+docker compose exec -T n8n n8n publish:workflow --id=nexoraStudyCoachV1
+docker compose exec -T n8n n8n publish:workflow --id=nexoraMeetingLabV1
+docker compose exec -T n8n n8n publish:workflow --id=nexoraPrivacyGuardianV1
+docker compose exec -T n8n n8n publish:workflow --id=nexoraImpactDashboardV1
 docker compose restart n8n
 ```
 
@@ -270,11 +296,11 @@ curl -X POST http://localhost:5678/webhook/nexora \
   -d '{"action":"task","subject":"Exposición","content":"Urgente: terminar diapositivas hoy. Ensayar la demo."}'
 ```
 
-### Activar el workflow
+### Activar los workflows
 
-1. Abrir **NEXORA AI - Automatizaciones locales inteligentes**.
-2. Verificar que el webhook tenga la ruta `nexora`.
-3. Activar el workflow.
+1. Abrir los cinco workflows cuyo nombre comienza con **NEXORA AI**.
+2. Verificar las rutas de la tabla anterior.
+3. Activar o publicar cada workflow.
 4. Copiar `http://localhost:5678/webhook/nexora` en la barra lateral.
 5. Ejecutar una acción desde **Automatizaciones**.
 

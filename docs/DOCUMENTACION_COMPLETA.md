@@ -18,9 +18,11 @@
 
 NEXORA AI es una suite web multimodal de apoyo académico y productividad con dos interfaces complementarias: una versión local en Python y Streamlit y una versión desplegable en Vercel. Integra chat contextual, once herramientas especializadas de texto, visión artificial, generación de imágenes, texto a voz, moderación, conversación de voz a voz mediante Realtime API y WebRTC, transcripción de audio y automatizaciones conectadas a n8n. El propósito es demostrar cómo una experiencia unificada puede procesar texto, voz e imágenes y entregar datos estructurados a flujos externos sin incrustar credenciales sensibles en el código.
 
-La persona usuaria puede pegar temporalmente una OpenAI API Key, seleccionar un modelo disponible, conversar por texto o voz, transformar contenido, crear guías y evaluaciones, analizar una imagen, generar una pieza visual, escuchar una narración sintética, revisar contenido potencialmente riesgoso, grabar o cargar un audio, generar un resumen, descargar resultados y activar una automatización. El workflow funciona localmente en Docker sin suscripción a n8n Cloud: valida y prioriza la solicitud, mantiene una bitácora JSONL y genera registros, borradores, checklists, sesiones de estudio o eventos. Las comunicaciones externas permanecen pendientes de aprobación hasta que el equipo configure credenciales propias.
+La persona usuaria puede pegar temporalmente una OpenAI API Key, seleccionar un modelo disponible, conversar por texto o voz, transformar contenido, crear guías y evaluaciones, analizar una imagen, generar una pieza visual, escuchar una narración sintética, revisar contenido potencialmente riesgoso, grabar o cargar un audio, generar un resumen, descargar resultados y activar una automatización. El ecosistema funciona localmente en Docker sin suscripción a n8n Cloud: cinco workflows validan y priorizan solicitudes, crean sesiones de estudio adaptativas, convierten reuniones en actas, redactan patrones sensibles y consolidan métricas. Las comunicaciones externas permanecen pendientes de aprobación hasta que el equipo configure credenciales propias.
 
 El prototipo cubre los objetivos de creación de chatbots, uso de modelos de OpenAI, transcripción con IA, voz en tiempo real, diseño de interfaces y automatización de procesos. La versión web ya queda preparada para despliegue HTTPS en Vercel y mantiene las mismas funciones centrales que la versión Streamlit.
+
+![Panorama visual de las cinco áreas de NEXORA AI](docs/images/experiencia-multimodal.png)
 
 ## Introducción
 
@@ -85,6 +87,7 @@ Desarrollar una aplicación web de apoyo académico que integre conversación po
 13. Generar imágenes descargables a partir de instrucciones escritas.
 14. Convertir resultados en voz sintética con aviso explícito al usuario.
 15. Clasificar contenido con un modelo de moderación y presentar un resultado comprensible.
+16. Implementar cuatro workflows avanzados adicionales para estudio, reuniones, privacidad y métricas.
 
 ## Alcance
 
@@ -100,6 +103,7 @@ Desarrollar una aplicación web de apoyo académico que integre conversación po
 - Reutilización de la transcripción dentro del chat.
 - Envío de payloads JSON a n8n.
 - Seis tipos de automatización local con prioridad y bitácora persistente.
+- Cinco workflows n8n publicados y probados sin dependencia de n8n Cloud.
 - Scripts para Windows, macOS y Linux.
 - Pruebas de humo y documentación académica.
 - Conversación de voz a voz, silenciamiento, interrupción y transcripción en vivo.
@@ -285,6 +289,8 @@ Si falta la clave, la app solicita configurarla. Si OpenAI devuelve un error, se
 
 ## Arquitectura de la solución
 
+![Arquitectura técnica de NEXORA AI](docs/images/arquitectura-nexora.png)
+
 ```text
 Usuario
   │ navegador
@@ -367,8 +373,9 @@ El historial se limita a los últimos mensajes para reducir el contexto. La clav
 | package.json | Metadatos y validación de JavaScript |
 | assets/nexora-logo.svg y assets/nexora-icon.png | Identidad visual vectorial y versión para Streamlit y Word |
 | public/logo.svg y public/favicon.svg | Marca monocromática optimizada para la interfaz web |
-| automations/nexora-n8n.json | Workflow importable |
+| automations | Cinco workflows importables para acciones, estudio, reuniones, privacidad y métricas |
 | n8n-local | Destino local de la bitácora JSONL; sus eventos se excluyen de Git |
+| docs/images | Cuatro láminas técnicas originales en SVG y PNG para el informe |
 | .streamlit/config.toml | Tema y límite de carga |
 | .env.example | Variables sin secretos reales |
 | requirements.txt | Dependencias Python |
@@ -456,6 +463,20 @@ La vista crea un diccionario con acción, destinatario, asunto, contenido, orige
 
 ## Integración con n8n
 
+![Mapa de los cinco workflows locales de n8n](docs/images/mapa-workflows-n8n.png)
+
+La instancia local contiene cinco workflows independientes. El primero atiende la interfaz de la aplicación; los otros cuatro amplían la demostración con capacidades especializadas y pueden invocarse directamente por HTTP.
+
+| Workflow | Método y ruta | Entrada principal | Resultado |
+|---|---|---|---|
+| Automatizaciones locales inteligentes | `POST /webhook/nexora` | Acción, asunto, destinatario y contenido | Registro, borrador, checklist, estudio o evento |
+| Coach de estudio adaptativo | `POST /webhook/nexora-study-coach` | Tema, contenido y minutos | Bloques, conceptos, preguntas y repaso espaciado |
+| Laboratorio de reuniones | `POST /webhook/nexora-meeting-lab` | Título, participantes y transcripción | Acta, decisiones, tareas, responsables y riesgos |
+| Guardián de privacidad | `POST /webhook/nexora-privacy-guardian` | Contenido por revisar | Hallazgos, puntaje y copia redactada |
+| Panel de impacto local | `GET /webhook/nexora-impact-dashboard` | Sin cuerpo | Totales, indicadores, logros y actividad reciente |
+
+### Workflow 1: centro de automatizaciones
+
 | Nodo | Función |
 |---|---|
 | Entrada NEXORA | Recibe POST en la ruta nexora |
@@ -476,6 +497,22 @@ La vista crea un diccionario con acción, destinatario, asunto, contenido, orige
 }
 ```
 
+### Workflow 2: coach de estudio adaptativo
+
+Divide una duración entre 20 y 120 minutos en tres fases: comprender, recordar y comprobar. Extrae conceptos frecuentes, transforma oraciones del material en preguntas de recuperación y programa repasos para hoy, mañana, tres días y siete días. Persiste el plan en `nexora-study.jsonl`.
+
+### Workflow 3: laboratorio de reuniones
+
+Recibe una transcripción y detecta expresiones de acuerdo, decisión, responsabilidad, tarea, bloqueo y riesgo. Devuelve un acta estructurada con resumen, participantes, decisiones, responsables, pendientes y recomendación de seguimiento. Persiste el resultado en `nexora-meetings.jsonl`.
+
+### Workflow 4: guardián de privacidad
+
+Busca patrones comunes de correo, teléfono peruano, OpenAI API Key, número financiero y DNI indicado explícitamente. Calcula un puntaje de riesgo y devuelve una copia con marcadores como `[EMAIL OCULTO]`. La bitácora `nexora-privacy-audit.jsonl` guarda únicamente metadatos; excluye el contenido original y el texto redactado.
+
+### Workflow 5: panel de impacto local
+
+Lee las cuatro bitácoras locales, tolera archivos todavía inexistentes y calcula el total de ejecuciones, prioridades altas, aprobaciones pendientes, alertas de privacidad y actividad reciente. No necesita cuerpo de entrada y funciona como evidencia inmediata durante la exposición.
+
 ### Funcionamiento local e integraciones opcionales
 
 El workflow funciona de principio a fin sin suscripciones: guarda el registro en la Mac y genera el resultado dentro de n8n. Las acciones `email`, `whatsapp` y `calendar` devuelven borradores con `approvalRequired: true`; no envían ni publican nada por accidente.
@@ -486,6 +523,8 @@ El workflow funciona de principio a fin sin suscripciones: guarda el registro en
 - **Calendario:** conectar Google Calendar u Outlook Calendar después de que el usuario confirme fecha y contenido.
 
 ## Seguridad y privacidad
+
+![Controles de seguridad y aprobación humana](docs/images/seguridad-datos.png)
 
 ### Activos protegidos
 
@@ -568,16 +607,28 @@ streamlit run app.py
 1. Abrir Docker Desktop y esperar a que indique **Engine running**.
 2. Desde la raíz del repositorio ejecutar `docker compose up -d`.
 3. Comprobar `http://localhost:5678/healthz`; debe responder `{"status":"ok"}`.
-4. Importar y publicar el workflow incluido si todavía no aparece en el editor.
+4. Importar y publicar los cinco workflows incluidos si todavía no aparecen en el editor.
 
 ```bash
-docker cp automations/nexora-n8n.json teng-n8n-1:/tmp/nexora-n8n.json
+docker compose cp automations/nexora-n8n.json n8n:/tmp/nexora-n8n.json
+docker compose cp automations/nexora-coach-estudio.json n8n:/tmp/nexora-coach-estudio.json
+docker compose cp automations/nexora-laboratorio-reuniones.json n8n:/tmp/nexora-laboratorio-reuniones.json
+docker compose cp automations/nexora-guardian-privacidad.json n8n:/tmp/nexora-guardian-privacidad.json
+docker compose cp automations/nexora-panel-impacto.json n8n:/tmp/nexora-panel-impacto.json
 docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-n8n.json
+docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-coach-estudio.json
+docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-laboratorio-reuniones.json
+docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-guardian-privacidad.json
+docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-panel-impacto.json
 docker compose exec -T n8n n8n publish:workflow --id=nexoraLocalV2
+docker compose exec -T n8n n8n publish:workflow --id=nexoraStudyCoachV1
+docker compose exec -T n8n n8n publish:workflow --id=nexoraMeetingLabV1
+docker compose exec -T n8n n8n publish:workflow --id=nexoraPrivacyGuardianV1
+docker compose exec -T n8n n8n publish:workflow --id=nexoraImpactDashboardV1
 docker compose restart n8n
 ```
 
-n8n queda disponible en `http://localhost:5678`, su configuración persiste en el volumen `n8n_data` y la bitácora aparece en `n8n-local/nexora-events.jsonl`. Para detenerlo sin perder datos se utiliza `docker compose stop`; para reanudar, `docker compose start`.
+n8n queda disponible en `http://localhost:5678`, su configuración persiste en el volumen `n8n_data` y las bitácoras aparecen dentro de `n8n-local/`. Para detenerlo sin perder datos se utiliza `docker compose stop`; para reanudar, `docker compose start`.
 
 ### Despliegue en Vercel
 
@@ -651,6 +702,13 @@ El uso de visión e imágenes implica enviar esos datos a OpenAI. No deben carga
 6. Verificar identificador, prioridad, aprobación requerida y resultado en la respuesta.
 7. Consultar la ejecución en n8n o la bitácora `n8n-local/nexora-events.jsonl`.
 
+### Ejecutar los workflows avanzados
+
+- Enviar material y duración a `/webhook/nexora-study-coach` para generar un plan de estudio.
+- Enviar una transcripción a `/webhook/nexora-meeting-lab` para obtener un acta automática.
+- Enviar texto a `/webhook/nexora-privacy-guardian` para recibir una versión redactada.
+- Abrir `/webhook/nexora-impact-dashboard` con GET para mostrar las métricas consolidadas.
+
 ## Plan de pruebas
 
 Las pruebas automáticas no consumen OpenAI para evitar costos y dependencia de credenciales. Las pruebas reales deben ejecutarse con una cuenta controlada.
@@ -684,6 +742,10 @@ Las pruebas automáticas no consumen OpenAI para evitar costos y dependencia de 
 | CP 25 | Endpoints nuevos | Todos pasan `node --check` y existen en pruebas | Aprobado |
 | CP 26 | Seis acciones n8n | Cada acción devuelve un resultado especializado | Aprobado |
 | CP 27 | Persistencia local | Cada solicitud añade una línea JSONL | Aprobado |
+| CP 28 | Coach de estudio | Plan de 60 minutos, preguntas y cuatro repasos | Aprobado |
+| CP 29 | Laboratorio de reuniones | Detecta decisiones, tareas y riesgos | Aprobado |
+| CP 30 | Guardián de privacidad | Oculta correo, teléfono y clave; no persiste el texto | Aprobado |
+| CP 31 | Panel de impacto | Consolida cuatro bitácoras y actividad reciente | Aprobado |
 
 ```bash
 python -m pytest -q
@@ -698,7 +760,7 @@ git status --short
 - Las cinco áreas son accesibles.
 - La versión Vercel conserva las funciones centrales y añade voz en tiempo real y Studio IA multimodal.
 - Chat y transcripción solicitan una clave cuando falta.
-- n8n acepta las seis acciones, calcula prioridad, registra el evento y devuelve el resultado correspondiente.
+- n8n publica cinco workflows; el centro acepta seis acciones y los cuatro flujos avanzados entregan resultados especializados.
 - Los errores de red se muestran de forma controlada.
 - El equipo puede ejecutar el guion completo.
 

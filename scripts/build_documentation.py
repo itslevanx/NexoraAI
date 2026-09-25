@@ -187,6 +187,25 @@ def add_table(doc: Document, rows: list[list[str]]) -> None:
     doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
 
+def add_figure(doc: Document, source: str, caption: str) -> None:
+    image_path = (ROOT / source).resolve()
+    if not image_path.exists():
+        raise FileNotFoundError(f"No se encontró la imagen: {image_path}")
+    paragraph = doc.add_paragraph()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    paragraph.paragraph_format.space_before = Pt(8)
+    paragraph.paragraph_format.keep_with_next = True
+    paragraph.add_run().add_picture(str(image_path), width=Inches(6.75))
+    label = doc.add_paragraph()
+    label.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    label.paragraph_format.space_after = Pt(12)
+    label.paragraph_format.keep_together = True
+    run = label.add_run(caption)
+    run.italic = True
+    run.font.size = Pt(8.5)
+    run.font.color.rgb = RGBColor(90, 90, 90)
+
+
 def build() -> None:
     lines = SOURCE.read_text(encoding="utf-8").splitlines()
     doc = Document()
@@ -226,6 +245,12 @@ def build() -> None:
             index += 1
             continue
         if not line.strip():
+            index += 1
+            continue
+        image_match = re.match(r"^!\[([^]]*)\]\(([^)]+)\)$", line)
+        if image_match:
+            caption, source = image_match.groups()
+            add_figure(doc, source, caption)
             index += 1
             continue
         if line.startswith("|") and index + 1 < len(lines) and re.match(r"^\|[\s|:-]+\|$", lines[index + 1]):
