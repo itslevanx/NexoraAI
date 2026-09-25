@@ -6,6 +6,8 @@ NEXORA AI es una aplicación académica desarrollada con Streamlit que reúne tr
 
 ## Estado del proyecto
 
+**Aplicación publicada:** [nexora-ai-blue-three.vercel.app](https://nexora-ai-blue-three.vercel.app/)
+
 | Componente | Estado | Descripción |
 |---|---|---|
 | Chat con IA | Implementado | Utiliza la Responses API y conserva el contexto de la sesión |
