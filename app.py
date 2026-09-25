@@ -43,52 +43,37 @@ def inject_theme() -> None:
     st.markdown(
         """
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
-        :root { --cyan:#42e8e0; --violet:#8b5cf6; --ink:#eaf2ff; --muted:#9eb0cc; }
-        html, body, [class*="css"] { font-family:'DM Sans',sans-serif; }
-        .stApp {
-          background:
-            radial-gradient(circle at 15% 5%, rgba(66,232,224,.12), transparent 28rem),
-            radial-gradient(circle at 90% 20%, rgba(139,92,246,.15), transparent 30rem),
-            #070b18;
-          color:var(--ink);
-        }
-        [data-testid="stSidebar"] { background:rgba(8,13,29,.88); border-right:1px solid rgba(255,255,255,.08); }
+        :root { --bg:#050505; --panel:#0b0b0b; --line:#262626; --ink:#f5f5f5; --muted:#969696; }
+        html, body, [class*="css"] { font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+        .stApp { background:var(--bg); color:var(--ink); }
+        [data-testid="stSidebar"] { background:#080808; border-right:1px solid var(--line); }
         [data-testid="stHeader"] { background:transparent; }
-        .block-container { max-width:1180px; padding-top:1.5rem; }
-        h1,h2,h3 { font-family:'Space Grotesk',sans-serif!important; letter-spacing:-.03em; }
-        .hero { position:relative; overflow:hidden; padding:2.2rem 2.4rem; border:1px solid rgba(255,255,255,.12);
-          border-radius:28px; background:linear-gradient(135deg,rgba(18,28,59,.94),rgba(13,16,38,.86));
-          box-shadow:0 24px 80px rgba(0,0,0,.35); margin-bottom:1.2rem; }
-        .hero:after { content:''; position:absolute; width:240px; height:240px; right:-40px; top:-80px;
-          border-radius:50%; background:radial-gradient(circle,rgba(66,232,224,.24),transparent 68%); animation:pulse 3s ease-in-out infinite; }
-        .hero-row { display:flex; align-items:center; gap:1.2rem; position:relative; z-index:2; }
-        .hero img { width:92px; height:92px; object-fit:contain; filter:drop-shadow(0 0 22px rgba(66,232,224,.35)); animation:float 3.5s ease-in-out infinite; }
-        .eyebrow { font-size:.74rem; letter-spacing:.18em; color:var(--cyan); font-weight:700; text-transform:uppercase; }
-        .hero h1 { margin:.2rem 0 .25rem; font-size:clamp(2rem,5vw,3.8rem); background:linear-gradient(90deg,#fff,#7cebe6 58%,#b69cff);
-          -webkit-background-clip:text; color:transparent; }
-        .hero p { margin:0; color:var(--muted); font-size:1.03rem; max-width:680px; }
-        .status-pill { display:inline-flex; align-items:center; gap:.45rem; padding:.35rem .7rem; border-radius:999px;
-          background:rgba(66,232,224,.09); border:1px solid rgba(66,232,224,.22); color:#9ff8f3; font-size:.8rem; }
-        .dot { width:8px;height:8px;border-radius:50%;background:#47f5b0;box-shadow:0 0 12px #47f5b0;animation:pulse 1.8s infinite; }
-        .feature { padding:1.15rem; min-height:112px; border:1px solid rgba(255,255,255,.09); border-radius:18px;
-          background:rgba(255,255,255,.035); transition:.2s ease; }
-        .feature:hover { transform:translateY(-3px); border-color:rgba(66,232,224,.3); }
+        .block-container { max-width:1120px; padding-top:2rem; }
+        h1,h2,h3 { letter-spacing:-.045em; font-weight:600!important; }
+        .hero { padding:4.5rem 2rem; border-bottom:1px solid var(--line); margin-bottom:1.5rem; text-align:center; }
+        .hero-row { display:block; }
+        .eyebrow { font-size:.7rem; letter-spacing:.18em; color:var(--muted); font-weight:600; text-transform:uppercase; }
+        .hero h1 { margin:.65rem 0 .8rem; font-size:clamp(3rem,7vw,6rem); color:#fff; line-height:.95; }
+        .hero p { margin:0 auto; color:var(--muted); font-size:1.02rem; max-width:620px; }
+        .status-pill { display:inline-flex; align-items:center; gap:.5rem; margin-top:1.2rem; padding:.4rem .75rem; border-radius:999px;
+          background:#0a0a0a; border:1px solid var(--line); color:#cfcfcf; font-size:.78rem; }
+        .dot { width:7px;height:7px;border-radius:50%;background:#fff; }
+        .feature { padding:1.25rem; min-height:112px; border:1px solid var(--line); border-radius:16px;
+          background:var(--panel); transition:border-color .2s ease; }
+        .feature:hover { border-color:#555; }
         .feature b { color:white; display:block; margin-bottom:.3rem; }
         .feature span { color:var(--muted); font-size:.9rem; }
-        .metric { padding:1rem; border-radius:18px; background:linear-gradient(145deg,rgba(66,232,224,.08),rgba(139,92,246,.08));
-          border:1px solid rgba(255,255,255,.08); text-align:center; }
-        .metric strong { display:block;font:700 1.55rem 'Space Grotesk';color:#fff; }
+        .metric { padding:1rem; border-radius:16px; background:var(--panel); border:1px solid var(--line); text-align:center; }
+        .metric strong { display:block;font-size:1.45rem;color:#fff; }
         .metric small { color:var(--muted); }
         .wave { height:46px; display:flex; align-items:center; justify-content:center; gap:5px; margin:.5rem 0 1rem; }
-        .wave i { width:5px; border-radius:8px; background:linear-gradient(#42e8e0,#8b5cf6); animation:wave 1.1s ease-in-out infinite; }
+        .wave i { width:3px; border-radius:8px; background:#fff; animation:wave 1.1s ease-in-out infinite; }
         .wave i:nth-child(2){animation-delay:.1s}.wave i:nth-child(3){animation-delay:.2s}.wave i:nth-child(4){animation-delay:.3s}.wave i:nth-child(5){animation-delay:.4s}.wave i:nth-child(6){animation-delay:.5s}.wave i:nth-child(7){animation-delay:.6s}
-        .result { border-left:3px solid var(--cyan); background:rgba(66,232,224,.06); padding:1rem 1.2rem; border-radius:0 14px 14px 0; }
-        .stButton>button { border-radius:12px; border:1px solid rgba(66,232,224,.25); background:linear-gradient(110deg,#176f78,#5b3db8); color:#fff; font-weight:700; }
-        .stButton>button:hover { border-color:#68f5ed; box-shadow:0 0 22px rgba(66,232,224,.2); }
-        [data-testid="stChatMessage"] { border:1px solid rgba(255,255,255,.07); border-radius:18px; background:rgba(255,255,255,.025); padding:.45rem .7rem; }
-        @keyframes float { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-8px) rotate(2deg)} }
-        @keyframes pulse { 0%,100%{opacity:.65;transform:scale(.96)} 50%{opacity:1;transform:scale(1.05)} }
+        .result { border:1px solid var(--line); background:var(--panel); padding:1rem 1.2rem; border-radius:14px; }
+        .stButton>button { border-radius:999px; border:1px solid #fff; background:#fff; color:#050505; font-weight:600; }
+        .stButton>button:hover { background:#ddd; border-color:#ddd; color:#050505; }
+        [data-testid="stChatMessage"] { border:1px solid var(--line); border-radius:16px; background:var(--panel); padding:.45rem .7rem; }
+        input, textarea, [data-baseweb="select"] > div { background:#090909!important; border-color:var(--line)!important; }
         @keyframes wave { 0%,100%{height:10px;opacity:.45}50%{height:42px;opacity:1} }
         </style>
         """,
@@ -133,15 +118,13 @@ def transcribe(client: OpenAI, audio, filename: str) -> str:
 
 
 def hero() -> None:
-    icon = image_data_uri(ICON_PATH)
-    image = f'<img src="{icon}" alt="NEXORA AI">' if icon else ""
     st.markdown(
-        f"""
-        <section class="hero"><div class="hero-row">{image}<div>
-          <div class="eyebrow">Inteligencia que transforma ideas</div>
+        """
+        <section class="hero"><div class="hero-row"><div>
+          <div class="eyebrow">Asistente académico</div>
           <h1>NEXORA AI</h1>
-          <p>Tu copiloto académico: conversa, transcribe audios y activa flujos de productividad desde un solo lugar.</p>
-          <div style="margin-top:.9rem"><span class="status-pill"><span class="dot"></span> Sistema listo para conectar</span></div>
+          <p>Conversación, voz y automatización en una experiencia clara y directa.</p>
+          <span class="status-pill"><span class="dot"></span> Listo para conectar</span>
         </div></div></section>
         """,
         unsafe_allow_html=True,
@@ -150,10 +133,8 @@ def hero() -> None:
 
 def sidebar() -> tuple[str, str, str, str]:
     with st.sidebar:
-        if ICON_PATH.exists():
-            st.image(str(ICON_PATH), width=76)
-        st.markdown("### NEXORA AI")
-        st.caption("Centro de control")
+        st.markdown("# ◯ NEXORA")
+        st.caption("Configuración")
         api_key = st.text_input("OpenAI API Key", type="password", placeholder="sk-proj-…", help="Solo vive en esta sesión; no se guarda.")
         model = st.text_input("Modelo de chat", value=DEFAULT_MODEL, help="Puedes cambiarlo por un modelo disponible en tu cuenta.")
         webhook = st.text_input("Webhook n8n (opcional)", value=os.getenv("N8N_WEBHOOK_URL", ""), placeholder="http://localhost:5678/webhook/nexora")
@@ -180,9 +161,9 @@ def page_home(api_key: str) -> None:
     hero()
     cols = st.columns(3)
     cards = [
-        ("💬 Chat contextual", "Conversaciones útiles con memoria durante la sesión."),
-        ("🎙️ Audio → texto", "Transcripción precisa de clases, entrevistas y notas de voz."),
-        ("⚡ Flujos n8n", "Dispara correos, registros y mensajes desde un webhook."),
+        ("Chat contextual", "Conversaciones útiles con memoria durante la sesión."),
+        ("Audio a texto", "Transcripción precisa de clases, entrevistas y notas de voz."),
+        ("Flujos n8n", "Dispara correos, registros y mensajes desde un webhook."),
     ]
     for col, (title, body) in zip(cols, cards):
         with col:
@@ -196,11 +177,11 @@ def page_home(api_key: str) -> None:
     with c:
         label = "ONLINE" if get_client(api_key) else "ESPERA"
         st.markdown(f'<div class="metric"><strong>{label}</strong><small>estado OpenAI</small></div>', unsafe_allow_html=True)
-    st.info("Demo sugerida: haz una pregunta → sube un audio → envía su resumen a n8n. Es un recorrido corto que muestra todo el proyecto.", icon="✨")
+    st.info("Demo sugerida: pregunta, transcribe un audio y envía su resumen a n8n.")
 
 
 def page_chat(api_key: str, model: str) -> None:
-    st.title("💬 Chat inteligente")
+    st.title("Chat inteligente")
     st.caption(f"Motor seleccionado: {model}")
     left, right = st.columns([4, 1])
     with right:
@@ -229,7 +210,7 @@ def page_chat(api_key: str, model: str) -> None:
 
 
 def page_transcriber(api_key: str, model: str) -> None:
-    st.title("🎙️ Transcriptor inteligente")
+    st.title("Transcriptor inteligente")
     st.caption("Convierte voz en texto y, si deseas, transfórmalo en apuntes accionables.")
     st.markdown('<div class="wave">' + '<i></i>' * 7 + '</div>', unsafe_allow_html=True)
     mode = st.radio("Fuente", ["Grabar ahora", "Subir archivo"], horizontal=True)
@@ -240,7 +221,7 @@ def page_transcriber(api_key: str, model: str) -> None:
         st.audio(audio)
         if getattr(audio, "size", len(audio.getvalue())) > 25 * 1024 * 1024:
             st.error("El archivo supera 25 MB. Comprímelo o divídelo antes de continuar.")
-        elif st.button("✨ Transcribir con IA", type="primary"):
+        elif st.button("Transcribir con IA", type="primary"):
             client = require_client(api_key)
             if client:
                 try:
@@ -274,7 +255,7 @@ def page_transcriber(api_key: str, model: str) -> None:
 
 
 def page_automations(webhook: str) -> None:
-    st.title("⚡ Automatizaciones con n8n")
+    st.title("Automatizaciones con n8n")
     st.caption("Envía una instrucción estructurada al flujo incluido en `automations/nexora-n8n.json`.")
     action = st.selectbox("Acción", ["Registrar en Google Sheets", "Enviar email", "Enviar WhatsApp"])
     action_map = {"Registrar en Google Sheets": "sheet", "Enviar email": "email", "Enviar WhatsApp": "whatsapp"}
@@ -294,7 +275,7 @@ def page_automations(webhook: str) -> None:
     }
     with st.expander("Ver payload JSON"):
         st.code(json.dumps(payload, ensure_ascii=False, indent=2), language="json")
-    if st.button("🚀 Ejecutar automatización", type="primary"):
+    if st.button("Ejecutar automatización", type="primary"):
         if not webhook:
             st.warning("Agrega la URL del webhook n8n en la barra lateral.")
         elif not content.strip():
@@ -309,11 +290,11 @@ def page_automations(webhook: str) -> None:
                 st.error(f"No se pudo contactar el webhook: {exc}")
     st.markdown("#### ¿Cómo funciona?")
     st.markdown("1. NEXORA prepara un payload seguro.  2. n8n identifica la acción.  3. El flujo registra o envía el contenido con tus credenciales de n8n.")
-    st.info("La plantilla viene en modo demostración seguro. En n8n conecta tus credenciales y reemplaza cada nodo marcado como DEMO por Gmail, Google Sheets o WhatsApp Cloud/Twilio.", icon="🧩")
+    st.info("La plantilla viene en modo demostración seguro. En n8n conecta tus credenciales y reemplaza cada nodo marcado como DEMO por Gmail, Google Sheets o WhatsApp Cloud/Twilio.")
 
 
 def page_about() -> None:
-    st.title("🧠 Acerca del proyecto")
+    st.title("Acerca del proyecto")
     st.markdown("""
     **NEXORA AI** integra en una sola aplicación los objetivos académicos de chatbot, transcripción y automatización.
 
