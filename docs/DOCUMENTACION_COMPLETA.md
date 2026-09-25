@@ -18,7 +18,7 @@
 
 NEXORA AI es una suite web multimodal de apoyo académico y productividad con dos interfaces complementarias: una versión local en Python y Streamlit y una versión desplegable en Vercel. Integra chat contextual, once herramientas especializadas de texto, visión artificial, generación de imágenes, texto a voz, moderación, conversación de voz a voz mediante Realtime API y WebRTC, transcripción de audio y automatizaciones conectadas a n8n. El propósito es demostrar cómo una experiencia unificada puede procesar texto, voz e imágenes y entregar datos estructurados a flujos externos sin incrustar credenciales sensibles en el código.
 
-La persona usuaria puede pegar temporalmente una OpenAI API Key, seleccionar un modelo disponible, conversar por texto o voz, transformar contenido, crear guías y evaluaciones, analizar una imagen, generar una pieza visual, escuchar una narración sintética, revisar contenido potencialmente riesgoso, grabar o cargar un audio, generar un resumen, descargar resultados y activar una automatización. El workflow incluido opera en modo demostración seguro: valida la solicitud, identifica la acción y devuelve una confirmación. La conexión real con Google Sheets, correo o WhatsApp requiere que el equipo configure sus credenciales dentro de n8n.
+La persona usuaria puede pegar temporalmente una OpenAI API Key, seleccionar un modelo disponible, conversar por texto o voz, transformar contenido, crear guías y evaluaciones, analizar una imagen, generar una pieza visual, escuchar una narración sintética, revisar contenido potencialmente riesgoso, grabar o cargar un audio, generar un resumen, descargar resultados y activar una automatización. El workflow funciona localmente en Docker sin suscripción a n8n Cloud: valida y prioriza la solicitud, mantiene una bitácora JSONL y genera registros, borradores, checklists, sesiones de estudio o eventos. Las comunicaciones externas permanecen pendientes de aprobación hasta que el equipo configure credenciales propias.
 
 El prototipo cubre los objetivos de creación de chatbots, uso de modelos de OpenAI, transcripción con IA, voz en tiempo real, diseño de interfaces y automatización de procesos. La versión web ya queda preparada para despliegue HTTPS en Vercel y mantiene las mismas funciones centrales que la versión Streamlit.
 
@@ -60,7 +60,7 @@ Streamlit permite construir una interfaz local sin separar frontend y backend. L
 
 ### Justificación práctica
 
-La solución reduce pasos manuales en escenarios como tomar apuntes de voz, resumir una reunión, preparar un correo o registrar una actividad. Aunque el workflow se entrega en modo demostración, la arquitectura permite conectar servicios reales sin rediseñar la aplicación.
+La solución reduce pasos manuales en escenarios como tomar apuntes de voz, resumir una reunión, preparar un correo, organizar una sesión de estudio o registrar una actividad. El workflow local produce resultados útiles sin depender de una cuenta de pago y permite conectar servicios reales sin rediseñar la aplicación.
 
 ## Objetivos
 
@@ -76,7 +76,7 @@ Desarrollar una aplicación web de apoyo académico que integre conversación po
 4. Transcribir audio mediante el modelo gpt-transcribe.
 5. Generar resúmenes estructurados de las transcripciones.
 6. Diseñar un webhook que conecte la aplicación con n8n.
-7. Enrutar acciones de Sheets, correo y WhatsApp en un workflow importable.
+7. Procesar seis acciones locales: registro, correo, WhatsApp, tareas, estudio y calendario.
 8. Proteger la clave evitando que sea almacenada en el repositorio.
 9. Documentar instalación, funcionamiento, pruebas y mejoras.
 10. Desplegar una interfaz minimalista en Vercel con voz en tiempo real mediante WebRTC.
@@ -99,7 +99,7 @@ Desarrollar una aplicación web de apoyo académico que integre conversación po
 - Transcripción, resumen y descarga en TXT.
 - Reutilización de la transcripción dentro del chat.
 - Envío de payloads JSON a n8n.
-- Enrutamiento de tres tipos de automatización.
+- Seis tipos de automatización local con prioridad y bitácora persistente.
 - Scripts para Windows, macOS y Linux.
 - Pruebas de humo y documentación académica.
 - Conversación de voz a voz, silenciamiento, interrupción y transcripción en vivo.
@@ -148,7 +148,7 @@ Desarrollar una aplicación web de apoyo académico que integre conversación po
 | RF 13 | Preparar automatización | Se eligen acción, destinatario, asunto y contenido |
 | RF 14 | Mostrar payload | El JSON puede revisarse antes de enviarlo |
 | RF 15 | Llamar al webhook | Se ejecuta una solicitud POST |
-| RF 16 | Enrutar en n8n | Se distinguen sheet, email y whatsapp |
+| RF 16 | Enrutar en n8n | Se distinguen sheet, email, whatsapp, task, study y calendar |
 | RF 17 | Confirmar resultado | La respuesta JSON aparece en Streamlit |
 | RF 18 | Iniciar voz en tiempo real | El navegador crea una sesión WebRTC |
 | RF 19 | Reproducir la respuesta | El audio del modelo se escucha automáticamente |
@@ -276,12 +276,12 @@ Si falta la clave, la app solicita configurarla. Si OpenAI devuelve un error, se
 
 ### Ejecutar una automatización
 
-1. El usuario selecciona Sheets, email o WhatsApp.
+1. El usuario selecciona registro, email, WhatsApp, tareas, estudio o calendario.
 2. Completa destinatario, asunto y contenido.
 3. Revisa el payload JSON y confirma.
 4. Streamlit o la función serverless envía una solicitud POST.
-5. n8n valida y enruta la acción.
-6. n8n devuelve una confirmación.
+5. n8n valida el contenido, calcula la prioridad y registra el evento en una bitácora JSONL.
+6. n8n devuelve un resultado útil: registro, borrador, checklist, sesión de estudio o evento.
 
 ## Arquitectura de la solución
 
@@ -307,8 +307,9 @@ Usuario
 
 n8n
   ├── Validación
-  ├── Enrutamiento
-  └── Sheets Email WhatsApp
+  ├── Priorización
+  ├── Bitácora JSONL
+  └── Registros Borradores Tareas Estudio Calendario
 ```
 
 ### Componentes
@@ -364,8 +365,10 @@ El historial se limita a los últimos mensajes para reducir el contexto. La clav
 | api | Endpoints serverless para texto, visión, imágenes, voz, moderación, Realtime, audio y n8n |
 | vercel.json | Rutas, funciones y cabeceras del despliegue |
 | package.json | Metadatos y validación de JavaScript |
-| assets/nexora-icon.png | Identidad visual |
+| assets/nexora-logo.svg y assets/nexora-icon.png | Identidad visual vectorial y versión para Streamlit y Word |
+| public/logo.svg y public/favicon.svg | Marca monocromática optimizada para la interfaz web |
 | automations/nexora-n8n.json | Workflow importable |
+| n8n-local | Destino local de la bitácora JSONL; sus eventos se excluyen de Git |
 | .streamlit/config.toml | Tema y límite de carga |
 | .env.example | Variables sin secretos reales |
 | requirements.txt | Dependencias Python |
@@ -457,28 +460,30 @@ La vista crea un diccionario con acción, destinatario, asunto, contenido, orige
 |---|---|
 | Entrada NEXORA | Recibe POST en la ruta nexora |
 | Validar y normalizar | Verifica acción y contenido |
-| Enrutar acción | Separa sheet, email y whatsapp |
-| DEMO Google Sheets | Simula un registro |
-| DEMO Enviar email | Simula un correo |
-| DEMO WhatsApp | Simula un mensaje |
-| Confirmar a la app | Devuelve JSON |
+| Validar, priorizar y enriquecer | Acepta seis acciones, normaliza campos, limita el contenido y calcula prioridad |
+| Guardar bitácora local | Añade cada solicitud a `/files/nexora-events.jsonl` dentro del contenedor |
+| Construir resultado útil | Produce un registro, borrador, checklist, sesión de estudio o evento según la acción |
+| Confirmar a la app | Devuelve el identificador, la prioridad, el estado de aprobación y el resultado |
 
 ```json
 {
-  "action": "sheet",
-  "recipient": "registro académico",
-  "subject": "Resumen de clase",
-  "content": "Texto que debe procesar el flujo",
+  "action": "task",
+  "recipient": "equipo de exposición",
+  "subject": "Preparar la sustentación",
+  "content": "Urgente: terminar diapositivas hoy. Ensayar la demostración.",
   "source": "NEXORA AI",
   "timestamp": "2026-09-23T20:30:00"
 }
 ```
 
-### Activación de integraciones reales
+### Funcionamiento local e integraciones opcionales
 
-**Google Sheets:** crear columnas, configurar credenciales, reemplazar el nodo DEMO por Append Row y mapear los campos.  
-**Correo:** elegir Gmail, Outlook o SMTP; mapear destinatario, asunto y cuerpo; añadir aprobación humana.  
-**WhatsApp:** disponer de WhatsApp Business Cloud o Twilio, validar número, mapear contenido y cumplir reglas de consentimiento.
+El workflow funciona de principio a fin sin suscripciones: guarda el registro en la Mac y genera el resultado dentro de n8n. Las acciones `email`, `whatsapp` y `calendar` devuelven borradores con `approvalRequired: true`; no envían ni publican nada por accidente.
+
+- **Google Sheets:** conectar Append Row únicamente si el equipo desea sincronizar la bitácora.
+- **Correo:** elegir Gmail, Outlook o SMTP después de incorporar una aprobación humana.
+- **WhatsApp:** disponer de WhatsApp Business Cloud o Twilio, validar el número y cumplir las reglas de consentimiento.
+- **Calendario:** conectar Google Calendar u Outlook Calendar después de que el usuario confirme fecha y contenido.
 
 ## Seguridad y privacidad
 
@@ -499,7 +504,8 @@ La vista crea un diccionario con acción, destinatario, asunto, contenido, orige
 - Límite de caracteres para texto y narración.
 - Divulgación visible de voz generada por IA.
 - Timeout y manejo de errores.
-- Workflow de demostración sin efectos externos.
+- Workflow local operativo, con efectos limitados a una bitácora del proyecto.
+- Borradores de comunicación y calendario marcados para aprobación humana.
 
 ### Controles recomendados
 
@@ -557,15 +563,33 @@ python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
+### n8n local en macOS
+
+1. Abrir Docker Desktop y esperar a que indique **Engine running**.
+2. Desde la raíz del repositorio ejecutar `docker compose up -d`.
+3. Comprobar `http://localhost:5678/healthz`; debe responder `{"status":"ok"}`.
+4. Importar y publicar el workflow incluido si todavía no aparece en el editor.
+
+```bash
+docker cp automations/nexora-n8n.json teng-n8n-1:/tmp/nexora-n8n.json
+docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-n8n.json
+docker compose exec -T n8n n8n publish:workflow --id=nexoraLocalV2
+docker compose restart n8n
+```
+
+n8n queda disponible en `http://localhost:5678`, su configuración persiste en el volumen `n8n_data` y la bitácora aparece en `n8n-local/nexora-events.jsonl`. Para detenerlo sin perder datos se utiliza `docker compose stop`; para reanudar, `docker compose start`.
+
 ### Despliegue en Vercel
 
 1. Importar `itslevanx/NexoraAI` en Vercel.
 2. Seleccionar Other como preset y mantener el directorio raíz.
-3. Configurar `OPENAI_API_KEY` y, opcionalmente, `N8N_WEBHOOK_URL` en Environment Variables.
+3. Configurar `OPENAI_API_KEY` y, opcionalmente, una URL pública HTTPS de n8n en `N8N_WEBHOOK_URL`.
 4. Desplegar y abrir `https://nexora-ai-blue-three.vercel.app/`.
 5. Autorizar el micrófono y comprobar Voz, Chat, Studio IA, Transcribir y Automatizar.
 
 La versión serverless limita los audios codificados a menos de 4 MB. Streamlit mantiene el límite local de 25 MB.
+
+`localhost` solo es accesible desde la Mac: el despliegue de Vercel no puede llamar directamente al contenedor local. Para demostrar n8n sin publicar servicios se utiliza la interfaz Streamlit local. Una futura conexión Vercel-n8n requeriría un dominio HTTPS protegido o un túnel temporal administrado por el equipo.
 
 | Variable | Obligatoria | Propósito |
 |---|---|---|
@@ -619,11 +643,13 @@ El uso de visión e imágenes implica enviar esos datos a OpenAI. No deben carga
 
 ### Ejecutar automatizaciones
 
-1. Configurar el webhook en la barra lateral.
-2. Abrir Automatizaciones y elegir una acción.
-3. Escribir destinatario, asunto y contenido.
-4. Revisar el payload y confirmar.
-5. Verificar la respuesta y ejecución en n8n.
+1. Confirmar que Docker Desktop y el contenedor n8n están activos.
+2. Mantener `http://localhost:5678/webhook/nexora` en la barra lateral de Streamlit.
+3. Abrir Automatizaciones y elegir registro, email, WhatsApp, tareas, estudio o calendario.
+4. Escribir destinatario, asunto y contenido.
+5. Revisar el payload y confirmar.
+6. Verificar identificador, prioridad, aprobación requerida y resultado en la respuesta.
+7. Consultar la ejecución en n8n o la bitácora `n8n-local/nexora-events.jsonl`.
 
 ## Plan de pruebas
 
@@ -642,8 +668,8 @@ Las pruebas automáticas no consumen OpenAI para evitar costos y dependencia de 
 | CP 09 | Audio mayor a 25 MB | Error, sin solicitud | Preparado |
 | CP 10 | Audio válido | Transcripción visible | Pendiente de clave del equipo |
 | CP 11 | Webhook ausente | Solicita URL | Aprobado |
-| CP 12 | Webhook demo | Confirmación JSON | Pendiente de n8n activo |
-| CP 13 | Acción inválida | Error de validación | Preparado |
+| CP 12 | Webhook local | Confirmación JSON, prioridad y checklist | Aprobado |
+| CP 13 | Acción inválida | Error de validación | Aprobado |
 | CP 14 | Clave fuera de Git | No existe secreto | Aprobado |
 | CP 15 | Sintaxis JavaScript | Todos los archivos pasan `node --check` | Aprobado |
 | CP 16 | Interfaz Safari | Diseño monocromático y navegación visibles | Aprobado |
@@ -656,6 +682,8 @@ Las pruebas automáticas no consumen OpenAI para evitar costos y dependencia de 
 | CP 23 | Narración | MP3 reproducible con aviso de voz IA | Pendiente de clave del equipo |
 | CP 24 | Moderación | Resultado y categorías visibles | Pendiente de clave del equipo |
 | CP 25 | Endpoints nuevos | Todos pasan `node --check` y existen en pruebas | Aprobado |
+| CP 26 | Seis acciones n8n | Cada acción devuelve un resultado especializado | Aprobado |
+| CP 27 | Persistencia local | Cada solicitud añade una línea JSONL | Aprobado |
 
 ```bash
 python -m pytest -q
@@ -670,7 +698,7 @@ git status --short
 - Las cinco áreas son accesibles.
 - La versión Vercel conserva las funciones centrales y añade voz en tiempo real y Studio IA multimodal.
 - Chat y transcripción solicitan una clave cuando falta.
-- n8n acepta y enruta las tres acciones.
+- n8n acepta las seis acciones, calcula prioridad, registra el evento y devuelve el resultado correspondiente.
 - Los errores de red se muestran de forma controlada.
 - El equipo puede ejecutar el guion completo.
 
@@ -726,7 +754,7 @@ El resultado clave es que la información pasa de voz a texto, de texto a resume
 
 ## Limitaciones y mejoras futuras
 
-La aplicación no persiste conversaciones ni archivos. El modo demostración de n8n no crea efectos externos. La precisión depende del modelo, el audio, la imagen y las instrucciones. El proyecto no verifica hechos de manera independiente y el consumo puede generar costos. La conversación de voz necesita HTTPS, permiso de micrófono y acceso al modelo Realtime. La versión Vercel limita cada audio o imagen codificada a menos de 4 MB. La narración acepta hasta 2500 caracteres por solicitud y la generación de imágenes puede requerir verificación de la organización de OpenAI. La moderación es una señal de apoyo y no una decisión definitiva.
+La aplicación no persiste conversaciones ni archivos multimedia. n8n conserva únicamente una bitácora JSONL de las solicitudes locales; los borradores de comunicación y calendario no se envían sin una integración y aprobación posteriores. La precisión depende del modelo, el audio, la imagen y las instrucciones. El proyecto no verifica hechos de manera independiente y el consumo puede generar costos. La conversación de voz necesita HTTPS, permiso de micrófono y acceso al modelo Realtime. La versión Vercel limita cada audio o imagen codificada a menos de 4 MB y no puede acceder al `localhost` de la Mac. La narración acepta hasta 2500 caracteres por solicitud y la generación de imágenes puede requerir verificación de la organización de OpenAI. La moderación es una señal de apoyo y no una decisión definitiva.
 
 Mejoras propuestas: usuarios y roles; persistencia con PostgreSQL o Supabase; búsqueda semántica y documentos PDF; edición iterativa de imágenes; respuestas en streaming; métricas de tokens y costos; firma HMAC para el webhook; aprobación de acciones; plantillas por curso; caché de resultados; y pruebas end to end.
 
@@ -734,7 +762,7 @@ Mejoras propuestas: usuarios y roles; persistencia con PostgreSQL o Supabase; b�
 
 NEXORA AI demuestra que se pueden integrar lenguaje, visión, generación de imágenes, voz sintética, conversación de voz, transcripción, moderación y automatización en una aplicación compacta. Streamlit mantiene una versión local fácil de explicar; Vercel publica la suite minimalista bajo HTTPS; OpenAI procesa distintas modalidades; y n8n representa las acciones externas.
 
-El proyecto evidencia que una integración responsable requiere validar entradas, manejar errores, separar credenciales, limitar el alcance y documentar los pasos. El modo demostración permite enseñar el flujo sin enviar comunicaciones por accidente.
+El proyecto evidencia que una integración responsable requiere validar entradas, manejar errores, separar credenciales, limitar el alcance y documentar los pasos. El workflow local permite enseñar una ejecución real y persistente sin enviar comunicaciones por accidente.
 
 La solución queda preparada para evolucionar. La persistencia, autenticación, monitoreo y aprobación permitirían convertir el prototipo en una herramienta de uso continuo.
 
@@ -743,7 +771,7 @@ La solución queda preparada para evolucionar. La persistencia, autenticación, 
 - Probar la demostración un día antes.
 - Utilizar una clave exclusiva y rotarla después.
 - Preparar un audio y video de respaldo.
-- No afirmar que un servicio está conectado si continúa en modo DEMO.
+- Explicar que los servicios externos son extensiones opcionales y que los borradores requieren aprobación.
 - Registrar únicamente pruebas realizadas.
 - Mantener documentación y código sincronizados.
 
@@ -807,7 +835,7 @@ N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 | Webhook 404 | Workflow inactivo | Activar y copiar URL correcta |
 | n8n no abre | Docker o puerto | Iniciar Docker y revisar 5678 |
 | Respuesta lenta | Red o audio largo | Esperar o reducir archivo |
-| Mensaje no enviado | Nodo DEMO | Configurar credenciales y nodo real |
+| Mensaje no enviado | El flujo genera un borrador seguro | Revisar, aprobar y conectar el proveedor externo si se necesita envío real |
 | Voz no inicia | Micrófono bloqueado o modelo sin acceso | Autorizar Safari y verificar la cuenta |
 | Vercel muestra 401 | Variable y clave temporal ausentes | Configurar `OPENAI_API_KEY` o pegarla en Configuración |
 | Audio web rechazado | Archivo mayor de 4 MB | Reducir el archivo o usar Streamlit local |

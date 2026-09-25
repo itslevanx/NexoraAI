@@ -1,6 +1,6 @@
 # NEXORA AI
 
-![Icono de NEXORA AI](assets/nexora-icon.png)
+![Logo de NEXORA AI](assets/nexora-logo.svg)
 
 NEXORA AI es una suite académica multimodal que integra conversación, herramientas de texto, visión, generación de imágenes, voz sintética, transcripción, moderación y automatización mediante n8n. Incluye una versión local en Streamlit y una experiencia serverless publicada en Vercel, sin incrustar credenciales en el código.
 
@@ -20,8 +20,8 @@ NEXORA AI es una suite académica multimodal que integra conversación, herramie
 | Transcripción | Implementado | Acepta grabación directa y archivos compatibles; 25 MB en Streamlit y 4 MB en Vercel |
 | Resumen de audio | Implementado | Convierte la transcripción en ideas, decisiones y pendientes |
 | Exportación | Implementado | Permite descargar la transcripción en formato TXT |
-| Automatización n8n | Modo demostración | Valida, enruta y confirma acciones por webhook |
-| Sheets, email y WhatsApp reales | Requiere credenciales | Se conectan sustituyendo los nodos DEMO dentro de n8n |
+| Automatización n8n local | Implementado | Valida, prioriza, registra en JSONL y construye resultados útiles |
+| Acciones externas reales | Requiere credenciales | Los borradores exigen revisión antes de conectar correo, WhatsApp o calendario |
 | Pruebas de humo | Implementado | Verifican archivos esenciales y validez del workflow |
 
 ## Funcionalidades
@@ -68,7 +68,11 @@ La experiencia publicada conserva también el chat contextual, la grabación o c
 ### Automatizaciones con n8n
 
 - Envía solicitudes HTTP mediante un webhook configurable.
-- Soporta las acciones `sheet`, `email` y `whatsapp`.
+- Ofrece seis acciones: `sheet`, `email`, `whatsapp`, `task`, `study` y `calendar`.
+- Detecta prioridad alta, media o normal según el contenido.
+- Guarda cada solicitud en `n8n-local/nexora-events.jsonl` dentro de la Mac.
+- Construye registros, borradores, checklists, sesiones de estudio y eventos.
+- Marca email, WhatsApp y calendario como pendientes de aprobación humana.
 - Valida y normaliza el contenido antes de procesarlo.
 - Mantiene las credenciales de servicios externos dentro de n8n.
 - Incluye un workflow importable en `automations/nexora-n8n.json`.
@@ -93,12 +97,12 @@ La experiencia publicada conserva también el chat contextual, la grabación o c
         ┌──────────▼──────────┐  ┌──────▼─────────┐
         │ OpenAI Platform     │  │      n8n       │
         │ Responses           │  │ validación     │
-        │ Transcriptions      │  │ enrutamiento   │
+        │ Transcriptions      │  │ prioridad      │
         │ Vision + Images     │  └──────┬─────────┘
         │ Speech + Moderation │         │
         │ Realtime + WebRTC   │         │
         └─────────────────────┘         │
-                               Sheets email WhatsApp
+                         Bitácora tareas estudio borradores
 ```
 
 Streamlit actúa como capa de servidor y utiliza la clave únicamente en memoria o desde una variable de entorno. n8n recibe solo el contenido necesario para la automatización; nunca recibe la clave de OpenAI.
@@ -133,8 +137,10 @@ NexoraAI/
 ├── api/                                # Texto, visión, imagen, voz, moderación, Realtime y n8n
 ├── package.json                        # Validación de JavaScript
 ├── vercel.json                         # Configuración de despliegue
-├── assets/nexora-icon.png              # Icono de la aplicación
+├── assets/nexora-logo.svg              # Logo vectorial principal
+├── assets/nexora-icon.png              # Versión PNG para Streamlit y Word
 ├── automations/nexora-n8n.json         # Workflow importable de n8n
+├── n8n-local/.gitkeep                   # Carpeta local para la bitácora ignorada por Git
 ├── docs/
 │   ├── DOCUMENTACION_COMPLETA.md       # Fuente del informe académico
 │   └── Documentacion_NEXORA_AI.docx    # Documento Word final
@@ -238,29 +244,48 @@ La arquitectura de voz sigue la recomendación oficial: el navegador usa WebRTC 
 
 ## Configuración de n8n
 
-### Levantar n8n con Docker
+### Levantar n8n con Docker en la Mac
 
 ```bash
 docker compose up -d
 ```
 
-Abrir `http://localhost:5678`, completar la configuración inicial e importar `automations/nexora-n8n.json`.
+El contenedor queda disponible en `http://localhost:5678` y conserva su configuración en el volumen `n8n_data`. El workflow se importa desde `automations/nexora-n8n.json` y la bitácora se guarda en `n8n-local/nexora-events.jsonl`.
+
+Para importar y publicar manualmente desde la terminal:
+
+```bash
+docker cp automations/nexora-n8n.json teng-n8n-1:/tmp/nexora-n8n.json
+docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-n8n.json
+docker compose exec -T n8n n8n publish:workflow --id=nexoraLocalV2
+docker compose restart n8n
+```
+
+Comprobación rápida:
+
+```bash
+curl http://localhost:5678/healthz
+curl -X POST http://localhost:5678/webhook/nexora \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"task","subject":"Exposición","content":"Urgente: terminar diapositivas hoy. Ensayar la demo."}'
+```
 
 ### Activar el workflow
 
-1. Abrir **NEXORA AI Centro de automatizaciones**.
+1. Abrir **NEXORA AI - Automatizaciones locales inteligentes**.
 2. Verificar que el webhook tenga la ruta `nexora`.
 3. Activar el workflow.
 4. Copiar `http://localhost:5678/webhook/nexora` en la barra lateral.
 5. Ejecutar una acción desde **Automatizaciones**.
 
-### Convertir la demostración en una integración real
+### Conectar servicios externos opcionales
 
-Los nodos `DEMO` no envían mensajes ni escriben datos externos.
+El workflow local ya funciona sin cuentas de pago: valida, prioriza, crea el resultado y lo registra en JSONL. Los borradores no producen efectos externos.
 
-- Sustituir **DEMO Google Sheets** por Google Sheets con la operación Append Row.
-- Sustituir **DEMO Enviar email** por Gmail, Outlook o SMTP.
-- Sustituir **DEMO WhatsApp** por WhatsApp Business Cloud o Twilio.
+- Conectar Google Sheets con la operación Append Row si el equipo desea sincronización.
+- Conectar Gmail, Outlook o SMTP después del paso de aprobación.
+- Conectar WhatsApp Business Cloud o Twilio únicamente con consentimiento.
+- Conectar Google Calendar u Outlook Calendar para crear eventos aprobados.
 - Configurar las credenciales únicamente dentro de n8n.
 - Mantener los nodos de validación y enrutamiento.
 - Probar primero con cuentas y datos del equipo.
@@ -278,14 +303,16 @@ Los nodos `DEMO` no envían mensajes ni escriben datos externos.
 }
 ```
 
-Respuesta de demostración:
+Respuesta local de ejemplo:
 
 ```json
 {
   "ok": true,
   "app": "NEXORA AI",
-  "action": "email",
-  "message": "DEMO: correo preparado correctamente"
+  "action": "task",
+  "priority": "alta",
+  "storedLocally": true,
+  "message": "Plan de tareas preparado correctamente en n8n local"
 }
 ```
 
@@ -325,7 +352,7 @@ Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workf
 ## Limitaciones
 
 - El historial vive únicamente durante la sesión.
-- El workflow opera en modo demostración hasta configurar credenciales.
+- El workflow local produce registros, planes y borradores; no envía comunicaciones sin una integración y aprobación explícitas.
 - No existe autenticación de usuarios.
 - Los archivos están limitados a 25 MB en Streamlit y a menos de 4 MB en Vercel.
 - La narración admite hasta 2500 caracteres por solicitud.
@@ -377,4 +404,4 @@ Completar antes de la entrega:
 
 ## Uso académico
 
-Proyecto preparado con fines académicos. Antes de utilizarlo con datos reales, el equipo debe definir una licencia, revisar las políticas de los servicios conectados y reemplazar todos los datos de demostración.
+Proyecto preparado con fines académicos. Antes de utilizarlo con datos reales, el equipo debe definir una licencia, revisar las políticas de los servicios conectados y mantener la aprobación humana para acciones externas.
