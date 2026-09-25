@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check public/app.js && node --check api/realtime-session.js && node --check api/chat.js && node --check api/transcribe.js && node --check api/automation.js && node --check api/studio.js && node --check api/speech.js && node --check api/image.js && node --check api/vision.js && node --check api/moderate.js"
+    "check": "node --check public/app.js && node --check api/realtime-session.js && node --check api/chat.js && node --check api/transcribe.js && node --check api/automation.js && node --check api/studio.js && node --check api/speech.js && node --check api/image.js && node --check api/vision.js && node --check api/moderate.js && node --test tests/realtime-session.test.js"
   },
   "engines": {
     "node": ">=20"

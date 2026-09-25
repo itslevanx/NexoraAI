@@ -1,8 +1,32 @@
 import { readOpenAIError, rejectMethod, resolveApiKey } from "./_shared.js";
 
 export const config = {
-  api: { bodyParser: { sizeLimit: "1mb" } },
+  // La oferta SDP debe llegar como texto crudo. El parser de Vercel no
+  // convierte application/sdp a string, por eso se desactiva para esta ruta.
+  api: { bodyParser: false },
 };
+
+const MAX_SDP_BYTES = 128 * 1024;
+
+export async function readSdpBody(req) {
+  if (typeof req.body === "string") return req.body.trim();
+  if (Buffer.isBuffer(req.body)) return req.body.toString("utf8").trim();
+  if (typeof req.body?.sdp === "string") return req.body.sdp.trim();
+
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of req) {
+    const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    total += bytes.length;
+    if (total > MAX_SDP_BYTES) {
+      const error = new Error("La oferta WebRTC supera el tamaño permitido.");
+      error.statusCode = 413;
+      throw error;
+    }
+    chunks.push(bytes);
+  }
+  return Buffer.concat(chunks).toString("utf8").trim();
+}
 
 export default async function handler(req, res) {
   if (rejectMethod(req, res)) return;
@@ -12,8 +36,13 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Configura OPENAI_API_KEY en Vercel o pega una clave temporal." });
   }
 
-  const sdp = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : String(req.body || "");
-  if (!sdp.includes("v=0")) {
+  let sdp;
+  try {
+    sdp = await readSdpBody(req);
+  } catch (error) {
+    return res.status(error.statusCode || 400).json({ error: error.message });
+  }
+  if (!/^v=0(?:\r?\n|$)/.test(sdp)) {
     return res.status(400).json({ error: "La oferta WebRTC no es válida." });
   }
 
