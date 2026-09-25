@@ -34,7 +34,9 @@ export async function readSdpBody(req) {
     error.statusCode = 413;
     throw error;
   }
-  return sdp.trim();
+  // SDP es un protocolo orientado a líneas y debe conservar su CRLF final.
+  // Aplicar trim() convierte una oferta válida en una descripción truncada.
+  return sdp;
 }
 
 export default async function handler(req, res) {
