@@ -9,7 +9,8 @@ NEXORA AI es una aplicación académica desarrollada con Streamlit que reúne tr
 | Componente | Estado | Descripción |
 |---|---|---|
 | Chat con IA | Implementado | Utiliza la Responses API y conserva el contexto de la sesión |
-| Transcripción | Implementado | Acepta grabación directa y archivos compatibles de hasta 25 MB |
+| Voz a voz | Implementado | Conversación natural mediante Realtime API y WebRTC |
+| Transcripción | Implementado | Acepta grabación directa y archivos compatibles; 25 MB en Streamlit y 4 MB en Vercel |
 | Resumen de audio | Implementado | Convierte la transcripción en ideas, decisiones y pendientes |
 | Exportación | Implementado | Permite descargar la transcripción en formato TXT |
 | Automatización n8n | Modo demostración | Valida, enruta y confirma acciones por webhook |
@@ -17,6 +18,17 @@ NEXORA AI es una aplicación académica desarrollada con Streamlit que reúne tr
 | Pruebas de humo | Implementado | Verifican archivos esenciales y validez del workflow |
 
 ## Funcionalidades
+
+### Conversación de voz en tiempo real
+
+- Mantiene una conversación directa de voz a voz con `gpt-realtime-2.1`.
+- Utiliza WebRTC para transportar el micrófono y el audio generado con baja latencia.
+- Detecta automáticamente cuándo comienza y termina cada turno.
+- Permite interrumpir, silenciar y finalizar la llamada.
+- Muestra una transcripción en vivo cuando el servicio entrega eventos de texto.
+- La clave estándar solo se utiliza en el endpoint del servidor; nunca se incrusta en JavaScript.
+
+La experiencia publicada conserva también el chat contextual, la grabación o carga de audio, la edición de la transcripción, el resumen, la descarga TXT, la reutilización en chat y el formulario para n8n. La voz es una función adicional y no reemplaza las capacidades anteriores.
 
 ### Chat inteligente
 
@@ -45,31 +57,28 @@ NEXORA AI es una aplicación académica desarrollada con Streamlit que reúne tr
 
 ### Experiencia visual
 
-- Identidad propia con icono generado para NEXORA AI.
-- Diseño oscuro con efectos de glassmorphism.
-- Animaciones CSS de entrada, pulso y onda de audio.
-- Navegación lateral y diseño adaptable.
-- Indicadores de estado y número de solicitudes realizadas.
+- Identidad propia con icono de NEXORA AI.
+- Fondo negro, tipografía blanca y escala de grises.
+- Animaciones discretas que comunican escucha y respuesta.
+- Navegación adaptable para escritorio y móvil.
+- Controles de alto contraste sin colores decorativos intensos.
 
 ## Arquitectura
 
 ```text
-                        ┌──────────────────────────┐
-                        │      OpenAI Platform     │
-                        │  Responses / Transcribe  │
-                        └────────────▲─────────────┘
-                                     │ HTTPS
-┌──────────┐      navegador      ┌───┴──────────────┐
-│ Usuario  ├────────────────────►│   NEXORA AI      │
-└──────────┘                     │   Streamlit      │
-                                 └───┬──────────────┘
-                                     │ webhook JSON
-                        ┌────────────▼─────────────┐
-                        │           n8n            │
-                        │ validación y enrutamiento│
-                        └─────┬────────┬───────────┘
-                              │        │
-                       Sheets/email/WhatsApp
+┌──────────┐      ┌──────────────────────────────┐
+│ Usuario  ├─────►│ Streamlit local o web Vercel │
+└──────────┘      └───────────┬──────────────────┘
+                              │
+                   ┌──────────┴──────────┐
+                   │                     │
+        ┌──────────▼──────────┐  ┌──────▼─────────┐
+        │ OpenAI Platform     │  │      n8n       │
+        │ Responses           │  │ validación     │
+        │ Transcriptions      │  │ enrutamiento   │
+        │ Realtime + WebRTC   │  └──────┬─────────┘
+        └─────────────────────┘         │
+                               Sheets email WhatsApp
 ```
 
 Streamlit actúa como capa de servidor y utiliza la clave únicamente en memoria o desde una variable de entorno. n8n recibe solo el contenido necesario para la automatización; nunca recibe la clave de OpenAI.
@@ -79,7 +88,10 @@ Streamlit actúa como capa de servidor y utiliza la clave únicamente en memoria
 | Tecnología | Uso en el proyecto |
 |---|---|
 | Python 3 | Lógica principal de la aplicación |
-| Streamlit | Interfaz web y manejo de sesión |
+| Streamlit | Interfaz local y manejo de sesión |
+| HTML, CSS y JavaScript | Interfaz minimalista desplegada |
+| Vercel | Hosting HTTPS y funciones serverless |
+| WebRTC y Realtime API | Conversación de voz a voz |
 | OpenAI Python SDK | Chat y transcripción |
 | Responses API | Generación de respuestas del asistente |
 | Transcriptions API | Conversión de audio en texto |
@@ -93,6 +105,10 @@ Streamlit actúa como capa de servidor y utiliza la clave únicamente en memoria
 ```text
 NexoraAI/
 ├── app.py                              # Aplicación Streamlit
+├── public/                             # Interfaz web minimalista para Vercel
+├── api/                                # Funciones serverless para OpenAI
+├── package.json                        # Validación de JavaScript
+├── vercel.json                         # Configuración de despliegue
 ├── assets/nexora-icon.png              # Icono de la aplicación
 ├── automations/nexora-n8n.json         # Workflow importable de n8n
 ├── docs/
@@ -155,6 +171,22 @@ N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 ```
 
 El archivo `.env` está excluido de Git. Nunca se debe publicar una clave real en el repositorio, una captura o el informe.
+
+En la versión Vercel se puede configurar `OPENAI_API_KEY` como variable cifrada del proyecto. Para una demostración rápida también es posible pegar la clave temporalmente en **Configuración**; se conserva solamente en la memoria de la pestaña y se envía al endpoint propio mediante HTTPS.
+
+## Despliegue en Vercel
+
+El directorio raíz ya incluye una aplicación estática y funciones serverless compatibles con Vercel.
+
+1. Importar el repositorio `itslevanx/NexoraAI` desde el panel de Vercel.
+2. Mantener **Framework Preset** en `Other` y el directorio raíz sin cambios.
+3. Añadir `OPENAI_API_KEY` y, opcionalmente, `N8N_WEBHOOK_URL` en **Settings → Environment Variables** para producción, vista previa y desarrollo.
+4. Ejecutar el despliegue.
+5. Autorizar el micrófono en el navegador y probar **Voz**.
+
+La interfaz desplegada incluye voz a voz, chat contextual, grabación, carga y edición de transcripciones, resumen, descarga TXT, reutilización en chat y automatizaciones n8n. Por el límite del cuerpo de las funciones serverless, la transcripción web acepta archivos menores de 4 MB; la versión Streamlit conserva su límite de 25 MB.
+
+La arquitectura de voz sigue la recomendación oficial: el navegador usa WebRTC y un endpoint confiable crea la sesión con la clave del servidor. Consulta la [guía WebRTC de OpenAI](https://developers.openai.com/api/docs/guides/voice-webrtc).
 
 ## Configuración de n8n
 
@@ -221,6 +253,7 @@ Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workf
 ## Seguridad y privacidad
 
 - La clave ingresada permanece en la sesión de Streamlit.
+- En la versión web, una clave temporal vive solo en la memoria de la pestaña y viaja a los endpoints propios mediante HTTPS.
 - `.env` y `.streamlit/secrets.toml` están ignorados por Git.
 - El webhook recibe datos de la tarea, no la clave de OpenAI.
 - La app aplica timeout y reintentos limitados.
@@ -243,7 +276,7 @@ Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workf
 - El historial vive únicamente durante la sesión.
 - El workflow opera en modo demostración hasta configurar credenciales.
 - No existe autenticación de usuarios.
-- Los archivos están limitados a 25 MB.
+- Los archivos están limitados a 25 MB en Streamlit y a menos de 4 MB en Vercel.
 - El modelo debe estar disponible en la cuenta del usuario.
 - El consumo de API puede generar costos.
 
@@ -256,7 +289,7 @@ Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workf
 - Panel de costos y consumo.
 - Procesamiento de documentos PDF.
 - Aprobación de automatizaciones reales.
-- Despliegue con HTTPS y gestión de secretos.
+- Monitoreo del despliegue y rotación programada de secretos.
 
 ## Documentación académica
 

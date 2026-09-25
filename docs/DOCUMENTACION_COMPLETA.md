@@ -16,11 +16,11 @@
 
 ## Resumen ejecutivo
 
-NEXORA AI es una aplicación web de apoyo académico y productividad construida con Python y Streamlit. Integra un chatbot basado en la Responses API de OpenAI, un módulo de transcripción mediante el modelo gpt-transcribe y un sistema de automatizaciones conectado a n8n por un webhook. El propósito es demostrar que una misma interfaz puede recibir consultas, transformar voz en texto, resumir información y entregar datos estructurados a flujos externos sin incrustar credenciales sensibles en el código.
+NEXORA AI es una aplicación web de apoyo académico y productividad con dos interfaces complementarias: una versión local en Python y Streamlit y una versión desplegable en Vercel. Integra un chatbot basado en la Responses API de OpenAI, conversación de voz a voz mediante Realtime API y WebRTC, transcripción de audio y automatizaciones conectadas a n8n. El propósito es demostrar que una misma experiencia puede conversar por texto o voz, transformar grabaciones en apuntes y entregar datos estructurados a flujos externos sin incrustar credenciales sensibles en el código.
 
-La persona usuaria puede pegar temporalmente una OpenAI API Key, seleccionar un modelo disponible en su cuenta, conversar con el asistente, grabar o cargar un audio, generar un resumen y activar una automatización. El workflow incluido opera en modo demostración seguro: valida la solicitud, identifica la acción y devuelve una confirmación. La conexión real con Google Sheets, correo o WhatsApp requiere que el equipo configure sus credenciales dentro de n8n.
+La persona usuaria puede pegar temporalmente una OpenAI API Key, seleccionar un modelo disponible, conversar por texto o voz, grabar o cargar un audio, generar un resumen, descargarlo y activar una automatización. El workflow incluido opera en modo demostración seguro: valida la solicitud, identifica la acción y devuelve una confirmación. La conexión real con Google Sheets, correo o WhatsApp requiere que el equipo configure sus credenciales dentro de n8n.
 
-El prototipo cubre los objetivos de creación de chatbots, consumo de modelos de OpenAI, transcripción con IA, diseño de interfaces en Streamlit y automatización de procesos. También deja una base extensible para incorporar autenticación, almacenamiento persistente, analítica y despliegue.
+El prototipo cubre los objetivos de creación de chatbots, uso de modelos de OpenAI, transcripción con IA, voz en tiempo real, diseño de interfaces y automatización de procesos. La versión web ya queda preparada para despliegue HTTPS en Vercel y mantiene las mismas funciones centrales que la versión Streamlit.
 
 ## Introducción
 
@@ -56,7 +56,7 @@ El proyecto aplica consumo de API, programación en Python, diseño de interfaz,
 
 ### Justificación tecnológica
 
-Streamlit permite construir una interfaz web sin separar frontend y backend. El SDK oficial de OpenAI simplifica las solicitudes de generación de texto y transcripción. n8n aporta una representación visual de los procesos y separa las credenciales externas de la aplicación.
+Streamlit permite construir una interfaz local sin separar frontend y backend. La versión Vercel incorpora HTML, CSS, JavaScript y funciones serverless para habilitar WebRTC en un origen HTTPS. Las API de OpenAI procesan texto, transcripción y audio en tiempo real. n8n aporta una representación visual de los procesos y separa las credenciales externas de la aplicación.
 
 ### Justificación práctica
 
@@ -66,7 +66,7 @@ La solución reduce pasos manuales en escenarios como tomar apuntes de voz, resu
 
 ### Objetivo general
 
-Desarrollar una aplicación web de apoyo académico que integre conversación con inteligencia artificial, transcripción de audios y automatización de tareas mediante las API de OpenAI, Streamlit y n8n.
+Desarrollar una aplicación web de apoyo académico que integre conversación por texto y voz, transcripción de audios y automatización de tareas mediante las API de OpenAI, Streamlit, Vercel y n8n.
 
 ### Objetivos específicos
 
@@ -79,12 +79,13 @@ Desarrollar una aplicación web de apoyo académico que integre conversación co
 7. Enrutar acciones de Sheets, correo y WhatsApp en un workflow importable.
 8. Proteger la clave evitando que sea almacenada en el repositorio.
 9. Documentar instalación, funcionamiento, pruebas y mejoras.
+10. Desplegar una interfaz minimalista en Vercel con voz en tiempo real mediante WebRTC.
 
 ## Alcance
 
 ### Funciones incluidas
 
-- Interfaz web ejecutada localmente.
+- Interfaz Streamlit ejecutada localmente e interfaz web desplegable en Vercel.
 - Ingreso temporal de la OpenAI API Key.
 - Selección manual del modelo de chat.
 - Conversación con memoria limitada a la sesión.
@@ -96,6 +97,8 @@ Desarrollar una aplicación web de apoyo académico que integre conversación co
 - Enrutamiento de tres tipos de automatización.
 - Scripts para Windows, macOS y Linux.
 - Pruebas de humo y documentación académica.
+- Conversación de voz a voz, silenciamiento, interrupción y transcripción en vivo.
+- Diseño monocromático adaptable con fondo negro y controles accesibles.
 
 ### Funciones fuera del alcance
 
@@ -137,6 +140,11 @@ Desarrollar una aplicación web de apoyo académico que integre conversación co
 | RF 15 | Llamar al webhook | Se ejecuta una solicitud POST |
 | RF 16 | Enrutar en n8n | Se distinguen sheet, email y whatsapp |
 | RF 17 | Confirmar resultado | La respuesta JSON aparece en Streamlit |
+| RF 18 | Iniciar voz en tiempo real | El navegador crea una sesión WebRTC |
+| RF 19 | Reproducir la respuesta | El audio del modelo se escucha automáticamente |
+| RF 20 | Controlar la llamada | Se puede silenciar y finalizar la sesión |
+| RF 21 | Mostrar conversación | Los eventos disponibles forman una transcripción en vivo |
+| RF 22 | Mantener paridad web | Chat, grabación, transcripción, resumen, descarga y n8n están disponibles en Vercel |
 
 ## Requisitos no funcionales
 
@@ -152,6 +160,8 @@ Desarrollar una aplicación web de apoyo académico que integre conversación co
 | RNF 08 | Fiabilidad | Las solicitudes deben manejar timeout y errores |
 | RNF 09 | Trazabilidad | Requisitos, pruebas y componentes deben documentarse |
 | RNF 10 | Accesibilidad básica | Los controles deben tener etiquetas comprensibles |
+| RNF 11 | Diseño | La interfaz utiliza negro, blanco y grises sin saturación visual |
+| RNF 12 | Despliegue | La versión pública funciona bajo HTTPS en Vercel |
 
 ## Casos de uso
 
@@ -166,6 +176,18 @@ Desarrollar una aplicación web de apoyo académico que integre conversación co
 5. La respuesta se conserva para la siguiente interacción.
 
 Si falta la clave, la app solicita configurarla. Si OpenAI devuelve un error, se muestra sin cerrar la sesión.
+
+### Conversar por voz con NEXORA
+
+**Actor:** usuario. **Precondición:** navegador con micrófono, conexión HTTPS y API key válida.
+
+1. El usuario abre Voz y selecciona Iniciar conversación.
+2. El navegador solicita permiso para utilizar el micrófono.
+3. Una función serverless crea la sesión Realtime sin exponer la clave en el frontend.
+4. El navegador establece WebRTC directamente con OpenAI.
+5. El usuario habla y recibe audio generado con baja latencia.
+6. Puede interrumpir al modelo, silenciar el micrófono o finalizar la sesión.
+7. Los eventos disponibles actualizan la transcripción en vivo.
 
 ### Transcribir una nota de voz
 
@@ -189,7 +211,7 @@ Si falta la clave, la app solicita configurarla. Si OpenAI devuelve un error, se
 1. El usuario selecciona Sheets, email o WhatsApp.
 2. Completa destinatario, asunto y contenido.
 3. Revisa el payload JSON y confirma.
-4. Streamlit envía una solicitud POST.
+4. Streamlit o la función serverless envía una solicitud POST.
 5. n8n valida y enruta la acción.
 6. n8n devuelve una confirmación.
 
@@ -198,18 +220,23 @@ Si falta la clave, la app solicita configurarla. Si OpenAI devuelve un error, se
 ```text
 Usuario
   │ navegador
-  ▼
-NEXORA AI con Streamlit
-  ├── Interfaz y estado de sesión
-  ├── Cliente de OpenAI
-  ├── Validación de audio
-  └── Cliente HTTP para n8n
-       ├── OpenAI Responses API
-       ├── OpenAI Transcriptions API
-       └── Webhook n8n
-              ├── Validación
-              ├── Enrutamiento
-              └── Sheets Email WhatsApp
+  ├── Streamlit local
+  │    ├── Chat y transcripción
+  │    ├── Resumen y descarga
+  │    └── Automatización n8n
+  │
+  └── Interfaz Vercel
+       ├── HTML CSS JavaScript
+       ├── Funciones serverless
+       │    ├── Responses API
+       │    ├── Transcriptions API
+       │    └── Proxy controlado hacia n8n
+       └── WebRTC directo con OpenAI Realtime API
+
+n8n
+  ├── Validación
+  ├── Enrutamiento
+  └── Sheets Email WhatsApp
 ```
 
 ### Componentes
@@ -217,6 +244,9 @@ NEXORA AI con Streamlit
 | Componente | Responsabilidad |
 |---|---|
 | Interfaz Streamlit | Renderizar vistas, recibir datos y mantener la sesión |
+| Interfaz Vercel | Ofrecer la experiencia pública minimalista y responsiva |
+| Endpoint Realtime | Crear la sesión WebRTC con la clave en el servidor |
+| Funciones serverless | Proteger credenciales y llamar a OpenAI o n8n |
 | Módulo de chat | Preparar contexto y consumir Responses API |
 | Módulo de audio | Validar y consumir Transcriptions API |
 | Módulo de resumen | Estructurar el contenido transcrito |
@@ -226,7 +256,7 @@ NEXORA AI con Streamlit
 
 ### Decisiones de diseño
 
-Se eligió una arquitectura monolítica ligera para una demostración rápida y comprensible. Streamlit combina servidor y presentación, reduce archivos y elimina la necesidad de desarrollar una API propia y un frontend separado. n8n se mantiene desacoplado mediante HTTP, por lo que el workflow puede cambiar sin modificar los módulos de IA.
+Se mantiene una arquitectura monolítica ligera en Streamlit para ejecución local y se añade una arquitectura serverless para publicación. Vercel sirve la interfaz estática y ejecuta endpoints que conservan la clave estándar fuera del JavaScript. En voz, el endpoint crea la sesión y el navegador transporta audio por WebRTC, lo que reduce latencia. n8n permanece desacoplado mediante HTTP, por lo que el workflow puede cambiar sin modificar los módulos de IA.
 
 El historial se limita a los últimos mensajes para reducir el contexto. La clave puede escribirse temporalmente o cargarse desde el entorno. La primera opción facilita la exposición y la segunda es adecuada para un despliegue controlado.
 
@@ -236,6 +266,10 @@ El historial se limita a los últimos mensajes para reducir el contexto. La clav
 |---|---|
 | Python | Lógica, validación y comunicación con APIs |
 | Streamlit | Interfaz, chat, audio y estado |
+| HTML CSS JavaScript | Interfaz web minimalista y controles del navegador |
+| Vercel | Hosting HTTPS y funciones serverless |
+| WebRTC | Transporte bidireccional de audio en tiempo real |
+| Realtime API | Conversación de voz a voz |
 | OpenAI SDK | Cliente de Responses y Transcriptions |
 | n8n | Workflow y conectores externos |
 | Requests | Solicitud POST al webhook |
@@ -245,6 +279,10 @@ El historial se limita a los últimos mensajes para reducir el contexto. La clav
 | Ruta | Contenido |
 |---|---|
 | app.py | Página, tema, estado, API, vistas y navegación |
+| public | Interfaz Vercel de voz, chat, transcripción y automatización |
+| api | Endpoints serverless para Realtime, chat, audio y n8n |
+| vercel.json | Rutas, funciones y cabeceras del despliegue |
+| package.json | Metadatos y validación de JavaScript |
 | assets/nexora-icon.png | Identidad visual |
 | automations/nexora-n8n.json | Workflow importable |
 | .streamlit/config.toml | Tema y límite de carga |
@@ -262,7 +300,11 @@ Streamlit configura el título, icono y diseño ancho. `inject_theme` incorpora 
 
 ### Credenciales
 
-`get_client` prioriza la clave escrita en la interfaz y utiliza `OPENAI_API_KEY` como alternativa. Si no hay clave, devuelve un valor nulo y la vista muestra una advertencia. La clave nunca se agrega al historial ni al payload de n8n.
+`get_client` prioriza la clave escrita en Streamlit y utiliza `OPENAI_API_KEY` como alternativa. En Vercel, los endpoints priorizan la variable cifrada y aceptan una clave temporal enviada por HTTPS para la demostración. La clave se conserva solamente en memoria, nunca se agrega al historial ni al payload de n8n y no se retorna al navegador.
+
+### Voz en tiempo real
+
+El navegador obtiene el micrófono con `getUserMedia`, crea un `RTCPeerConnection` y genera una oferta SDP. El endpoint `/api/realtime-session` envía esa oferta y la configuración de sesión a OpenAI mediante `/v1/realtime/calls`. La respuesta SDP completa la conexión. El audio se transporta por WebRTC y un canal de datos recibe eventos de turnos y transcripción. La sesión utiliza `gpt-realtime-2.1`, la voz `marin`, detección de turnos del servidor e instrucciones en español.
 
 ### Chat
 
@@ -392,6 +434,16 @@ python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
+### Despliegue en Vercel
+
+1. Importar `itslevanx/NexoraAI` en Vercel.
+2. Seleccionar Other como preset y mantener el directorio raíz.
+3. Configurar `OPENAI_API_KEY` y, opcionalmente, `N8N_WEBHOOK_URL` en Environment Variables.
+4. Desplegar y abrir la URL HTTPS.
+5. Autorizar el micrófono y comprobar Voz, Chat, Transcribir y Automatizar.
+
+La versión serverless limita los audios codificados a menos de 4 MB. Streamlit mantiene el límite local de 25 MB.
+
 | Variable | Obligatoria | Propósito |
 |---|---|---|
 | OPENAI_API_KEY | No si se ingresa en la interfaz | Autenticar OpenAI |
@@ -415,6 +467,14 @@ La clave no debe proyectarse. Se recomienda pegarla antes de compartir pantalla 
 2. Escribir la consulta y esperar la respuesta.
 3. Continuar con preguntas relacionadas.
 4. Usar Nueva charla para limpiar el contexto.
+
+### Conversar por voz
+
+1. Abrir la URL de Vercel y seleccionar Voz.
+2. Conectar la API key desde Configuración o utilizar la variable del servidor.
+3. Pulsar Iniciar conversación y permitir el micrófono.
+4. Hablar con naturalidad; el modelo responde por audio.
+5. Utilizar Silenciar o Finalizar cuando corresponda.
 
 ### Transcribir audio
 
@@ -451,10 +511,15 @@ Las pruebas automáticas no consumen OpenAI para evitar costos y dependencia de 
 | CP 12 | Webhook demo | Confirmación JSON | Pendiente de n8n activo |
 | CP 13 | Acción inválida | Error de validación | Preparado |
 | CP 14 | Clave fuera de Git | No existe secreto | Aprobado |
+| CP 15 | Sintaxis JavaScript | Todos los archivos pasan `node --check` | Aprobado |
+| CP 16 | Interfaz Safari | Diseño monocromático y navegación visibles | Aprobado |
+| CP 17 | Voz WebRTC | Audio bidireccional | Pendiente de clave del equipo |
+| CP 18 | Paridad Vercel | Chat, grabación, resumen, descarga y n8n disponibles | Aprobado |
 
 ```bash
 python -m pytest -q
 python -m py_compile app.py
+npm run check
 git status --short
 ```
 
@@ -462,6 +527,7 @@ git status --short
 
 - La aplicación inicia sin errores y ninguna clave real aparece en Git.
 - Las cinco áreas son accesibles.
+- La versión Vercel conserva las funciones centrales y añade voz en tiempo real.
 - Chat y transcripción solicitan una clave cuando falta.
 - n8n acepta y enruta las tres acciones.
 - Los errores de red se muestran de forma controlada.
@@ -481,11 +547,11 @@ git status --short
 
 ## Estrategia de demostración
 
-**Minuto 1:** problema y arquitectura.  
-**Minuto 2:** consulta académica.  
-**Minuto 3:** grabación y transcripción.  
-**Minuto 4:** resumen y webhook.  
-**Minuto 5:** ejecución en n8n, seguridad y mejoras.
+- **Minuto 1:** problema, nombre e interfaz minimalista.
+- **Minuto 2:** conversación de voz a voz.
+- **Minuto 3:** consulta escrita, grabación y transcripción.
+- **Minuto 4:** resumen, descarga y reutilización en chat.
+**Minuto 5:** ejecución en n8n, arquitectura y seguridad.
 
 Consulta sugerida: “Explica la computación cuántica con una analogía sencilla, resume la idea en cinco puntos y crea tres preguntas de repaso”.
 
@@ -507,6 +573,7 @@ El resultado clave es que la información pasa de voz a texto, de texto a resume
 ### Evidencias necesarias
 
 - Pantalla principal, chat, transcripción y resumen.
+- Conversación de voz a voz y URL pública de Vercel.
 - Workflow completo y ejecución exitosa en n8n.
 - Resultado de pytest.
 - Historial de commits atómicos.
@@ -514,13 +581,13 @@ El resultado clave es que la información pasa de voz a texto, de texto a resume
 
 ## Limitaciones y mejoras futuras
 
-La aplicación no persiste conversaciones ni archivos. El modo demostración de n8n no crea efectos externos. La precisión depende del modelo, el audio y las instrucciones. El proyecto no verifica hechos de manera independiente y el consumo puede generar costos.
+La aplicación no persiste conversaciones ni archivos. El modo demostración de n8n no crea efectos externos. La precisión depende del modelo, el audio y las instrucciones. El proyecto no verifica hechos de manera independiente y el consumo puede generar costos. La conversación de voz necesita HTTPS, permiso de micrófono y acceso al modelo Realtime. La versión Vercel limita cada audio de transcripción a menos de 4 MB.
 
 Mejoras propuestas: usuarios y roles; persistencia con PostgreSQL o Supabase; búsqueda semántica; respuestas en streaming; métricas de tokens y costos; firma HMAC para el webhook; aprobación de acciones; plantillas por curso; despliegue HTTPS; y pruebas end to end.
 
 ## Conclusiones
 
-NEXORA AI demuestra que se pueden integrar modelos de lenguaje, transcripción y automatización en una aplicación compacta. Cada componente es visible y explicable: Streamlit gestiona la experiencia, OpenAI procesa texto y audio, y n8n representa las acciones externas.
+NEXORA AI demuestra que se pueden integrar modelos de lenguaje, conversación de voz, transcripción y automatización en una aplicación compacta. Streamlit mantiene una versión local fácil de explicar; Vercel publica la experiencia minimalista bajo HTTPS; OpenAI procesa texto y audio; y n8n representa las acciones externas.
 
 El proyecto evidencia que una integración responsable requiere validar entradas, manejar errores, separar credenciales, limitar el alcance y documentar los pasos. El modo demostración permite enseñar el flujo sin enviar comunicaciones por accidente.
 
@@ -549,6 +616,9 @@ La solución queda preparada para evolucionar. La persistencia, autenticación, 
 | Payload | Datos enviados en una solicitud HTTP |
 | Prompt | Instrucción entregada al modelo |
 | Streamlit | Framework para aplicaciones de datos e IA |
+| Realtime API | API para interacción multimodal de baja latencia |
+| Vercel | Plataforma de hosting y funciones serverless |
+| WebRTC | Protocolo de comunicación de audio en tiempo real |
 | Transcripción | Conversión de voz en texto |
 | Webhook | URL que recibe eventos mediante HTTP |
 | Workflow | Secuencia automatizada de tareas |
@@ -557,7 +627,9 @@ La solución queda preparada para evolucionar. La persistencia, autenticación, 
 
 OpenAI. Developer quickstart. https://developers.openai.com/api/docs/quickstart  
 OpenAI. File transcription. https://developers.openai.com/api/docs/guides/speech-to-text  
+OpenAI. Voice agents with WebRTC. https://developers.openai.com/api/docs/guides/voice-webrtc
 Streamlit. Documentation. https://docs.streamlit.io/  
+Vercel. Documentation. https://vercel.com/docs
 n8n. Documentation. https://docs.n8n.io/  
 Docker. Docker Compose documentation. https://docs.docker.com/compose/  
 Python Software Foundation. Python documentation. https://docs.python.org/3/
@@ -582,6 +654,9 @@ N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 | n8n no abre | Docker o puerto | Iniciar Docker y revisar 5678 |
 | Respuesta lenta | Red o audio largo | Esperar o reducir archivo |
 | Mensaje no enviado | Nodo DEMO | Configurar credenciales y nodo real |
+| Voz no inicia | Micrófono bloqueado o modelo sin acceso | Autorizar Safari y verificar la cuenta |
+| Vercel muestra 401 | Variable y clave temporal ausentes | Configurar `OPENAI_API_KEY` o pegarla en Configuración |
+| Audio web rechazado | Archivo mayor de 4 MB | Reducir el archivo o usar Streamlit local |
 
 ## Anexo C Lista de verificación
 
@@ -603,5 +678,7 @@ N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 | Transcribir audio | RF 06 a RF 10 | Vista Transcriptor y función transcribe |
 | Generar apuntes | RF 11 y RF 12 | Botones de resumen y chat |
 | Automatizar | RF 13 a RF 17 | Workflow y vista Automatizaciones |
+| Conversar por voz | RF 18 a RF 21 | Vista Voz, WebRTC y Realtime API |
+| Mantener paridad web | RF 22 | Vistas y controles equivalentes en Vercel |
 | Proteger credenciales | RNF 02 y RNF 03 | Gitignore y separación de servicios |
 | Documentar y probar | RNF 09 | README, informe, pytest y revisión visual |
