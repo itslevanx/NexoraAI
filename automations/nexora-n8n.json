@@ -1,136 +1,65 @@
 {
-  "name": "NEXORA AI - Centro de automatizaciones",
+  "id": "nexoraLocalV2",
+  "name": "NEXORA AI - Automatizaciones locales inteligentes",
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "nexora",
-        "responseMode": "responseNode",
-        "options": {}
-      },
+      "parameters": { "httpMethod": "POST", "path": "nexora", "responseMode": "responseNode", "options": {} },
       "id": "webhook-nexora",
       "name": "Entrada NEXORA",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [-700, 20],
-      "webhookId": "nexora"
+      "position": [-720, 0],
+      "webhookId": "nexora-local"
     },
     {
       "parameters": {
-        "jsCode": "const p = $json.body ?? $json;\nconst allowed = ['sheet', 'email', 'whatsapp'];\nif (!allowed.includes(p.action)) throw new Error('Acción no válida');\nif (!String(p.content ?? '').trim()) throw new Error('El contenido está vacío');\nreturn [{ json: { action: p.action, recipient: String(p.recipient ?? ''), subject: String(p.subject ?? 'Mensaje NEXORA'), content: String(p.content), source: 'NEXORA AI', receivedAt: new Date().toISOString() } }];"
+        "jsCode": "const p = $json.body ?? $json;\nconst allowed = ['sheet', 'email', 'whatsapp', 'task', 'study', 'calendar'];\nif (!allowed.includes(p.action)) throw new Error('Acción no válida');\nconst content = String(p.content ?? '').trim();\nif (!content) throw new Error('El contenido está vacío');\nif (content.length > 10000) throw new Error('El contenido supera 10 000 caracteres');\nconst urgentWords = /urgente|hoy|inmediato|prioridad alta|asap/i;\nconst mediumWords = /mañana|esta semana|pendiente|importante/i;\nconst priority = urgentWords.test(content) ? 'alta' : mediumWords.test(content) ? 'media' : 'normal';\nconst labels = { sheet: 'Registro local', email: 'Borrador de email', whatsapp: 'Borrador de WhatsApp', task: 'Plan de tareas', study: 'Sesión de estudio', calendar: 'Evento de calendario' };\nreturn [{ json: { requestId: `nx-${Date.now().toString(36)}`, action: p.action, actionLabel: labels[p.action], recipient: String(p.recipient ?? '').trim(), subject: String(p.subject ?? 'Solicitud NEXORA').trim(), content, priority, source: 'NEXORA AI', receivedAt: new Date().toISOString(), approvalRequired: ['email', 'whatsapp', 'calendar'].includes(p.action) } }];"
       },
-      "id": "validate-payload",
-      "name": "Validar y normalizar",
+      "id": "validate-enrich",
+      "name": "Validar, priorizar y enriquecer",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-470, 20]
+      "position": [-470, 0]
     },
     {
       "parameters": {
-        "rules": {
-          "values": [
-            {
-              "conditions": {
-                "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
-                "conditions": [{"leftValue": "={{ $json.action }}", "rightValue": "sheet", "operator": {"type": "string", "operation": "equals"}}],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "Google Sheets"
-            },
-            {
-              "conditions": {
-                "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
-                "conditions": [{"leftValue": "={{ $json.action }}", "rightValue": "email", "operator": {"type": "string", "operation": "equals"}}],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "Email"
-            },
-            {
-              "conditions": {
-                "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2},
-                "conditions": [{"leftValue": "={{ $json.action }}", "rightValue": "whatsapp", "operator": {"type": "string", "operation": "equals"}}],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "WhatsApp"
-            }
-          ]
-        },
-        "options": {}
+        "jsCode": "const fs = require('fs');\nconst file = '/files/nexora-events.jsonl';\nfor (const item of items) fs.appendFileSync(file, `${JSON.stringify(item.json)}\\n`, 'utf8');\nreturn items.map(item => ({ json: { ...item.json, storedLocally: true, localFile: file } }));"
       },
-      "id": "route-action",
-      "name": "Enrutar acción",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3.2,
-      "position": [-220, 20]
+      "id": "local-audit",
+      "name": "Guardar bitácora local",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-210, 0]
     },
     {
       "parameters": {
-        "assignments": {"assignments": [{"id": "status-sheet", "name": "result", "value": "DEMO: registro listo para Google Sheets", "type": "string"}]},
-        "includeOtherFields": true,
-        "options": {}
+        "jsCode": "const p = $json;\nconst lines = p.content.split(/\\n|[.;](?:\\s+|$)/).map(x => x.trim()).filter(Boolean).slice(0, 8);\nlet automation;\nswitch (p.action) {\n  case 'sheet': automation = { type: 'local_record', columns: { id: p.requestId, fecha: p.receivedAt, asunto: p.subject, contenido: p.content, prioridad: p.priority } }; break;\n  case 'email': automation = { type: 'email_draft', to: p.recipient || 'POR DEFINIR', subject: p.subject, body: p.content, status: 'esperando aprobación humana' }; break;\n  case 'whatsapp': automation = { type: 'whatsapp_draft', to: p.recipient || 'POR DEFINIR', message: p.content, status: 'esperando aprobación humana' }; break;\n  case 'task': automation = { type: 'task_plan', priority: p.priority, checklist: lines.map((text, index) => ({ order: index + 1, text, done: false })) }; break;\n  case 'study': automation = { type: 'study_session', blocks: [{ minutes: 10, activity: 'Lectura y conceptos', material: p.content }, { minutes: 20, activity: 'Práctica activa', material: 'Explicar sin mirar y crear ejemplos' }, { minutes: 10, activity: 'Autoevaluación', material: 'Responder cinco preguntas y revisar errores' }], totalMinutes: 40 }; break;\n  case 'calendar': automation = { type: 'calendar_draft', title: p.subject, description: p.content, attendee: p.recipient || null, status: 'esperando fecha y aprobación' }; break;\n}\nreturn [{ json: { ok: true, app: 'NEXORA AI', requestId: p.requestId, action: p.action, label: p.actionLabel, priority: p.priority, approvalRequired: p.approvalRequired, storedLocally: p.storedLocally, message: `${p.actionLabel} preparado correctamente en n8n local`, automation, nextSteps: p.approvalRequired ? ['Revisar destinatario y contenido', 'Aprobar manualmente antes de conectar un servicio real'] : ['Revisar el resultado', 'Continuar el flujo desde NEXORA'] } }];"
       },
-      "id": "demo-sheet",
-      "name": "DEMO - Google Sheets",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [40, -160]
+      "id": "build-automation",
+      "name": "Construir resultado útil",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [50, 0]
     },
     {
-      "parameters": {
-        "assignments": {"assignments": [{"id": "status-email", "name": "result", "value": "DEMO: correo preparado correctamente", "type": "string"}]},
-        "includeOtherFields": true,
-        "options": {}
-      },
-      "id": "demo-email",
-      "name": "DEMO - Enviar email",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [40, 20]
-    },
-    {
-      "parameters": {
-        "assignments": {"assignments": [{"id": "status-whatsapp", "name": "result", "value": "DEMO: mensaje preparado para WhatsApp", "type": "string"}]},
-        "includeOtherFields": true,
-        "options": {}
-      },
-      "id": "demo-whatsapp",
-      "name": "DEMO - WhatsApp",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [40, 200]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ { ok: true, app: 'NEXORA AI', action: $json.action, message: $json.result, receivedAt: $json.receivedAt } }}",
-        "options": {}
-      },
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} },
       "id": "respond",
-      "name": "Confirmar a la app",
+      "name": "Responder a NEXORA",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
-      "position": [320, 20]
+      "position": [310, 0]
     }
   ],
   "pinData": {},
   "connections": {
-    "Entrada NEXORA": {"main": [[{"node": "Validar y normalizar", "type": "main", "index": 0}]]},
-    "Validar y normalizar": {"main": [[{"node": "Enrutar acción", "type": "main", "index": 0}]]},
-    "Enrutar acción": {"main": [
-      [{"node": "DEMO - Google Sheets", "type": "main", "index": 0}],
-      [{"node": "DEMO - Enviar email", "type": "main", "index": 0}],
-      [{"node": "DEMO - WhatsApp", "type": "main", "index": 0}]
-    ]},
-    "DEMO - Google Sheets": {"main": [[{"node": "Confirmar a la app", "type": "main", "index": 0}]]},
-    "DEMO - Enviar email": {"main": [[{"node": "Confirmar a la app", "type": "main", "index": 0}]]},
-    "DEMO - WhatsApp": {"main": [[{"node": "Confirmar a la app", "type": "main", "index": 0}]]}
+    "Entrada NEXORA": { "main": [[{ "node": "Validar, priorizar y enriquecer", "type": "main", "index": 0 }]] },
+    "Validar, priorizar y enriquecer": { "main": [[{ "node": "Guardar bitácora local", "type": "main", "index": 0 }]] },
+    "Guardar bitácora local": { "main": [[{ "node": "Construir resultado útil", "type": "main", "index": 0 }]] },
+    "Construir resultado útil": { "main": [[{ "node": "Responder a NEXORA", "type": "main", "index": 0 }]] }
   },
   "active": false,
-  "settings": {"executionOrder": "v1"},
-  "versionId": "a1f33791-5b9f-4669-b71a-9d16fe903a17",
-  "meta": {"templateCredsSetupCompleted": false},
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "timezone": "America/Lima" },
+  "versionId": "7e1f267f-f85b-442f-8ab2-6d61a3c11ee2",
+  "meta": { "templateCredsSetupCompleted": true, "instanceId": "nexora-local" },
   "tags": []
 }

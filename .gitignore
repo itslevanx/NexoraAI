@@ -9,3 +9,4 @@ outputs/
 work/
 node_modules/
 .vercel/
+n8n-local/*.jsonl

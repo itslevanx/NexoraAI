@@ -137,7 +137,7 @@ def sidebar() -> tuple[str, str, str, str]:
         st.caption("Configuración")
         api_key = st.text_input("OpenAI API Key", type="password", placeholder="sk-proj-…", help="Solo vive en esta sesión; no se guarda.")
         model = st.text_input("Modelo de chat", value=DEFAULT_MODEL, help="Puedes cambiarlo por un modelo disponible en tu cuenta.")
-        webhook = st.text_input("Webhook n8n (opcional)", value=os.getenv("N8N_WEBHOOK_URL", ""), placeholder="http://localhost:5678/webhook/nexora")
+        webhook = st.text_input("Webhook n8n local", value=os.getenv("N8N_WEBHOOK_URL", "http://localhost:5678/webhook/nexora"), placeholder="http://localhost:5678/webhook/nexora")
         connected = bool(api_key.strip() or os.getenv("OPENAI_API_KEY"))
         if connected:
             st.success("API configurada")
@@ -257,8 +257,15 @@ def page_transcriber(api_key: str, model: str) -> None:
 def page_automations(webhook: str) -> None:
     st.title("Automatizaciones con n8n")
     st.caption("Envía una instrucción estructurada al flujo incluido en `automations/nexora-n8n.json`.")
-    action = st.selectbox("Acción", ["Registrar en Google Sheets", "Enviar email", "Enviar WhatsApp"])
-    action_map = {"Registrar en Google Sheets": "sheet", "Enviar email": "email", "Enviar WhatsApp": "whatsapp"}
+    action_map = {
+        "Registrar en la bitácora local": "sheet",
+        "Preparar email": "email",
+        "Preparar WhatsApp": "whatsapp",
+        "Crear plan de tareas": "task",
+        "Preparar sesión de estudio": "study",
+        "Preparar evento de calendario": "calendar",
+    }
+    action = st.selectbox("Acción", list(action_map))
     col1, col2 = st.columns(2)
     with col1:
         recipient = st.text_input("Destinatario / referencia", placeholder="correo@ejemplo.com o +519…")
@@ -289,24 +296,26 @@ def page_automations(webhook: str) -> None:
             except requests.RequestException as exc:
                 st.error(f"No se pudo contactar el webhook: {exc}")
     st.markdown("#### ¿Cómo funciona?")
-    st.markdown("1. NEXORA prepara un payload seguro.  2. n8n identifica la acción.  3. El flujo registra o envía el contenido con tus credenciales de n8n.")
-    st.info("La plantilla viene en modo demostración seguro. En n8n conecta tus credenciales y reemplaza cada nodo marcado como DEMO por Gmail, Google Sheets o WhatsApp Cloud/Twilio.")
+    st.markdown("1. NEXORA valida el payload.  2. n8n asigna prioridad y lo guarda en una bitácora JSONL local.  3. El workflow crea un registro, borrador, checklist, plan de estudio o evento listo para revisión.")
+    st.info("El flujo funciona sin nube y no envía mensajes por accidente. Los borradores de email, WhatsApp y calendario exigen aprobación humana antes de conectar credenciales reales.")
 
 
 def page_about() -> None:
     st.title("Acerca del proyecto")
     st.markdown("""
-    **NEXORA AI** integra en una sola aplicación los objetivos académicos de chatbot, transcripción y automatización.
+    **NEXORA AI** integra en una sola aplicación los objetivos académicos de chatbot, voz, contenido multimodal, transcripción y automatización.
 
     - Chat mediante la **Responses API** de OpenAI.
+    - Voz a voz en la experiencia Vercel mediante **Realtime API y WebRTC**.
+    - Once herramientas de texto, visión, generación de imágenes, voz sintética y moderación en **Studio IA**.
     - Transcripción mediante el modelo **gpt-transcribe**.
     - Interfaz creada con **Streamlit** y diseño responsivo.
-    - Integración desacoplada con **n8n** mediante webhook.
+    - Seis automatizaciones locales con **n8n**, prioridad, bitácora y aprobación humana.
     - Seguridad básica: clave en memoria o variable de entorno, nunca escrita en el repositorio.
 
-    **Guion de exposición (3 minutos):** problema → chat → audio → resumen → webhook n8n → arquitectura y seguridad.
+    **Guion de exposición:** problema → voz → Studio IA → audio → resumen → webhook n8n → arquitectura y seguridad.
     """)
-    st.code("Usuario → Streamlit → OpenAI API\n                    ↘ n8n → Email / Sheets / WhatsApp", language="text")
+    st.code("Usuario → Streamlit / Vercel → OpenAI API\n                           ↘ n8n local → bitácora / tareas / estudio / borradores", language="text")
 
 
 inject_theme()

@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   try {
     const webhook = validateWebhook(configuredWebhook);
     const payload = parseJsonBody(req);
-    if (!["sheet", "email", "whatsapp"].includes(payload.action)) {
+    if (!["sheet", "email", "whatsapp", "task", "study", "calendar"].includes(payload.action)) {
       return res.status(400).json({ error: "La acción solicitada no es compatible." });
     }
     if (!String(payload.content || "").trim()) {
