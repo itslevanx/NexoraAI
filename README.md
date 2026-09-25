@@ -2,7 +2,7 @@
 
 ![Icono de NEXORA AI](assets/nexora-icon.png)
 
-NEXORA AI es una aplicación académica desarrollada con Streamlit que reúne tres capacidades en una sola interfaz: conversación con inteligencia artificial, transcripción de audio y automatización de tareas mediante n8n. El proyecto demuestra el uso práctico de las API de OpenAI y la integración de servicios externos sin exponer credenciales en el código.
+NEXORA AI es una suite académica multimodal que integra conversación, herramientas de texto, visión, generación de imágenes, voz sintética, transcripción, moderación y automatización mediante n8n. Incluye una versión local en Streamlit y una experiencia serverless publicada en Vercel, sin incrustar credenciales en el código.
 
 ## Estado del proyecto
 
@@ -12,6 +12,11 @@ NEXORA AI es una aplicación académica desarrollada con Streamlit que reúne tr
 |---|---|---|
 | Chat con IA | Implementado | Utiliza la Responses API y conserva el contexto de la sesión |
 | Voz a voz | Implementado | Conversación natural mediante Realtime API y WebRTC |
+| Studio IA | Implementado | Once herramientas para redactar, estudiar, programar, traducir, extraer y analizar |
+| Visión | Implementado | Analiza PNG, JPG y WEBP con una pregunta personalizada |
+| Generación de imágenes | Implementado | Crea imágenes descargables en tres formatos |
+| Texto a voz | Implementado | Narra resultados en MP3 con aviso de voz IA |
+| Moderación | Implementado | Clasifica contenido y muestra categorías detectadas |
 | Transcripción | Implementado | Acepta grabación directa y archivos compatibles; 25 MB en Streamlit y 4 MB en Vercel |
 | Resumen de audio | Implementado | Convierte la transcripción en ideas, decisiones y pendientes |
 | Exportación | Implementado | Permite descargar la transcripción en formato TXT |
@@ -20,6 +25,17 @@ NEXORA AI es una aplicación académica desarrollada con Streamlit que reúne tr
 | Pruebas de humo | Implementado | Verifican archivos esenciales y validez del workflow |
 
 ## Funcionalidades
+
+### Studio IA multimodal
+
+- Resume, reescribe, corrige y traduce contenido.
+- Crea guías de estudio, exámenes con respuestas y guiones de exposición.
+- Genera ideas, emails profesionales y análisis de argumentos.
+- Explica o revisa código y extrae datos estructurados.
+- Convierte el resultado en voz IA, lo descarga o lo continúa en el chat.
+- Analiza imágenes y texto visible con una instrucción personalizada.
+- Genera imágenes cuadradas, horizontales o verticales.
+- Revisa texto con el modelo de moderación y presenta categorías para revisión humana.
 
 ### Conversación de voz en tiempo real
 
@@ -78,7 +94,9 @@ La experiencia publicada conserva también el chat contextual, la grabación o c
         │ OpenAI Platform     │  │      n8n       │
         │ Responses           │  │ validación     │
         │ Transcriptions      │  │ enrutamiento   │
-        │ Realtime + WebRTC   │  └──────┬─────────┘
+        │ Vision + Images     │  └──────┬─────────┘
+        │ Speech + Moderation │         │
+        │ Realtime + WebRTC   │         │
         └─────────────────────┘         │
                                Sheets email WhatsApp
 ```
@@ -96,6 +114,10 @@ Streamlit actúa como capa de servidor y utiliza la clave únicamente en memoria
 | WebRTC y Realtime API | Conversación de voz a voz |
 | OpenAI Python SDK | Chat y transcripción |
 | Responses API | Generación de respuestas del asistente |
+| Image API | Generación de imágenes desde texto |
+| Speech API | Narración de texto en MP3 |
+| Moderations API | Clasificación de seguridad |
+| Entrada multimodal | Análisis de imágenes mediante Responses API |
 | Transcriptions API | Conversión de audio en texto |
 | n8n | Orquestación de automatizaciones |
 | Docker Compose | Ejecución local opcional de n8n |
@@ -108,7 +130,7 @@ Streamlit actúa como capa de servidor y utiliza la clave únicamente en memoria
 NexoraAI/
 ├── app.py                              # Aplicación Streamlit
 ├── public/                             # Interfaz web minimalista para Vercel
-├── api/                                # Funciones serverless para OpenAI
+├── api/                                # Texto, visión, imagen, voz, moderación, Realtime y n8n
 ├── package.json                        # Validación de JavaScript
 ├── vercel.json                         # Configuración de despliegue
 ├── assets/nexora-icon.png              # Icono de la aplicación
@@ -117,6 +139,7 @@ NexoraAI/
 │   ├── DOCUMENTACION_COMPLETA.md       # Fuente del informe académico
 │   └── Documentacion_NEXORA_AI.docx    # Documento Word final
 ├── tests/test_smoke.py                 # Pruebas básicas
+├── scripts/build_documentation.py      # Generador del Word académico
 ├── .streamlit/config.toml              # Tema y límite de carga
 ├── .env.example                        # Variables de entorno de ejemplo
 ├── docker-compose.yml                  # Servicio local de n8n
@@ -186,9 +209,32 @@ El directorio raíz ya incluye una aplicación estática y funciones serverless 
 4. Ejecutar el despliegue.
 5. Autorizar el micrófono en el navegador y probar **Voz**.
 
-La interfaz desplegada incluye voz a voz, chat contextual, grabación, carga y edición de transcripciones, resumen, descarga TXT, reutilización en chat y automatizaciones n8n. Por el límite del cuerpo de las funciones serverless, la transcripción web acepta archivos menores de 4 MB; la versión Streamlit conserva su límite de 25 MB.
+La interfaz desplegada incluye voz a voz, chat contextual, Studio IA, visión, generación de imágenes, voz sintética, moderación, grabación, carga y edición de transcripciones, resumen, descarga TXT, reutilización en chat y automatizaciones n8n. Por el límite del cuerpo de las funciones serverless, los audios e imágenes web aceptan archivos menores de 4 MB; la versión Streamlit conserva su límite de audio de 25 MB.
 
 La arquitectura de voz sigue la recomendación oficial: el navegador usa WebRTC y un endpoint confiable crea la sesión con la clave del servidor. Consulta la [guía WebRTC de OpenAI](https://developers.openai.com/api/docs/guides/voice-webrtc).
+
+## Endpoints de la versión web
+
+| Endpoint | Propósito | Validación principal |
+|---|---|---|
+| `/api/chat` | Chat contextual | Al menos un mensaje |
+| `/api/studio` | Once herramientas de texto | Modo permitido y 30 000 caracteres |
+| `/api/vision` | Análisis de imágenes | PNG, JPG o WEBP menor de 4 MB |
+| `/api/image` | Generación de imágenes | Prompt y tamaño permitido |
+| `/api/speech` | Texto a voz MP3 | Máximo 2500 caracteres |
+| `/api/moderate` | Clasificación de seguridad | Texto no vacío |
+| `/api/transcribe` | Audio a texto | Audio menor de 4 MB |
+| `/api/realtime-session` | Voz a voz por WebRTC | Oferta SDP válida |
+| `/api/automation` | Envío controlado a n8n | Acción y webhook HTTPS en producción |
+
+## Uso de Studio IA
+
+1. Abrir **Studio IA** y elegir Texto, Visión, Imágenes o Seguridad.
+2. En Texto, seleccionar una herramienta, añadir tono, idioma o nivel y pegar el contenido.
+3. Descargar el resultado, continuarlo en Chat o reproducirlo con voz IA.
+4. En Visión, cargar una imagen de prueba sin información sensible y formular una pregunta.
+5. En Imágenes, describir la pieza, elegir formato y descargar el JPEG.
+6. En Seguridad, interpretar el resultado como señal para revisión humana, no como una decisión absoluta.
 
 ## Configuración de n8n
 
@@ -248,6 +294,7 @@ Respuesta de demostración:
 ```bash
 python -m pytest -q
 python -m py_compile app.py
+npm run check
 ```
 
 Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workflow, cantidad mínima de nodos y sintaxis de Python. Las llamadas reales a OpenAI no forman parte de las pruebas automáticas porque requieren una clave, saldo y acceso a red.
@@ -259,7 +306,9 @@ Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workf
 - `.env` y `.streamlit/secrets.toml` están ignorados por Git.
 - El webhook recibe datos de la tarea, no la clave de OpenAI.
 - La app aplica timeout y reintentos limitados.
-- Los audios se envían a OpenAI; no se deben usar grabaciones sensibles en la demo.
+- Los audios, imágenes, texto y prompts se envían a OpenAI; no se deben usar datos sensibles en la demo.
+- La narración se identifica como voz generada por IA.
+- Los endpoints validan modos, tipos MIME, tamaños y longitud antes del envío.
 - Las acciones reales deben configurarse con credenciales protegidas y aprobación cuando corresponda.
 
 ## Demostración recomendada
@@ -267,11 +316,11 @@ Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workf
 1. Presentar el problema: chat, notas de voz y tareas manuales están dispersos.
 2. Pegar la API key sin mostrarla al público.
 3. Preguntar: “Explícame la computación cuántica con una analogía y crea tres preguntas de repaso”.
-4. Grabar una nota de voz de 10 a 15 segundos.
-5. Transcribirla y generar el resumen.
-6. Enviar el contenido al webhook n8n.
-7. Mostrar la ejecución visual dentro de n8n.
-8. Explicar que las credenciales permanecen fuera del código.
+4. Convertir la respuesta en guía de estudio y reproducirla con voz IA.
+5. Analizar una imagen académica o generar un afiche de ejemplo.
+6. Grabar una nota de voz de 10 a 15 segundos, transcribirla y resumirla.
+7. Enviar el contenido al webhook n8n y mostrar la ejecución visual.
+8. Explicar moderación, límites y que las credenciales permanecen fuera del código.
 
 ## Limitaciones
 
@@ -279,6 +328,9 @@ Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workf
 - El workflow opera en modo demostración hasta configurar credenciales.
 - No existe autenticación de usuarios.
 - Los archivos están limitados a 25 MB en Streamlit y a menos de 4 MB en Vercel.
+- La narración admite hasta 2500 caracteres por solicitud.
+- La generación de imágenes puede requerir verificación de la organización y genera costos.
+- El análisis visual y la moderación son ayudas; requieren revisión humana.
 - El modelo debe estar disponible en la cuenta del usuario.
 - El consumo de API puede generar costos.
 
@@ -304,6 +356,10 @@ Incluye problema, objetivos, alcance, requisitos, casos de uso, arquitectura, c�
 
 - [Inicio rápido de OpenAI](https://developers.openai.com/api/docs/quickstart)
 - [Guía de transcripción de OpenAI](https://developers.openai.com/api/docs/guides/speech-to-text)
+- [Guía de visión de OpenAI](https://developers.openai.com/api/docs/guides/images-vision)
+- [Guía de generación de imágenes de OpenAI](https://developers.openai.com/api/docs/guides/image-generation)
+- [Guía de texto a voz de OpenAI](https://developers.openai.com/api/docs/guides/text-to-speech)
+- [Guía de moderación de OpenAI](https://developers.openai.com/api/docs/guides/moderation)
 - [Documentación de Streamlit](https://docs.streamlit.io/)
 - [Documentación de n8n](https://docs.n8n.io/)
 - [Documentación de Docker Compose](https://docs.docker.com/compose/)
