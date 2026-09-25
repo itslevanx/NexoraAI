@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="description" content="NEXORA AI: voz, chat, transcripción y automatizaciones con OpenAI." />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+    <title>NEXORA AI</title>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="#inicio" aria-label="NEXORA AI, inicio">
+          <span class="mark">N</span><span>NEXORA</span>
+        </a>
+        <nav aria-label="Navegación principal">
+          <button class="nav-link active" data-view="voice">Voz</button>
+          <button class="nav-link" data-view="chat">Chat</button>
+          <button class="nav-link" data-view="transcribe">Transcribir</button>
+          <button class="nav-link" data-view="automate">Automatizar</button>
+        </nav>
+        <button id="settingsButton" class="icon-button" aria-label="Abrir configuración">•••</button>
+      </header>
+
+      <main>
+        <section id="voiceView" class="view active" aria-labelledby="voiceTitle">
+          <div class="intro">
+            <p class="kicker">Conversación en tiempo real</p>
+            <h1 id="voiceTitle">Habla. NEXORA responde.</h1>
+            <p>Una conversación natural de voz a voz con baja latencia, interrupciones y detección automática de turnos.</p>
+          </div>
+
+          <div class="call-panel">
+            <div id="orb" class="orb" aria-hidden="true"><span>N</span></div>
+            <div class="call-copy">
+              <strong id="callStatus">Lista para conversar</strong>
+              <span id="callDetail">El micrófono se activa únicamente al iniciar.</span>
+            </div>
+            <div class="call-actions">
+              <button id="startCall" class="primary">Iniciar conversación</button>
+              <button id="muteCall" class="secondary" disabled>Silenciar</button>
+              <button id="stopCall" class="secondary danger" disabled>Finalizar</button>
+            </div>
+          </div>
+
+          <section class="transcript-panel" aria-live="polite">
+            <div class="section-heading"><span>Transcripción en vivo</span><button id="clearTranscript" class="text-button">Limpiar</button></div>
+            <div id="liveTranscript" class="transcript empty">La conversación aparecerá aquí.</div>
+          </section>
+        </section>
+
+        <section id="chatView" class="view" aria-labelledby="chatTitle">
+          <div class="intro compact">
+            <p class="kicker">Texto</p>
+            <h1 id="chatTitle">Chat inteligente</h1>
+            <p>Pregunta, estudia o estructura una idea.</p>
+          </div>
+          <div class="toolbar-row"><button id="clearChat" class="text-button">Nueva conversación</button></div>
+          <div id="chatMessages" class="chat-messages" aria-live="polite">
+            <article class="message assistant"><span>NEXORA</span><p>Hola. ¿En qué trabajamos hoy?</p></article>
+          </div>
+          <form id="chatForm" class="composer">
+            <textarea id="chatInput" rows="1" placeholder="Escribe tu mensaje" required></textarea>
+            <button class="primary" type="submit">Enviar</button>
+          </form>
+        </section>
+
+        <section id="transcribeView" class="view" aria-labelledby="transcribeTitle">
+          <div class="intro compact">
+            <p class="kicker">Audio a texto</p>
+            <h1 id="transcribeTitle">Transcripción precisa</h1>
+            <p>Graba una nota o selecciona un audio de menos de 4 MB.</p>
+          </div>
+          <div class="record-panel">
+            <div><strong>Grabar ahora</strong><span id="recordStatus">Micrófono detenido</span></div>
+            <button id="recordButton" class="secondary">Iniciar grabación</button>
+          </div>
+          <label class="upload" for="audioFile">
+            <span>Seleccionar audio</span>
+            <small>MP3, M4A, WAV o WEBM</small>
+            <input id="audioFile" type="file" accept="audio/*" />
+          </label>
+          <audio id="audioPreview" class="audio-preview" controls hidden></audio>
+          <button id="transcribeButton" class="primary wide" disabled>Transcribir</button>
+          <textarea id="transcriptionResult" class="result-area" placeholder="La transcripción aparecerá aquí"></textarea>
+          <div class="result-actions">
+            <button id="summarizeButton" class="secondary" disabled>Crear resumen</button>
+            <button id="downloadTranscript" class="secondary" disabled>Descargar TXT</button>
+            <button id="useInChat" class="secondary" disabled>Usar en chat</button>
+          </div>
+          <textarea id="summaryResult" class="result-area summary" placeholder="El resumen aparecerá aquí" readonly></textarea>
+        </section>
+
+        <section id="automateView" class="view" aria-labelledby="automateTitle">
+          <div class="intro compact">
+            <p class="kicker">Productividad</p>
+            <h1 id="automateTitle">Automatiza con n8n</h1>
+            <p>Prepara un registro, correo o mensaje y envíalo a tu workflow.</p>
+          </div>
+          <form id="automationForm" class="form-card">
+            <label>Acción
+              <select id="automationAction">
+                <option value="sheet">Registrar en Google Sheets</option>
+                <option value="email">Enviar email</option>
+                <option value="whatsapp">Enviar WhatsApp</option>
+              </select>
+            </label>
+            <label>Destinatario o referencia
+              <input id="automationRecipient" type="text" placeholder="docente@ejemplo.com" />
+            </label>
+            <label>Asunto
+              <input id="automationSubject" type="text" placeholder="Resumen de la sesión" />
+            </label>
+            <label>Contenido
+              <textarea id="automationContent" rows="7" placeholder="Contenido revisado por el usuario" required></textarea>
+            </label>
+            <button class="primary wide" type="submit">Ejecutar automatización</button>
+          </form>
+          <pre id="automationResult" class="automation-result">El resultado del workflow aparecerá aquí.</pre>
+        </section>
+      </main>
+
+      <footer><span>NEXORA AI</span><span>OpenAI · WebRTC · Vercel</span></footer>
+    </div>
+
+    <dialog id="settingsDialog">
+      <form method="dialog" class="settings-card">
+        <div class="section-heading"><strong>Configuración</strong><button class="icon-button" value="cancel" aria-label="Cerrar">×</button></div>
+        <label>OpenAI API Key
+          <input id="apiKey" type="password" autocomplete="off" placeholder="sk-proj-…" />
+        </label>
+        <p class="privacy">La clave permanece en la memoria de esta pestaña. Si el administrador configuró <code>OPENAI_API_KEY</code> en Vercel, puedes dejarla vacía.</p>
+        <label>Modelo de chat
+          <input id="chatModel" type="text" value="gpt-5-mini" />
+        </label>
+        <label>Webhook de n8n
+          <input id="n8nWebhook" type="url" placeholder="https://tu-n8n/webhook/nexora" />
+        </label>
+        <p class="privacy">También puedes configurar <code>N8N_WEBHOOK_URL</code> de forma segura en Vercel.</p>
+        <button class="primary wide" value="default">Guardar para esta sesión</button>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status"></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

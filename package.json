@@ -1,0 +1,12 @@
+{
+  "name": "nexora-ai-web",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check public/app.js && node --check api/realtime-session.js && node --check api/chat.js && node --check api/transcribe.js && node --check api/automation.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
