@@ -396,7 +396,7 @@ Streamlit configura el título, icono y diseño ancho. `inject_theme` incorpora 
 
 ### Voz en tiempo real
 
-El navegador obtiene el micrófono con `getUserMedia`, crea un `RTCPeerConnection` y genera una oferta SDP. Para evitar el tratamiento incompleto de `application/sdp` en el runtime serverless, envía la oferta dentro de un objeto JSON al endpoint `/api/realtime-session`. La función extrae el SDP, valida que comience con `v=0`, limita la oferta a 128 KB y la combina con la configuración de sesión en el formulario multipart requerido por `/v1/realtime/calls`, sin exponer la API Key. La respuesta SDP completa la conexión. El audio se transporta por WebRTC y un canal de datos recibe eventos de turnos y transcripción. La sesión utiliza `gpt-realtime-2.1`, la voz `marin`, detección de turnos del servidor e instrucciones en español.
+El navegador obtiene el micrófono con `getUserMedia`, crea un `RTCPeerConnection` y genera una oferta SDP. Envía directamente `offer.sdp`, siguiendo el ejemplo oficial y evitando depender en Safari de una `localDescription` transitoria mientras se reúnen candidatos ICE. Para impedir el tratamiento incompleto de `application/sdp` en el runtime serverless, transporta esa oferta dentro de un objeto JSON al endpoint `/api/realtime-session`. La función extrae el SDP, valida que comience con `v=0`, limita la oferta a 128 KB y la combina con la configuración de sesión en el formulario multipart requerido por `/v1/realtime/calls`, sin exponer la API Key. La respuesta SDP completa la conexión. El audio se transporta por WebRTC y un canal de datos recibe eventos de turnos y transcripción. La sesión utiliza `gpt-realtime-2.1`, la voz `marin`, detección de turnos del servidor e instrucciones en español.
 
 ### Chat
 

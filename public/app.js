@@ -98,19 +98,6 @@ function escapeHtml(value) {
   return span.innerHTML;
 }
 
-function waitForIce(connection) {
-  if (connection.iceGatheringState === "complete") return Promise.resolve();
-  return new Promise((resolve) => {
-    const check = () => {
-      if (connection.iceGatheringState === "complete") {
-        connection.removeEventListener("icegatheringstatechange", check);
-        resolve();
-      }
-    };
-    connection.addEventListener("icegatheringstatechange", check);
-  });
-}
-
 function handleRealtimeEvent(event) {
   if (event.type === "input_audio_buffer.speech_started") {
     $("#orb").classList.remove("speaking");
@@ -159,11 +146,12 @@ async function startCall() {
 
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
-    await waitForIce(peer);
     const response = await fetch("/api/realtime-session", {
       method: "POST",
       headers: apiHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ sdp: peer.localDescription.sdp })
+      // Safari puede exponer una localDescription transitoria mientras reúne
+      // candidatos ICE. La oferta original coincide con el flujo oficial.
+      body: JSON.stringify({ sdp: offer.sdp })
     });
     if (!response.ok) throw new Error(await apiError(response));
     await peer.setRemoteDescription({ type: "answer", sdp: await response.text() });
