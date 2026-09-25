@@ -1,0 +1,54 @@
+{
+  "id": "nexoraPrivacyGuardianV1",
+  "name": "NEXORA AI - Guardián de privacidad",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "nexora-privacy-guardian", "responseMode": "responseNode", "options": {} },
+      "id": "privacy-webhook",
+      "name": "Recibir contenido sensible",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-600, 0],
+      "webhookId": "nexora-privacy-guardian"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.body ?? $json;\nconst content = String(p.content ?? '').trim();\nif (!content) throw new Error('Falta el contenido que debe revisarse');\nif (content.length > 20000) throw new Error('El contenido supera 20 000 caracteres');\nconst rules = [{ type: 'email', regex: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, replacement: '[EMAIL OCULTO]', weight: 15 }, { type: 'telefono', regex: /(?:\\+?51[ -]?)?9\\d{8}\\b/g, replacement: '[TELÉFONO OCULTO]', weight: 20 }, { type: 'api_key', regex: /sk-(?:proj-)?[A-Za-z0-9_-]{16,}/g, replacement: '[CLAVE API OCULTA]', weight: 50 }, { type: 'tarjeta', regex: /\\b(?:\\d[ -]*?){13,16}\\b/g, replacement: '[NÚMERO FINANCIERO OCULTO]', weight: 40 }, { type: 'documento', regex: /\\b(?:DNI|documento)[: ]+\\d{8}\\b/gi, replacement: '[DOCUMENTO OCULTO]', weight: 35 }];\nlet redacted = content;\nconst findings = [];\nlet score = 0;\nfor (const rule of rules) { const matches = redacted.match(rule.regex) || []; if (matches.length) { findings.push({ type: rule.type, count: matches.length }); score += rule.weight * matches.length; redacted = redacted.replace(rule.regex, rule.replacement); } }\nscore = Math.min(100, score);\nconst risk = score >= 60 ? 'alto' : score >= 25 ? 'medio' : score > 0 ? 'bajo' : 'sin hallazgos';\nreturn [{ json: { ok: true, workflow: 'guardian-privacidad', auditId: `privacy-${Date.now().toString(36)}`, checkedAt: new Date().toISOString(), risk, score, findings, safeToShare: score === 0, redactedContent: redacted, recommendations: score ? ['Usar la versión redactada', 'No publicar secretos ni datos personales', 'Rotar cualquier clave que ya haya sido expuesta'] : ['No se detectaron patrones sensibles comunes', 'Mantener una revisión humana antes de compartir'] } }];"
+      },
+      "id": "privacy-scan",
+      "name": "Detectar y redactar datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-320, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst file = '/files/nexora-privacy-audit.jsonl';\nfor (const item of items) { const { redactedContent, ...safeAudit } = item.json; fs.appendFileSync(file, `${JSON.stringify(safeAudit)}\\n`, 'utf8'); }\nreturn items.map(item => ({ json: { ...item.json, storedLocally: true, storedSensitiveContent: false, localFile: file, message: 'Revisión de privacidad completada sin guardar el contenido sensible' } }));"
+      },
+      "id": "privacy-store",
+      "name": "Guardar solo metadatos seguros",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-40, 0]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} },
+      "id": "privacy-respond",
+      "name": "Entregar versión redactada",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [240, 0]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Recibir contenido sensible": { "main": [[{ "node": "Detectar y redactar datos", "type": "main", "index": 0 }]] },
+    "Detectar y redactar datos": { "main": [[{ "node": "Guardar solo metadatos seguros", "type": "main", "index": 0 }]] },
+    "Guardar solo metadatos seguros": { "main": [[{ "node": "Entregar versión redactada", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "timezone": "America/Lima" },
+  "versionId": "0e1f39a2-a43f-44da-948b-389d14df28ad",
+  "meta": { "templateCredsSetupCompleted": true, "instanceId": "nexora-local" },
+  "tags": []
+}

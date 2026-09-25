@@ -1,0 +1,54 @@
+{
+  "id": "nexoraMeetingLabV1",
+  "name": "NEXORA AI - Laboratorio de reuniones",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "nexora-meeting-lab", "responseMode": "responseNode", "options": {} },
+      "id": "meeting-webhook",
+      "name": "Recibir transcripción",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-600, 0],
+      "webhookId": "nexora-meeting-lab"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.body ?? $json;\nconst transcript = String(p.transcript ?? p.content ?? '').trim();\nif (!transcript) throw new Error('Falta la transcripción');\nif (transcript.length > 20000) throw new Error('La transcripción supera 20 000 caracteres');\nconst title = String(p.title ?? p.subject ?? 'Reunión NEXORA').trim();\nconst parts = transcript.split(/\\n|[.!?](?:\\s+|$)/).map(x => x.trim()).filter(Boolean);\nconst decisions = parts.filter(x => /acordamos|decidimos|se aprueba|quedamos|decisión/i.test(x)).slice(0, 8);\nconst tasks = parts.filter(x => /debemos|hay que|encarg|responsable|entregar|preparar|revisar|terminar/i.test(x)).slice(0, 10).map((text, i) => { const direct = text.match(/^([A-ZÁÉÍÓÚÑ][\\wÁÉÍÓÚÑáéíóúñ-]+)\\s+(?:es\\s+)?(?:responsable|encargad[oa])/); const labeled = text.match(/(?:responsable|encargad[oa]):?\\s*([A-ZÁÉÍÓÚÑ][\\wÁÉÍÓÚÑáéíóúñ-]+)/); return { id: i + 1, task: text, owner: direct?.[1] || labeled?.[1] || 'por asignar', status: 'pendiente' }; });\nconst risks = parts.filter(x => /riesgo|bloqueo|problema|falta|retraso|urgente/i.test(x)).slice(0, 6);\nconst attendees = Array.isArray(p.attendees) ? p.attendees : String(p.attendees ?? '').split(',').map(x => x.trim()).filter(Boolean);\nreturn [{ json: { ok: true, workflow: 'laboratorio-reuniones', meetingId: `meet-${Date.now().toString(36)}`, title, date: String(p.date ?? new Date().toISOString()), attendees, summary: parts.slice(0, 4).join('. '), decisions: decisions.length ? decisions : ['No se detectaron decisiones explícitas'], tasks, risks, followUp: { recommended: tasks.length > 0, message: tasks.length ? `Dar seguimiento a ${tasks.length} tarea(s)` : 'Confirmar próximos pasos con el equipo' } } }];"
+      },
+      "id": "meeting-analyze",
+      "name": "Extraer acuerdos y responsables",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-320, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst file = '/files/nexora-meetings.jsonl';\nfor (const item of items) fs.appendFileSync(file, `${JSON.stringify(item.json)}\\n`, 'utf8');\nreturn items.map(item => ({ json: { ...item.json, storedLocally: true, localFile: file, message: 'Acta inteligente creada con acuerdos, tareas y riesgos' } }));"
+      },
+      "id": "meeting-store",
+      "name": "Archivar acta inteligente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-40, 0]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} },
+      "id": "meeting-respond",
+      "name": "Entregar acta y seguimiento",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [240, 0]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Recibir transcripción": { "main": [[{ "node": "Extraer acuerdos y responsables", "type": "main", "index": 0 }]] },
+    "Extraer acuerdos y responsables": { "main": [[{ "node": "Archivar acta inteligente", "type": "main", "index": 0 }]] },
+    "Archivar acta inteligente": { "main": [[{ "node": "Entregar acta y seguimiento", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "timezone": "America/Lima" },
+  "versionId": "ccb90093-6c9b-4aaf-85cb-5ea72d468a35",
+  "meta": { "templateCredsSetupCompleted": true, "instanceId": "nexora-local" },
+  "tags": []
+}

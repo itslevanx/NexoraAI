@@ -1,0 +1,43 @@
+{
+  "id": "nexoraImpactDashboardV1",
+  "name": "NEXORA AI - Panel de impacto local",
+  "nodes": [
+    {
+      "parameters": { "path": "nexora-impact-dashboard", "responseMode": "responseNode", "options": {} },
+      "id": "dashboard-webhook",
+      "name": "Solicitar métricas",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-500, 0],
+      "webhookId": "nexora-impact-dashboard"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst sources = [{ key: 'general', file: '/files/nexora-events.jsonl' }, { key: 'study', file: '/files/nexora-study.jsonl' }, { key: 'meetings', file: '/files/nexora-meetings.jsonl' }, { key: 'privacy', file: '/files/nexora-privacy-audit.jsonl' }];\nconst read = file => { if (!fs.existsSync(file)) return []; return fs.readFileSync(file, 'utf8').split('\\n').filter(Boolean).map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean); };\nconst data = Object.fromEntries(sources.map(s => [s.key, read(s.file)]));\nconst all = Object.values(data).flat();\nconst highPriority = data.general.filter(x => x.priority === 'alta').length;\nconst approvals = data.general.filter(x => x.approvalRequired).length;\nconst privacyAlerts = data.privacy.filter(x => x.score > 0).length;\nconst totals = Object.fromEntries(Object.entries(data).map(([key, value]) => [key, value.length]));\nconst activityScore = Math.min(100, all.length * 8);\nreturn [{ json: { ok: true, workflow: 'panel-impacto', generatedAt: new Date().toISOString(), totalExecutions: all.length, totals, indicators: { highPriority, pendingHumanApproval: approvals, privacyAlerts, activityScore }, highlights: [`${data.study.length} planes de estudio adaptativos`, `${data.meetings.length} actas inteligentes`, `${data.privacy.length} revisiones de privacidad`, `${data.general.length} acciones del centro local`], recentActivity: all.slice(-5).reverse().map(x => ({ id: x.requestId || x.sessionId || x.meetingId || x.auditId, type: x.workflow || x.action || 'general', date: x.receivedAt || x.createdAt || x.date || x.checkedAt })) } }];"
+      },
+      "id": "dashboard-calculate",
+      "name": "Calcular impacto y actividad",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-200, 0]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} },
+      "id": "dashboard-respond",
+      "name": "Mostrar panel ejecutivo",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [100, 0]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Solicitar métricas": { "main": [[{ "node": "Calcular impacto y actividad", "type": "main", "index": 0 }]] },
+    "Calcular impacto y actividad": { "main": [[{ "node": "Mostrar panel ejecutivo", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "timezone": "America/Lima" },
+  "versionId": "3a72f2eb-6087-4ab8-95c0-0e131ee5418f",
+  "meta": { "templateCredsSetupCompleted": true, "instanceId": "nexora-local" },
+  "tags": []
+}

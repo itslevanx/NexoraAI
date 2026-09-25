@@ -1,0 +1,54 @@
+{
+  "id": "nexoraStudyCoachV1",
+  "name": "NEXORA AI - Coach de estudio adaptativo",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "nexora-study-coach", "responseMode": "responseNode", "options": {} },
+      "id": "study-webhook",
+      "name": "Recibir material de estudio",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-600, 0],
+      "webhookId": "nexora-study-coach"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.body ?? $json;\nconst topic = String(p.topic ?? p.subject ?? 'Tema de estudio').trim();\nconst content = String(p.content ?? '').trim();\nif (!content) throw new Error('Falta el material de estudio');\nif (content.length > 15000) throw new Error('El material supera 15 000 caracteres');\nconst minutes = Math.max(20, Math.min(120, Number(p.minutes) || 50));\nconst sentences = content.split(/\\n|[.!?](?:\\s+|$)/).map(x => x.trim()).filter(x => x.length > 12);\nconst concepts = [...new Set((content.toLowerCase().match(/[a-záéíóúñü]{6,}/gi) || []).filter(w => !['porque','cuando','también','puede','desde','entre','sobre','hasta','tiene','estos','estas'].includes(w)))].slice(0, 8);\nconst focus = Math.round(minutes * 0.55);\nconst practice = Math.round(minutes * 0.30);\nconst review = minutes - focus - practice;\nconst questions = sentences.slice(0, 5).map((text, index) => ({ id: index + 1, question: `Explica con tus palabras: ${text}`, answerHint: concepts[index % Math.max(concepts.length, 1)] || 'idea principal' }));\nreturn [{ json: { ok: true, workflow: 'coach-estudio', sessionId: `study-${Date.now().toString(36)}`, topic, minutes, createdAt: new Date().toISOString(), concepts, plan: [{ minutes: focus, phase: 'Comprender', technique: 'lectura activa y mapa mental' }, { minutes: practice, phase: 'Recordar', technique: 'explicación sin apuntes y ejemplos propios' }, { minutes: review, phase: 'Comprobar', technique: 'autoevaluación y corrección' }], questions, spacedRepetition: ['hoy al finalizar', 'mañana', 'en 3 días', 'en 7 días'], sourcePreview: content.slice(0, 240) } }];"
+      },
+      "id": "study-build",
+      "name": "Diseñar sesión adaptativa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-320, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst file = '/files/nexora-study.jsonl';\nfor (const item of items) fs.appendFileSync(file, `${JSON.stringify(item.json)}\\n`, 'utf8');\nreturn items.map(item => ({ json: { ...item.json, storedLocally: true, localFile: file, message: 'Plan adaptativo y repaso espaciado creados' } }));"
+      },
+      "id": "study-store",
+      "name": "Guardar plan de estudio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-40, 0]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} },
+      "id": "study-respond",
+      "name": "Entregar coach de estudio",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [240, 0]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Recibir material de estudio": { "main": [[{ "node": "Diseñar sesión adaptativa", "type": "main", "index": 0 }]] },
+    "Diseñar sesión adaptativa": { "main": [[{ "node": "Guardar plan de estudio", "type": "main", "index": 0 }]] },
+    "Guardar plan de estudio": { "main": [[{ "node": "Entregar coach de estudio", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "timezone": "America/Lima" },
+  "versionId": "7ac6f0b7-6fe1-4d52-a12b-f0382035b003",
+  "meta": { "templateCredsSetupCompleted": true, "instanceId": "nexora-local" },
+  "tags": []
+}

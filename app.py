@@ -299,6 +299,56 @@ def page_automations(webhook: str) -> None:
     st.markdown("1. NEXORA valida el payload.  2. n8n asigna prioridad y lo guarda en una bitácora JSONL local.  3. El workflow crea un registro, borrador, checklist, plan de estudio o evento listo para revisión.")
     st.info("El flujo funciona sin nube y no envía mensajes por accidente. Los borradores de email, WhatsApp y calendario exigen aprobación humana antes de conectar credenciales reales.")
 
+    st.divider()
+    st.subheader("Laboratorios avanzados")
+    st.caption("Cuatro workflows independientes para una demostración más completa en la Mac.")
+    advanced_map = {
+        "Coach de estudio adaptativo": "nexora-study-coach",
+        "Laboratorio de reuniones": "nexora-meeting-lab",
+        "Guardián de privacidad": "nexora-privacy-guardian",
+        "Panel de impacto local": "nexora-impact-dashboard",
+    }
+    advanced_name = st.selectbox("Workflow avanzado", list(advanced_map), key="advanced_workflow")
+    endpoint = webhook.rsplit("/", 1)[0] + "/" + advanced_map[advanced_name] if webhook and "/" in webhook else ""
+    if advanced_name == "Panel de impacto local":
+        st.caption("Consolida las bitácoras de actividad, estudio, reuniones y privacidad.")
+        if st.button("Actualizar panel de impacto", use_container_width=True):
+            if not endpoint:
+                st.warning("Configura primero el webhook local de n8n.")
+            else:
+                try:
+                    response = requests.get(endpoint, timeout=15)
+                    response.raise_for_status()
+                    st.json(response.json())
+                except requests.RequestException as exc:
+                    st.error(f"No se pudo consultar el panel: {exc}")
+    else:
+        advanced_content = st.text_area(
+            "Material del laboratorio",
+            value=st.session_state.get("summary") or st.session_state.transcript,
+            height=150,
+            key="advanced_content",
+            placeholder="Pega apuntes, una transcripción o el texto que deseas revisar",
+        )
+        advanced_payload = {"content": advanced_content, "source": APP_NAME}
+        if advanced_name == "Coach de estudio adaptativo":
+            advanced_payload.update({"topic": subject, "minutes": 50})
+        elif advanced_name == "Laboratorio de reuniones":
+            advanced_payload.update({"title": subject, "attendees": recipient, "transcript": advanced_content})
+        if st.button("Ejecutar laboratorio avanzado", type="primary", use_container_width=True):
+            if not endpoint:
+                st.warning("Configura primero el webhook local de n8n.")
+            elif not advanced_content.strip():
+                st.warning("Agrega material para procesar.")
+            else:
+                try:
+                    response = requests.post(endpoint, json=advanced_payload, timeout=15)
+                    response.raise_for_status()
+                    st.success(f"{advanced_name} completado.")
+                    st.json(response.json())
+                except requests.RequestException as exc:
+                    st.error(f"No se pudo ejecutar el laboratorio: {exc}")
+
 
 def page_about() -> None:
     st.title("Acerca del proyecto")
