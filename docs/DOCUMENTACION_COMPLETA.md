@@ -782,23 +782,23 @@ Las pruebas automáticas no consumen OpenAI para evitar costos y dependencia de 
 | CP 05 | Render de inicio | Portada y navegación visibles | Aprobado |
 | CP 06 | Navegación | Todas las vistas cargan | Aprobado |
 | CP 07 | Chat sin clave | Advertencia, sin llamada | Aprobado |
-| CP 08 | Chat con clave | Respuesta visible | Pendiente de clave del equipo |
+| CP 08 | Chat con clave | Respuesta visible | Aprobado en producción |
 | CP 09 | Audio mayor a 25 MB | Error, sin solicitud | Preparado |
-| CP 10 | Audio válido | Transcripción visible | Pendiente de clave del equipo |
+| CP 10 | Audio válido | Transcripción visible | Aprobado en producción |
 | CP 11 | Webhook ausente | Solicita URL | Aprobado |
 | CP 12 | Webhook local | Confirmación JSON, prioridad y checklist | Aprobado |
 | CP 13 | Acción inválida | Error de validación | Aprobado |
 | CP 14 | Clave fuera de Git | No existe secreto | Aprobado |
 | CP 15 | Sintaxis JavaScript | Todos los archivos pasan `node --check` | Aprobado |
 | CP 16 | Interfaz Safari | Diseño monocromático y navegación visibles | Aprobado |
-| CP 17 | Voz WebRTC | Audio bidireccional | Pendiente de clave del equipo |
+| CP 17 | Voz WebRTC | Audio bidireccional | Aprobado en Safari |
 | CP 18 | Paridad Vercel | Chat, grabación, resumen, descarga y n8n disponibles | Aprobado |
 | CP 19 | Modos de Studio | Los once modos aparecen y envían un modo permitido | Aprobado |
 | CP 20 | Imagen mayor de 4 MB | Se rechaza antes de la solicitud | Preparado |
-| CP 21 | Visión válida | Análisis textual visible | Pendiente de clave del equipo |
-| CP 22 | Generación visual | JPEG visible y descargable | Pendiente de acceso al modelo |
-| CP 23 | Narración | MP3 reproducible con aviso de voz IA | Pendiente de clave del equipo |
-| CP 24 | Moderación | Resultado y categorías visibles | Pendiente de clave del equipo |
+| CP 21 | Visión válida | Análisis textual visible | Aprobado en producción |
+| CP 22 | Generación visual | JPEG visible y descargable | Aprobado en producción |
+| CP 23 | Narración | MP3 reproducible con aviso de voz IA | Aprobado en producción |
+| CP 24 | Moderación | Resultado y categorías visibles | Aprobado en producción |
 | CP 25 | Endpoints nuevos | Todos pasan `node --check` y existen en pruebas | Aprobado |
 | CP 26 | Seis acciones n8n | Cada acción devuelve un resultado especializado | Aprobado |
 | CP 27 | Persistencia local | Cada solicitud añade una línea JSONL | Aprobado |
@@ -806,6 +806,12 @@ Las pruebas automáticas no consumen OpenAI para evitar costos y dependencia de 
 | CP 29 | Laboratorio de reuniones | Detecta decisiones, tareas y riesgos | Aprobado |
 | CP 30 | Guardián de privacidad | Oculta correo, teléfono y clave; no persiste el texto | Aprobado |
 | CP 31 | Panel de impacto | Consolida cuatro bitácoras y actividad reciente | Aprobado |
+
+### Evidencia funcional en producción
+
+El 25 de septiembre de 2026 se ejecutó una prueba manual de extremo a extremo en Safari sobre `https://nexora-ai-blue-three.vercel.app/`, utilizando la variable de entorno segura del despliegue. Se verificaron Chat, Studio de texto, narración, Visión, generación de imágenes, moderación, carga y transcripción de un WAV, resumen de la transcripción y conversación de voz mediante WebRTC. La voz alcanzó el estado **“Conversación activa”** y pudo finalizarse de forma controlada. Visión describió y extrajo correctamente el contenido del diagrama de arquitectura; Imágenes produjo una pieza monocromática descargable; Seguridad clasificó el texto académico como no marcado; y Transcribir devolvió texto y habilitó su resumen. La sección Automatizar se excluyó deliberadamente de esta ronda por indicación del solicitante.
+
+La prueba de voz confirma que el endpoint conserva los finales de línea `CRLF` del SDP y que Safari acepta la respuesta de OpenAI sin mostrar **“La oferta WebRTC no es válida”**. La transcripción se probó con un audio sintético de 4,3 segundos sin información personal.
 
 ```bash
 python -m pytest -q

@@ -250,6 +250,10 @@ La interfaz desplegada incluye voz a voz, chat contextual, Studio IA, visión, g
 
 La arquitectura de voz sigue la recomendación oficial: el navegador usa WebRTC y un endpoint confiable crea la sesión con la clave del servidor. Para evitar que Vercel interprete de forma incompleta el cuerpo `application/sdp`, el navegador encapsula en JSON la oferta original devuelta por `createOffer()` y el endpoint la reconstruye sin alterar sus finales de línea `CRLF`, valida el encabezado `v=0` y limita su tamaño a 128 KB antes de formar la solicitud multipart hacia OpenAI. En Safari se envía `offer.sdp` directamente, como indica el ejemplo oficial, para no depender de una `localDescription` transitoria mientras se reúnen candidatos ICE. Esto evita tanto **“La oferta WebRTC no es válida”** como una oferta truncada con error `EOF`. Consulta la [guía WebRTC de OpenAI](https://developers.openai.com/api/docs/guides/voice-webrtc).
 
+### Prueba funcional en producción
+
+El 25 de septiembre de 2026 se verificó en Safari la instancia `https://nexora-ai-blue-three.vercel.app/`. Pasaron Chat, Studio de texto, narración, Visión, generación de imágenes, moderación, transcripción y resumen de audio, además de la conversación de voz WebRTC. La sesión de voz mostró **“Conversación activa”** y finalizó correctamente; ya no se reproduce el error **“La oferta WebRTC no es válida”**. Automatizar no se ejecutó en esta ronda, por alcance de la prueba.
+
 ## Endpoints de la versión web
 
 | Endpoint | Propósito | Validación principal |
