@@ -467,6 +467,10 @@ La vista crea un diccionario con acción, destinatario, asunto, contenido, orige
 
 La instancia local contiene cinco workflows independientes. El primero atiende la interfaz de la aplicación; los otros cuatro amplían la demostración con capacidades especializadas y pueden invocarse directamente por HTTP.
 
+![Captura real del listado de los cinco workflows publicados en n8n](docs/screenshots/nexora-listado-publicado.png)
+
+La captura anterior corresponde a la instancia ejecutada en la Mac mediante Docker. En la columna derecha de cada fila se observa el estado **Published**, que habilita las URL de producción. El panel superior confirma además que la ejecución registrada terminó sin fallos. Las capturas de este capítulo se obtuvieron desde Safari sobre `http://localhost:5678`; no son maquetas ni diagramas conceptuales.
+
 | Workflow | Método y ruta | Entrada principal | Resultado |
 |---|---|---|---|
 | Automatizaciones locales inteligentes | `POST /webhook/nexora` | Acción, asunto, destinatario y contenido | Registro, borrador, checklist, estudio o evento |
@@ -477,14 +481,21 @@ La instancia local contiene cinco workflows independientes. El primero atiende l
 
 ### Workflow 1: centro de automatizaciones
 
-| Nodo | Función |
-|---|---|
-| Entrada NEXORA | Recibe POST en la ruta nexora |
-| Validar y normalizar | Verifica acción y contenido |
-| Validar, priorizar y enriquecer | Acepta seis acciones, normaliza campos, limita el contenido y calcula prioridad |
-| Guardar bitácora local | Añade cada solicitud a `/files/nexora-events.jsonl` dentro del contenedor |
-| Construir resultado útil | Produce un registro, borrador, checklist, sesión de estudio o evento según la acción |
-| Confirmar a la app | Devuelve el identificador, la prioridad, el estado de aprobación y el resultado |
+![Captura real del workflow Centro de automatizaciones](docs/screenshots/nexora-workflow-centro-local.png)
+
+Este flujo es la puerta de entrada de la aplicación. Su configuración mantiene una secuencia lineal para que el recorrido de los datos sea fácil de explicar durante la exposición.
+
+| Nodo | Configuración principal | Qué hace |
+|---|---|---|
+| Entrada NEXORA | Webhook `POST`, ruta `nexora`, respuesta mediante un nodo dedicado | Recibe la acción, destinatario, asunto, contenido, origen y fecha |
+| Validar, priorizar y enriquecer | Nodo Code; acciones admitidas: `sheet`, `email`, `whatsapp`, `task`, `study` y `calendar` | Normaliza campos, limita el contenido, rechaza entradas incompletas y calcula prioridad |
+| Guardar bitácora local | Nodo Code con acceso restringido a `/files`; archivo `nexora-events.jsonl` | Añade una línea JSON por solicitud sin guardar la OpenAI API Key |
+| Construir resultado útil | Nodo Code con una rama lógica por acción | Produce registro, borrador, checklist, sesión de estudio o evento |
+| Responder a NEXORA | Respond to Webhook, salida JSON | Devuelve identificador, prioridad, aprobación requerida y resultado final |
+
+![Captura real de la configuración del nodo Webhook de entrada](docs/screenshots/nexora-configuracion-webhook.png)
+
+La captura muestra la configuración exacta del nodo **Entrada NEXORA**. Para pruebas manuales se usa `http://localhost:5678/webhook-test/nexora` mientras el nodo está escuchando; cuando el workflow está publicado se utiliza `http://localhost:5678/webhook/nexora`. El método es `POST`, la autenticación está desactivada porque el servicio solo se expone en `localhost`, y la respuesta se delega al nodo **Responder a NEXORA** para controlar el JSON final. Si el servicio se publicara en Internet, sería obligatorio añadir autenticación, HTTPS y control de acceso.
 
 ```json
 {
@@ -499,19 +510,68 @@ La instancia local contiene cinco workflows independientes. El primero atiende l
 
 ### Workflow 2: coach de estudio adaptativo
 
-Divide una duración entre 20 y 120 minutos en tres fases: comprender, recordar y comprobar. Extrae conceptos frecuentes, transforma oraciones del material en preguntas de recuperación y programa repasos para hoy, mañana, tres días y siete días. Persiste el plan en `nexora-study.jsonl`.
+![Captura real del workflow Coach de estudio adaptativo](docs/screenshots/nexora-workflow-coach-estudio.png)
+
+Divide una duración entre 20 y 120 minutos en tres fases: comprender, recordar y comprobar. Extrae conceptos frecuentes, transforma oraciones del material en preguntas de recuperación y programa repasos para hoy, mañana, tres días y siete días.
+
+| Nodo | Configuración principal | Qué hace |
+|---|---|---|
+| Recibir material de estudio | Webhook `POST`, ruta `nexora-study-coach` | Recibe tema, material y duración deseada |
+| Diseñar sesión adaptativa | Nodo Code; duración acotada de 20 a 120 minutos | Calcula bloques, conceptos, preguntas y repaso espaciado |
+| Guardar plan de estudio | Nodo Code; archivo `/files/nexora-study.jsonl` | Persiste el plan para medir uso e impacto |
+| Entregar coach de estudio | Respond to Webhook, salida JSON | Devuelve el plan estructurado a la interfaz o cliente HTTP |
 
 ### Workflow 3: laboratorio de reuniones
 
-Recibe una transcripción y detecta expresiones de acuerdo, decisión, responsabilidad, tarea, bloqueo y riesgo. Devuelve un acta estructurada con resumen, participantes, decisiones, responsables, pendientes y recomendación de seguimiento. Persiste el resultado en `nexora-meetings.jsonl`.
+![Captura real del workflow Laboratorio de reuniones](docs/screenshots/nexora-workflow-reuniones.png)
+
+Recibe una transcripción y detecta expresiones de acuerdo, decisión, responsabilidad, tarea, bloqueo y riesgo.
+
+| Nodo | Configuración principal | Qué hace |
+|---|---|---|
+| Recibir transcripción | Webhook `POST`, ruta `nexora-meeting-lab` | Recibe título, participantes y transcripción |
+| Extraer acuerdos y responsables | Nodo Code con reglas de detección textual | Produce resumen, decisiones, responsables, pendientes y riesgos |
+| Archivar acta inteligente | Nodo Code; archivo `/files/nexora-meetings.jsonl` | Conserva el acta estructurada para consulta local |
+| Entregar acta y seguimiento | Respond to Webhook, salida JSON | Devuelve el acta y una recomendación de seguimiento |
 
 ### Workflow 4: guardián de privacidad
 
-Busca patrones comunes de correo, teléfono peruano, OpenAI API Key, número financiero y DNI indicado explícitamente. Calcula un puntaje de riesgo y devuelve una copia con marcadores como `[EMAIL OCULTO]`. La bitácora `nexora-privacy-audit.jsonl` guarda únicamente metadatos; excluye el contenido original y el texto redactado.
+![Captura real del workflow Guardián de privacidad](docs/screenshots/nexora-workflow-privacidad.png)
+
+Busca patrones comunes de correo, teléfono peruano, OpenAI API Key, número financiero y DNI indicado explícitamente.
+
+| Nodo | Configuración principal | Qué hace |
+|---|---|---|
+| Recibir contenido sensible | Webhook `POST`, ruta `nexora-privacy-guardian` | Recibe el texto que se desea revisar |
+| Detectar y redactar datos | Nodo Code con expresiones regulares y puntaje | Sustituye hallazgos por marcadores como `[EMAIL OCULTO]` |
+| Guardar solo metadatos seguros | Nodo Code; archivo `/files/nexora-privacy-audit.jsonl` | Registra tipos y cantidad de hallazgos, sin conservar texto original ni redactado |
+| Entregar versión redactada | Respond to Webhook, salida JSON | Devuelve copia segura, nivel de riesgo y recomendaciones |
 
 ### Workflow 5: panel de impacto local
 
-Lee las cuatro bitácoras locales, tolera archivos todavía inexistentes y calcula el total de ejecuciones, prioridades altas, aprobaciones pendientes, alertas de privacidad y actividad reciente. No necesita cuerpo de entrada y funciona como evidencia inmediata durante la exposición.
+![Captura real del workflow Panel de impacto local](docs/screenshots/nexora-workflow-panel-impacto.png)
+
+Lee las cuatro bitácoras locales, tolera archivos todavía inexistentes y calcula el total de ejecuciones, prioridades altas, aprobaciones pendientes, alertas de privacidad y actividad reciente.
+
+| Nodo | Configuración principal | Qué hace |
+|---|---|---|
+| Solicitar métricas | Webhook `GET`, ruta `nexora-impact-dashboard` | Permite consultar el panel sin enviar un cuerpo |
+| Calcular impacto y actividad | Nodo Code con lectura tolerante de cuatro JSONL | Consolida totales, prioridades, aprobaciones, alertas y eventos recientes |
+| Mostrar panel ejecutivo | Respond to Webhook, salida JSON | Entrega indicadores listos para una interfaz o para la exposición |
+
+### Configuración común de la instancia local
+
+| Elemento | Configuración | Motivo |
+|---|---|---|
+| Ejecución | `docker compose up -d` | Levanta n8n en segundo plano sin contratar n8n Cloud |
+| Puerto | `5678:5678` | Expone el editor y los webhooks solo desde la Mac |
+| Persistencia n8n | Volumen `n8n_data` | Conserva workflows y configuración al reiniciar el contenedor |
+| Persistencia del proyecto | `./n8n-local:/files` | Deja las bitácoras JSONL accesibles desde el repositorio local |
+| Acceso a módulos | `NODE_FUNCTION_ALLOW_BUILTIN=fs,path` | Permite que los nodos Code escriban y consulten los archivos autorizados |
+| Restricción de archivos | `N8N_RESTRICT_FILE_ACCESS_TO=/files` | Impide que los workflows lean rutas arbitrarias del contenedor |
+| Zona horaria | `America/Lima` | Mantiene fechas y métricas coherentes con la demostración |
+
+Cada workflow fue importado desde su JSON versionado en `automations/`, publicado mediante la CLI de n8n y probado por su URL de producción. Esta combinación hace reproducible la configuración: otro integrante puede levantar Docker, importar los mismos archivos y obtener los mismos nodos y rutas.
 
 ### Funcionamiento local e integraciones opcionales
 
@@ -909,7 +969,7 @@ N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 ## Anexo C Lista de verificación
 
 - [ ] Completar carátula e integrantes.
-- [ ] Insertar capturas reales.
+- [x] Insertar capturas reales de los cinco workflows, el listado publicado y la configuración del Webhook.
 - [ ] Confirmar que no exista una API key.
 - [ ] Ejecutar pruebas y registrar resultado.
 - [ ] Verificar la URL del repositorio.

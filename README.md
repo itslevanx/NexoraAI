@@ -90,6 +90,23 @@ La experiencia publicada conserva también el chat contextual, la grabación o c
 
 ![Mapa de los cinco workflows n8n](docs/images/mapa-workflows-n8n.png)
 
+### Evidencia visual de n8n
+
+La documentación incluye capturas reales tomadas desde Safari sobre la instancia local. Se muestran los cinco workflows publicados, el recorrido de cada flujo y la configuración del Webhook de entrada.
+
+![Cinco workflows publicados en la instancia local](docs/screenshots/nexora-listado-publicado.png)
+
+| Evidencia | Archivo |
+|---|---|
+| Centro de automatizaciones | [`nexora-workflow-centro-local.png`](docs/screenshots/nexora-workflow-centro-local.png) |
+| Coach de estudio | [`nexora-workflow-coach-estudio.png`](docs/screenshots/nexora-workflow-coach-estudio.png) |
+| Laboratorio de reuniones | [`nexora-workflow-reuniones.png`](docs/screenshots/nexora-workflow-reuniones.png) |
+| Guardián de privacidad | [`nexora-workflow-privacidad.png`](docs/screenshots/nexora-workflow-privacidad.png) |
+| Panel de impacto | [`nexora-workflow-panel-impacto.png`](docs/screenshots/nexora-workflow-panel-impacto.png) |
+| Parámetros del Webhook | [`nexora-configuracion-webhook.png`](docs/screenshots/nexora-configuracion-webhook.png) |
+
+El capítulo **Integración con n8n** de [`DOCUMENTACION_COMPLETA.md`](docs/DOCUMENTACION_COMPLETA.md) explica la configuración y función de cada nodo. La versión Word incorpora las mismas capturas con pies de figura y tablas explicativas.
+
 ### Experiencia visual
 
 - Identidad propia con icono de NEXORA AI.
@@ -265,6 +282,8 @@ docker compose up -d
 ```
 
 El contenedor queda disponible en `http://localhost:5678` y conserva su configuración en el volumen `n8n_data`. Los cinco workflows se importan desde `automations/` y sus bitácoras ignoradas por Git se guardan dentro de `n8n-local/`.
+
+La configuración de Docker habilita únicamente los módulos `fs` y `path` para los nodos Code, monta `./n8n-local` como `/files` y restringe el acceso de archivos a esa ruta. Así, los workflows pueden crear sus JSONL sin acceder al resto del sistema. En cada Webhook se define el método y la ruta indicados en la tabla anterior; los flujos `POST` responden mediante un nodo **Respond to Webhook**, y el panel de impacto se consulta con `GET`.
 
 Para importar y publicar manualmente desde la terminal:
 
