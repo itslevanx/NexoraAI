@@ -44,6 +44,14 @@ $$('[data-view]').forEach((button) => {
   });
 });
 
+$$('[data-studio]').forEach((button) => {
+  button.addEventListener("click", () => {
+    $$('[data-studio]').forEach((item) => item.classList.toggle("active", item === button));
+    $$('.studio-panel').forEach((panel) => panel.classList.remove("active"));
+    $(`#${button.dataset.studio}Studio`).classList.add("active");
+  });
+});
+
 const settingsDialog = $("#settingsDialog");
 $("#settingsButton").addEventListener("click", () => settingsDialog.showModal());
 settingsDialog.addEventListener("close", () => {
@@ -331,14 +339,17 @@ $("#summarizeButton").addEventListener("click", async () => {
 });
 
 $("#downloadTranscript").addEventListener("click", () => {
-  const text = $("#transcriptionResult").value;
+  downloadText($("#transcriptionResult").value, "transcripcion-nexora.txt");
+});
+
+function downloadText(text, filename) {
   const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
-  link.download = "transcripcion-nexora.txt";
+  link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
-});
+}
 
 $("#useInChat").addEventListener("click", () => {
   const text = $("#transcriptionResult").value.trim();
@@ -346,6 +357,152 @@ $("#useInChat").addEventListener("click", () => {
   $("#chatInput").value = `Trabaja con esta transcripción:\n\n${text}`;
   document.querySelector('[data-view="chat"]').click();
   $("#chatInput").focus();
+});
+
+function setStudioActions(enabled) {
+  ["#studioToSpeech", "#studioDownload", "#studioToChat"].forEach((selector) => { $(selector).disabled = !enabled; });
+}
+
+$("#studioForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  button.disabled = true;
+  button.textContent = "Procesando…";
+  try {
+    const response = await fetch("/api/studio", {
+      method: "POST",
+      headers: apiHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        mode: $("#studioMode").value,
+        instruction: $("#studioInstruction").value.trim(),
+        content: $("#studioInput").value.trim(),
+        model: state.chatModel
+      })
+    });
+    if (!response.ok) throw new Error(await apiError(response));
+    $("#studioResult").value = (await response.json()).text;
+    setStudioActions(true);
+  } catch (error) { toast(error.message); }
+  finally { button.disabled = false; button.textContent = "Procesar con IA"; }
+});
+
+$("#studioToSpeech").addEventListener("click", async () => {
+  const text = $("#studioResult").value.trim();
+  if (!text) return;
+  const button = $("#studioToSpeech");
+  button.disabled = true;
+  button.textContent = "Creando voz…";
+  try {
+    const response = await fetch("/api/speech", {
+      method: "POST",
+      headers: apiHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ text })
+    });
+    if (!response.ok) throw new Error(await apiError(response));
+    const audio = $("#speechPreview");
+    if (audio.src) URL.revokeObjectURL(audio.src);
+    audio.src = URL.createObjectURL(await response.blob());
+    audio.hidden = false;
+    await audio.play();
+  } catch (error) { toast(error.message); }
+  finally { button.disabled = false; button.textContent = "Escuchar con voz IA"; }
+});
+
+$("#studioDownload").addEventListener("click", () => downloadText($("#studioResult").value, "resultado-nexora.txt"));
+$("#studioToChat").addEventListener("click", () => {
+  $("#chatInput").value = `Continuemos trabajando con este resultado:\n\n${$("#studioResult").value}`;
+  document.querySelector('[data-view="chat"]').click();
+  $("#chatInput").focus();
+});
+
+$("#visionFile").addEventListener("change", () => {
+  const file = $("#visionFile").files[0];
+  if (!file) return;
+  if ($("#visionPreview").src) URL.revokeObjectURL($("#visionPreview").src);
+  $("#visionPreview").src = URL.createObjectURL(file);
+  $("#visionPreview").hidden = false;
+  $("#visionStudio .upload span").textContent = file.name;
+});
+
+$("#visionForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const file = $("#visionFile").files[0];
+  if (!file) return toast("Selecciona una imagen.");
+  if (file.size > 4 * 1024 * 1024) return toast("La imagen debe pesar menos de 4 MB.");
+  const button = event.submitter;
+  button.disabled = true;
+  button.textContent = "Analizando…";
+  try {
+    const response = await fetch("/api/vision", {
+      method: "POST",
+      headers: apiHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        data: await fileToBase64(file),
+        mimeType: file.type,
+        prompt: $("#visionPrompt").value.trim(),
+        model: state.chatModel
+      })
+    });
+    if (!response.ok) throw new Error(await apiError(response));
+    $("#visionResult").value = (await response.json()).text;
+  } catch (error) { toast(error.message); }
+  finally { button.disabled = false; button.textContent = "Analizar imagen"; }
+});
+
+$("#imageForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  button.disabled = true;
+  button.textContent = "Generando…";
+  const result = $("#imageResult");
+  result.className = "generated-image";
+  result.textContent = "NEXORA está creando la imagen…";
+  try {
+    const response = await fetch("/api/image", {
+      method: "POST",
+      headers: apiHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ prompt: $("#imagePrompt").value.trim(), size: $("#imageSize").value })
+    });
+    if (!response.ok) throw new Error(await apiError(response));
+    const { image } = await response.json();
+    result.innerHTML = "";
+    const preview = document.createElement("img");
+    preview.src = image;
+    preview.alt = "Imagen generada por NEXORA AI";
+    const actions = document.createElement("div");
+    actions.className = "image-actions";
+    const download = document.createElement("a");
+    download.className = "secondary link-button";
+    download.href = image;
+    download.download = "imagen-nexora.jpg";
+    download.textContent = "Descargar imagen";
+    actions.append(download);
+    result.append(preview, actions);
+  } catch (error) {
+    result.className = "generated-image empty";
+    result.textContent = "No se pudo generar la imagen.";
+    toast(error.message);
+  } finally { button.disabled = false; button.textContent = "Generar imagen"; }
+});
+
+$("#moderationForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  button.disabled = true;
+  button.textContent = "Analizando…";
+  try {
+    const response = await fetch("/api/moderate", {
+      method: "POST",
+      headers: apiHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ text: $("#moderationInput").value.trim() })
+    });
+    if (!response.ok) throw new Error(await apiError(response));
+    const result = await response.json();
+    $("#moderationResult").textContent = result.flagged
+      ? `Requiere revisión.\n\nCategorías detectadas:\n${result.categories.join("\n")}`
+      : "Contenido no marcado por el modelo de moderación.";
+  } catch (error) { toast(error.message); }
+  finally { button.disabled = false; button.textContent = "Analizar seguridad"; }
 });
 
 $("#automationForm").addEventListener("submit", async (event) => {

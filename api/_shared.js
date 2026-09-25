@@ -27,3 +27,12 @@ export async function readOpenAIError(response) {
     return text || `OpenAI respondió con HTTP ${response.status}.`;
   }
 }
+
+export function extractResponseText(data) {
+  return (data.output || [])
+    .flatMap((item) => item.content || [])
+    .filter((item) => item.type === "output_text")
+    .map((item) => item.text)
+    .join("\n")
+    .trim();
+}

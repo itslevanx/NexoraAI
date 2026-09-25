@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#050505" />
-    <meta name="description" content="NEXORA AI: voz, chat, transcripción y automatizaciones con OpenAI." />
+    <meta name="description" content="NEXORA AI: voz, chat, visión, imágenes, estudio, transcripción y automatizaciones con OpenAI." />
     <link rel="icon" href="/favicon.svg" />
     <link rel="stylesheet" href="/styles.css" />
     <title>NEXORA AI</title>
@@ -18,6 +18,7 @@
         <nav aria-label="Navegación principal">
           <button class="nav-link active" data-view="voice">Voz</button>
           <button class="nav-link" data-view="chat">Chat</button>
+          <button class="nav-link" data-view="studio">Studio IA</button>
           <button class="nav-link" data-view="transcribe">Transcribir</button>
           <button class="nav-link" data-view="automate">Automatizar</button>
         </nav>
@@ -48,6 +49,99 @@
           <section class="transcript-panel" aria-live="polite">
             <div class="section-heading"><span>Transcripción en vivo</span><button id="clearTranscript" class="text-button">Limpiar</button></div>
             <div id="liveTranscript" class="transcript empty">La conversación aparecerá aquí.</div>
+          </section>
+        </section>
+
+        <section id="studioView" class="view" aria-labelledby="studioTitle">
+          <div class="intro compact">
+            <p class="kicker">Laboratorio multimodal</p>
+            <h1 id="studioTitle">Una IA. Muchas capacidades.</h1>
+            <p>Transforma texto, crea material de estudio, analiza imágenes, genera arte, revisa seguridad y convierte resultados en voz.</p>
+          </div>
+
+          <div class="studio-tabs" role="tablist" aria-label="Herramientas de Studio IA">
+            <button class="studio-tab active" data-studio="text">Texto</button>
+            <button class="studio-tab" data-studio="vision">Visión</button>
+            <button class="studio-tab" data-studio="image">Imágenes</button>
+            <button class="studio-tab" data-studio="safety">Seguridad</button>
+          </div>
+
+          <section id="textStudio" class="studio-panel active">
+            <form id="studioForm" class="form-card">
+              <label>Herramienta
+                <select id="studioMode">
+                  <option value="summarize">Resumir y extraer puntos clave</option>
+                  <option value="rewrite">Reescribir y corregir</option>
+                  <option value="translate">Traducir</option>
+                  <option value="study">Crear guía de estudio</option>
+                  <option value="quiz">Generar examen y respuestas</option>
+                  <option value="brainstorm">Generar ideas</option>
+                  <option value="email">Redactar email profesional</option>
+                  <option value="presentation">Crear guion de exposición</option>
+                  <option value="code">Explicar o revisar código</option>
+                  <option value="extract">Extraer datos estructurados</option>
+                  <option value="analyze">Analizar argumentos y conclusiones</option>
+                </select>
+              </label>
+              <label>Idioma o instrucción adicional
+                <input id="studioInstruction" type="text" placeholder="Ejemplo: inglés, tono formal, nivel universitario" />
+              </label>
+              <label>Contenido
+                <textarea id="studioInput" rows="9" placeholder="Pega aquí el texto, apuntes, código o ideas" required></textarea>
+              </label>
+              <button class="primary wide" type="submit">Procesar con IA</button>
+            </form>
+            <textarea id="studioResult" class="result-area" placeholder="El resultado aparecerá aquí" readonly></textarea>
+            <div class="result-actions">
+              <button id="studioToSpeech" class="secondary" disabled>Escuchar con voz IA</button>
+              <button id="studioDownload" class="secondary" disabled>Descargar resultado</button>
+              <button id="studioToChat" class="secondary" disabled>Continuar en chat</button>
+            </div>
+            <audio id="speechPreview" class="audio-preview" controls hidden></audio>
+            <p class="ai-disclosure">La narración utiliza una voz generada por inteligencia artificial.</p>
+          </section>
+
+          <section id="visionStudio" class="studio-panel">
+            <form id="visionForm" class="form-card">
+              <label class="upload compact-upload" for="visionFile">
+                <span>Seleccionar imagen</span>
+                <small>PNG, JPG o WEBP · máximo 4 MB</small>
+                <input id="visionFile" type="file" accept="image/png,image/jpeg,image/webp" required />
+              </label>
+              <img id="visionPreview" class="image-preview" alt="Vista previa para análisis" hidden />
+              <label>¿Qué debe analizar NEXORA?
+                <textarea id="visionPrompt" rows="4" placeholder="Describe la imagen, extrae el texto y señala los elementos importantes.">Describe la imagen, extrae el texto visible y explica sus elementos importantes.</textarea>
+              </label>
+              <button class="primary wide" type="submit">Analizar imagen</button>
+            </form>
+            <textarea id="visionResult" class="result-area" placeholder="El análisis visual aparecerá aquí" readonly></textarea>
+          </section>
+
+          <section id="imageStudio" class="studio-panel">
+            <form id="imageForm" class="form-card">
+              <label>Descripción de la imagen
+                <textarea id="imagePrompt" rows="6" placeholder="Un afiche tecnológico minimalista en blanco y negro..." required></textarea>
+              </label>
+              <label>Formato
+                <select id="imageSize">
+                  <option value="1024x1024">Cuadrado</option>
+                  <option value="1536x1024">Horizontal</option>
+                  <option value="1024x1536">Vertical</option>
+                </select>
+              </label>
+              <button class="primary wide" type="submit">Generar imagen</button>
+            </form>
+            <div id="imageResult" class="generated-image empty">La imagen generada aparecerá aquí.</div>
+          </section>
+
+          <section id="safetyStudio" class="studio-panel">
+            <form id="moderationForm" class="form-card">
+              <label>Contenido a revisar
+                <textarea id="moderationInput" rows="8" placeholder="Pega aquí el texto que deseas clasificar" required></textarea>
+              </label>
+              <button class="primary wide" type="submit">Analizar seguridad</button>
+            </form>
+            <pre id="moderationResult" class="automation-result">El análisis de seguridad aparecerá aquí.</pre>
           </section>
         </section>
 
@@ -122,7 +216,7 @@
         </section>
       </main>
 
-      <footer><span>NEXORA AI</span><span>OpenAI · WebRTC · Vercel</span></footer>
+      <footer><span>NEXORA AI</span><span>Texto · Voz · Visión · Imágenes · Automatización</span></footer>
     </div>
 
     <dialog id="settingsDialog">

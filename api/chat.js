@@ -1,4 +1,4 @@
-import { parseJsonBody, readOpenAIError, rejectMethod, resolveApiKey } from "./_shared.js";
+import { extractResponseText, parseJsonBody, readOpenAIError, rejectMethod, resolveApiKey } from "./_shared.js";
 
 export default async function handler(req, res) {
   if (rejectMethod(req, res)) return;
@@ -25,12 +25,7 @@ export default async function handler(req, res) {
     });
     if (!response.ok) return res.status(response.status).json({ error: await readOpenAIError(response) });
     const data = await response.json();
-    const text = (data.output || [])
-      .flatMap((item) => item.content || [])
-      .filter((item) => item.type === "output_text")
-      .map((item) => item.text)
-      .join("\n")
-      .trim();
+    const text = extractResponseText(data);
     return res.status(200).json({ text: text || "No se recibió texto del modelo." });
   } catch (error) {
     return res.status(500).json({ error: error.message });
