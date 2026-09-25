@@ -396,7 +396,7 @@ Streamlit configura el título, icono y diseño ancho. `inject_theme` incorpora 
 
 ### Voz en tiempo real
 
-El navegador obtiene el micrófono con `getUserMedia`, crea un `RTCPeerConnection` y genera una oferta SDP. El endpoint `/api/realtime-session` recibe `application/sdp` como cuerpo crudo, valida que comience con `v=0`, limita la oferta a 128 KB y la envía junto con la configuración de sesión a OpenAI mediante `/v1/realtime/calls`. El parser automático de Vercel se desactiva únicamente para esta ruta porque no convierte `application/sdp` a texto; la función reconstruye el cuerpo desde el flujo HTTP sin exponer la API Key. La respuesta SDP completa la conexión. El audio se transporta por WebRTC y un canal de datos recibe eventos de turnos y transcripción. La sesión utiliza `gpt-realtime-2.1`, la voz `marin`, detección de turnos del servidor e instrucciones en español.
+El navegador obtiene el micrófono con `getUserMedia`, crea un `RTCPeerConnection` y genera una oferta SDP. Para evitar el tratamiento incompleto de `application/sdp` en el runtime serverless, envía la oferta dentro de un objeto JSON al endpoint `/api/realtime-session`. La función extrae el SDP, valida que comience con `v=0`, limita la oferta a 128 KB y la combina con la configuración de sesión en el formulario multipart requerido por `/v1/realtime/calls`, sin exponer la API Key. La respuesta SDP completa la conexión. El audio se transporta por WebRTC y un canal de datos recibe eventos de turnos y transcripción. La sesión utiliza `gpt-realtime-2.1`, la voz `marin`, detección de turnos del servidor e instrucciones en español.
 
 ### Chat
 
@@ -959,7 +959,7 @@ N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 | Respuesta lenta | Red o audio largo | Esperar o reducir archivo |
 | Mensaje no enviado | El flujo genera un borrador seguro | Revisar, aprobar y conectar el proveedor externo si se necesita envío real |
 | Voz no inicia | Micrófono bloqueado o modelo sin acceso | Autorizar Safari y verificar la cuenta |
-| “La oferta WebRTC no es válida” | El runtime interpretó incorrectamente el cuerpo `application/sdp` | Usar la versión actual del endpoint, que desactiva el parser y lee el SDP crudo; desplegar de nuevo en Vercel |
+| “La oferta WebRTC no es válida” o `Failed to parse offer … EOF` | El runtime interpretó o truncó el cuerpo `application/sdp` | Usar la versión actual, que transporta el SDP dentro de JSON y valida la oferta completa; desplegar de nuevo en Vercel |
 | Vercel muestra 401 | Variable y clave temporal ausentes | Configurar `OPENAI_API_KEY` o pegarla en Configuración |
 | Audio web rechazado | Archivo mayor de 4 MB | Reducir el archivo o usar Streamlit local |
 | Imagen rechazada | Formato o tamaño no permitido | Usar PNG, JPG o WEBP de menos de 4 MB |

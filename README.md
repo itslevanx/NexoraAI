@@ -248,7 +248,7 @@ El directorio raíz ya incluye una aplicación estática y funciones serverless 
 
 La interfaz desplegada incluye voz a voz, chat contextual, Studio IA, visión, generación de imágenes, voz sintética, moderación, grabación, carga y edición de transcripciones, resumen, descarga TXT, reutilización en chat y automatizaciones n8n. Por el límite del cuerpo de las funciones serverless, los audios e imágenes web aceptan archivos menores de 4 MB; la versión Streamlit conserva su límite de audio de 25 MB.
 
-La arquitectura de voz sigue la recomendación oficial: el navegador usa WebRTC y un endpoint confiable crea la sesión con la clave del servidor. El endpoint desactiva el parser automático de Vercel solo para esta ruta, lee el cuerpo crudo `application/sdp`, valida el encabezado `v=0` y limita la oferta a 128 KB antes de enviarla a OpenAI. Esto evita el error **“La oferta WebRTC no es válida”** causado cuando el runtime no transforma ese tipo de contenido en texto. Consulta la [guía WebRTC de OpenAI](https://developers.openai.com/api/docs/guides/voice-webrtc).
+La arquitectura de voz sigue la recomendación oficial: el navegador usa WebRTC y un endpoint confiable crea la sesión con la clave del servidor. Para evitar que Vercel interprete de forma incompleta el cuerpo `application/sdp`, el navegador encapsula la oferta SDP en JSON y el endpoint la reconstruye, valida el encabezado `v=0` y limita su tamaño a 128 KB antes de formar la solicitud multipart hacia OpenAI. Esto evita tanto **“La oferta WebRTC no es válida”** como una oferta truncada con error `EOF`. Consulta la [guía WebRTC de OpenAI](https://developers.openai.com/api/docs/guides/voice-webrtc).
 
 ## Endpoints de la versión web
 

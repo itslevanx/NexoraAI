@@ -1,31 +1,40 @@
 import { readOpenAIError, rejectMethod, resolveApiKey } from "./_shared.js";
 
 export const config = {
-  // La oferta SDP debe llegar como texto crudo. El parser de Vercel no
-  // convierte application/sdp a string, por eso se desactiva para esta ruta.
-  api: { bodyParser: false },
+  // El navegador envía la oferta dentro de JSON porque Vercel no transforma
+  // application/sdp de forma consistente en todas sus funciones Node.js.
+  api: { bodyParser: { sizeLimit: "256kb" } },
 };
 
 const MAX_SDP_BYTES = 128 * 1024;
 
 export async function readSdpBody(req) {
-  if (typeof req.body === "string") return req.body.trim();
-  if (Buffer.isBuffer(req.body)) return req.body.toString("utf8").trim();
-  if (typeof req.body?.sdp === "string") return req.body.sdp.trim();
-
-  const chunks = [];
-  let total = 0;
-  for await (const chunk of req) {
-    const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-    total += bytes.length;
-    if (total > MAX_SDP_BYTES) {
-      const error = new Error("La oferta WebRTC supera el tamaño permitido.");
-      error.statusCode = 413;
-      throw error;
+  let sdp;
+  if (typeof req.body === "string") sdp = req.body;
+  else if (Buffer.isBuffer(req.body)) sdp = req.body.toString("utf8");
+  else if (typeof req.body?.sdp === "string") sdp = req.body.sdp;
+  else {
+    const chunks = [];
+    let total = 0;
+    for await (const chunk of req) {
+      const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      total += bytes.length;
+      if (total > MAX_SDP_BYTES) {
+        const error = new Error("La oferta WebRTC supera el tamaño permitido.");
+        error.statusCode = 413;
+        throw error;
+      }
+      chunks.push(bytes);
     }
-    chunks.push(bytes);
+    sdp = Buffer.concat(chunks).toString("utf8");
   }
-  return Buffer.concat(chunks).toString("utf8").trim();
+
+  if (Buffer.byteLength(sdp, "utf8") > MAX_SDP_BYTES) {
+    const error = new Error("La oferta WebRTC supera el tamaño permitido.");
+    error.statusCode = 413;
+    throw error;
+  }
+  return sdp.trim();
 }
 
 export default async function handler(req, res) {

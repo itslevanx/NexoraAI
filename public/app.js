@@ -162,8 +162,8 @@ async function startCall() {
     await waitForIce(peer);
     const response = await fetch("/api/realtime-session", {
       method: "POST",
-      headers: apiHeaders({ "Content-Type": "application/sdp" }),
-      body: peer.localDescription.sdp
+      headers: apiHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ sdp: peer.localDescription.sdp })
     });
     if (!response.ok) throw new Error(await apiError(response));
     await peer.setRemoteDescription({ type: "answer", sdp: await response.text() });

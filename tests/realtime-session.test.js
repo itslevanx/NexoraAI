@@ -17,7 +17,19 @@ test("acepta un cuerpo SDP que ya fue convertido a texto", async () => {
   assert.equal(await readSdpBody(request), OFFER.trim());
 });
 
+test("acepta la oferta SDP dentro del JSON enviado por el navegador", async () => {
+  const request = Readable.from([]);
+  request.body = { sdp: OFFER };
+  assert.equal(await readSdpBody(request), OFFER.trim());
+});
+
 test("rechaza una oferta SDP excesivamente grande", async () => {
   const request = Readable.from([Buffer.alloc(128 * 1024 + 1, "a")]);
+  await assert.rejects(readSdpBody(request), (error) => error.statusCode === 413);
+});
+
+test("rechaza una oferta SDP excesiva aunque Vercel ya haya procesado el JSON", async () => {
+  const request = Readable.from([]);
+  request.body = { sdp: `v=0\r\n${"a".repeat(128 * 1024)}` };
   await assert.rejects(readSdpBody(request), (error) => error.statusCode === 413);
 });
