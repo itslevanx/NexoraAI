@@ -71,10 +71,10 @@ La experiencia publicada conserva también el chat contextual, la grabación o c
 - Ofrece seis acciones: `sheet`, `email`, `whatsapp`, `task`, `study` y `calendar`.
 - Detecta prioridad alta, media o normal según el contenido.
 - Guarda cada solicitud en `n8n-local/nexora-events.jsonl` dentro de la Mac.
-- Construye registros, borradores, checklists, sesiones de estudio y eventos.
-- Marca email, WhatsApp y calendario como pendientes de aprobación humana.
+- Entrega emails reales por SMTP a un buzón Mailpit visible en `http://localhost:8025`, sin salir de la Mac.
+- Crea una hoja CSV, un outbox local de WhatsApp, checklists Markdown, sesiones de estudio y calendarios ICS dentro de `n8n-local/outputs/`.
 - Valida y normaliza el contenido antes de procesarlo.
-- Mantiene las credenciales de servicios externos dentro de n8n.
+- No requiere cuentas, credenciales ni suscripciones para la demostración local.
 - Incluye un coach que crea bloques de estudio, preguntas y repaso espaciado.
 - Convierte transcripciones de reuniones en actas con acuerdos, tareas y riesgos.
 - Detecta y oculta correos, teléfonos, documentos, números financieros y claves API sin guardar el contenido sensible.
@@ -82,7 +82,7 @@ La experiencia publicada conserva también el chat contextual, la grabación o c
 
 | Workflow | Webhook | Resultado destacado |
 |---|---|---|
-| Centro local | `POST /webhook/nexora` | Seis acciones, prioridad, bitácora y borradores seguros |
+| Centro local | `POST /webhook/nexora` | Seis acciones, correo SMTP local y artefactos verificables |
 | Coach de estudio adaptativo | `POST /webhook/nexora-study-coach` | Sesión por bloques, conceptos, preguntas y repaso espaciado |
 | Laboratorio de reuniones | `POST /webhook/nexora-meeting-lab` | Resumen, decisiones, responsables, tareas y riesgos |
 | Guardián de privacidad | `POST /webhook/nexora-privacy-guardian` | Puntaje de riesgo y versión redactada sin persistir secretos |
@@ -282,12 +282,20 @@ El 25 de septiembre de 2026 se verificó en Safari la instancia `https://nexora-
 ### Levantar n8n con Docker en la Mac
 
 ```bash
-docker compose up -d
+./scripts/start_n8n_local.sh
 ```
 
-El contenedor queda disponible en `http://localhost:5678` y conserva su configuración en el volumen `n8n_data`. Los cinco workflows se importan desde `automations/` y sus bitácoras ignoradas por Git se guardan dentro de `n8n-local/`.
+El comando construye y levanta tres servicios: n8n en `http://localhost:5678`, el puente SMTP interno y Mailpit en `http://localhost:8025`. También importa y publica los cinco workflows. n8n conserva su configuración en el volumen `n8n_data`; las bitácoras y los artefactos de demostración quedan dentro de `n8n-local/` y están excluidos de Git.
 
-La configuración de Docker habilita únicamente los módulos `fs` y `path` para los nodos Code, monta `./n8n-local` como `/files` y restringe el acceso de archivos a esa ruta. Así, los workflows pueden crear sus JSONL sin acceder al resto del sistema. En cada Webhook se define el método y la ruta indicados en la tabla anterior; los flujos `POST` responden mediante un nodo **Respond to Webhook**, y el panel de impacto se consulta con `GET`.
+La configuración de Docker habilita únicamente los módulos `fs` y `path` para los nodos Code, monta `./n8n-local` como `/files` y restringe el acceso de archivos a esa ruta. El servicio `mailer` recibe la orden de n8n, valida el destinatario y entrega el mensaje por SMTP a Mailpit. Ningún correo abandona la Mac.
+
+Para la demostración rápida:
+
+```bash
+./scripts/demo_n8n_local.sh
+```
+
+Después abre `http://localhost:8025`: aparecerá el mensaje recibido con remitente, destinatario, asunto y contenido.
 
 Para importar y publicar manualmente desde la terminal:
 
@@ -316,7 +324,7 @@ Comprobación rápida:
 curl http://localhost:5678/healthz
 curl -X POST http://localhost:5678/webhook/nexora \
   -H 'Content-Type: application/json' \
-  -d '{"action":"task","subject":"Exposición","content":"Urgente: terminar diapositivas hoy. Ensayar la demo."}'
+  -d '{"action":"email","recipient":"docente@ejemplo.com","subject":"NEXORA AI - Demo","content":"Correo enviado por el workflow local."}'
 ```
 
 ### Activar los workflows
@@ -326,13 +334,14 @@ curl -X POST http://localhost:5678/webhook/nexora \
 3. Activar o publicar cada workflow.
 4. Copiar `http://localhost:5678/webhook/nexora` en la barra lateral.
 5. Ejecutar una acción desde **Automatizaciones**.
+6. Para email, abrir `http://localhost:8025` y mostrar el mensaje recibido.
 
 ### Conectar servicios externos opcionales
 
-El workflow local ya funciona sin cuentas de pago: valida, prioriza, crea el resultado y lo registra en JSONL. Los borradores no producen efectos externos.
+El workflow local ya funciona sin cuentas de pago: valida, prioriza, registra la ejecución y produce un resultado comprobable. El correo se entrega dentro de Mailpit; CSV, WhatsApp, tareas, estudio y calendario se guardan en `n8n-local/outputs/`.
 
 - Conectar Google Sheets con la operación Append Row si el equipo desea sincronización.
-- Conectar Gmail, Outlook o SMTP después del paso de aprobación.
+- Sustituir el puente SMTP local por Gmail, Outlook o un SMTP real únicamente cuando el equipo disponga de credenciales y destinatarios autorizados.
 - Conectar WhatsApp Business Cloud o Twilio únicamente con consentimiento.
 - Conectar Google Calendar u Outlook Calendar para crear eventos aprobados.
 - Configurar las credenciales únicamente dentro de n8n.

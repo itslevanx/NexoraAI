@@ -473,7 +473,7 @@ La captura anterior corresponde a la instancia ejecutada en la Mac mediante Dock
 
 | Workflow | Método y ruta | Entrada principal | Resultado |
 |---|---|---|---|
-| Automatizaciones locales inteligentes | `POST /webhook/nexora` | Acción, asunto, destinatario y contenido | Registro, borrador, checklist, estudio o evento |
+| Automatizaciones locales inteligentes | `POST /webhook/nexora` | Acción, asunto, destinatario y contenido | Email SMTP local, CSV, outbox, checklist, estudio o ICS |
 | Coach de estudio adaptativo | `POST /webhook/nexora-study-coach` | Tema, contenido y minutos | Bloques, conceptos, preguntas y repaso espaciado |
 | Laboratorio de reuniones | `POST /webhook/nexora-meeting-lab` | Título, participantes y transcripción | Acta, decisiones, tareas, responsables y riesgos |
 | Guardián de privacidad | `POST /webhook/nexora-privacy-guardian` | Contenido por revisar | Hallazgos, puntaje y copia redactada |
@@ -483,14 +483,17 @@ La captura anterior corresponde a la instancia ejecutada en la Mac mediante Dock
 
 ![Captura real del workflow Centro de automatizaciones](docs/screenshots/nexora-workflow-centro-local.png)
 
-Este flujo es la puerta de entrada de la aplicación. Su configuración mantiene una secuencia lineal para que el recorrido de los datos sea fácil de explicar durante la exposición.
+Este flujo es la puerta de entrada de la aplicación. Después de construir el artefacto local, un nodo condicional separa la acción `email`: esa rama llama al puente SMTP, entrega el mensaje a Mailpit y confirma la recepción. Las demás acciones responden directamente con la ruta del archivo creado.
 
 | Nodo | Configuración principal | Qué hace |
 |---|---|---|
 | Entrada NEXORA | Webhook `POST`, ruta `nexora`, respuesta mediante un nodo dedicado | Recibe la acción, destinatario, asunto, contenido, origen y fecha |
 | Validar, priorizar y enriquecer | Nodo Code; acciones admitidas: `sheet`, `email`, `whatsapp`, `task`, `study` y `calendar` | Normaliza campos, limita el contenido, rechaza entradas incompletas y calcula prioridad |
 | Guardar bitácora local | Nodo Code con acceso restringido a `/files`; archivo `nexora-events.jsonl` | Añade una línea JSON por solicitud sin guardar la OpenAI API Key |
-| Construir resultado útil | Nodo Code con una rama lógica por acción | Produce registro, borrador, checklist, sesión de estudio o evento |
+| Construir artefacto local | Nodo Code con una rama lógica por acción | Crea CSV, outbox JSONL, checklist Markdown, plan de estudio o calendario ICS |
+| ¿Es un correo? | Nodo If, condición `action = email` | Envía únicamente los correos hacia la rama SMTP |
+| Enviar correo local | HTTP Request a `http://mailer:3001/send` | Entrega el mensaje al servicio SMTP privado de Docker |
+| Confirmar correo local | Nodo Code | Añade el identificador del mensaje y la URL de Mailpit |
 | Responder a NEXORA | Respond to Webhook, salida JSON | Devuelve identificador, prioridad, aprobación requerida y resultado final |
 
 ![Captura real de la configuración del nodo Webhook de entrada](docs/screenshots/nexora-configuracion-webhook.png)
@@ -565,6 +568,9 @@ Lee las cuatro bitácoras locales, tolera archivos todavía inexistentes y calcu
 |---|---|---|
 | Ejecución | `docker compose up -d` | Levanta n8n en segundo plano sin contratar n8n Cloud |
 | Puerto | `5678:5678` | Expone el editor y los webhooks solo desde la Mac |
+| Buzón Mailpit | `8025:8025` | Muestra los correos recibidos sin enviarlos a Internet |
+| SMTP Mailpit | `1025:1025` | Recibe el correo de demostración dentro de Docker |
+| Puente de correo | Servicio `mailer`, puerto interno `3001` | Valida la solicitud y conversa con Mailpit mediante SMTP |
 | Persistencia n8n | Volumen `n8n_data` | Conserva workflows y configuración al reiniciar el contenedor |
 | Persistencia del proyecto | `./n8n-local:/files` | Deja las bitácoras JSONL accesibles desde el repositorio local |
 | Acceso a módulos | `NODE_FUNCTION_ALLOW_BUILTIN=fs,path` | Permite que los nodos Code escriban y consulten los archivos autorizados |
@@ -575,10 +581,10 @@ Cada workflow fue importado desde su JSON versionado en `automations/`, publicad
 
 ### Funcionamiento local e integraciones opcionales
 
-El workflow funciona de principio a fin sin suscripciones: guarda el registro en la Mac y genera el resultado dentro de n8n. Las acciones `email`, `whatsapp` y `calendar` devuelven borradores con `approvalRequired: true`; no envían ni publican nada por accidente.
+El workflow funciona de principio a fin sin suscripciones. La acción `email` entrega un mensaje real por SMTP al buzón Mailpit local, accesible en `http://localhost:8025`; no se conecta con proveedores externos ni requiere credenciales. `sheet` crea `registro-nexora.csv`; `whatsapp` agrega un mensaje a `whatsapp-outbox.jsonl`; `task` y `study` escriben archivos Markdown; y `calendar` produce una invitación ICS. Todos los archivos se guardan en `n8n-local/outputs/`.
 
 - **Google Sheets:** conectar Append Row únicamente si el equipo desea sincronizar la bitácora.
-- **Correo:** elegir Gmail, Outlook o SMTP después de incorporar una aprobación humana.
+- **Correo externo:** sustituir el puente local por Gmail, Outlook o SMTP únicamente después de incorporar credenciales seguras y aprobación humana.
 - **WhatsApp:** disponer de WhatsApp Business Cloud o Twilio, validar el número y cumplir las reglas de consentimiento.
 - **Calendario:** conectar Google Calendar u Outlook Calendar después de que el usuario confirme fecha y contenido.
 
@@ -603,8 +609,8 @@ El workflow funciona de principio a fin sin suscripciones: guarda el registro en
 - Límite de caracteres para texto y narración.
 - Divulgación visible de voz generada por IA.
 - Timeout y manejo de errores.
-- Workflow local operativo, con efectos limitados a una bitácora del proyecto.
-- Borradores de comunicación y calendario marcados para aprobación humana.
+- Workflow local operativo, con efectos limitados al buzón Mailpit y a `n8n-local/outputs/`.
+- Correo local aislado de Internet, sin credenciales ni entrega a terceros.
 
 ### Controles recomendados
 
@@ -754,13 +760,14 @@ El uso de visión e imágenes implica enviar esos datos a OpenAI. No deben carga
 
 ### Ejecutar automatizaciones
 
-1. Confirmar que Docker Desktop y el contenedor n8n están activos.
+1. Ejecutar `./scripts/start_n8n_local.sh` y esperar el mensaje **NEXORA local está listo**.
 2. Mantener `http://localhost:5678/webhook/nexora` en la barra lateral de Streamlit.
-3. Abrir Automatizaciones y elegir registro, email, WhatsApp, tareas, estudio o calendario.
+3. Abrir Automatizaciones y elegir CSV local, email local, WhatsApp local, tareas, estudio o calendario.
 4. Escribir destinatario, asunto y contenido.
 5. Revisar el payload y confirmar.
-6. Verificar identificador, prioridad, aprobación requerida y resultado en la respuesta.
-7. Consultar la ejecución en n8n o la bitácora `n8n-local/nexora-events.jsonl`.
+6. Verificar identificador, prioridad y resultado en la respuesta.
+7. Si se eligió email, abrir `http://localhost:8025` y mostrar el correo recibido.
+8. Para las demás acciones, revisar `n8n-local/outputs/` y la ejecución en n8n.
 
 ### Ejecutar los workflows avanzados
 
@@ -806,6 +813,16 @@ Las pruebas automáticas no consumen OpenAI para evitar costos y dependencia de 
 | CP 29 | Laboratorio de reuniones | Detecta decisiones, tareas y riesgos | Aprobado |
 | CP 30 | Guardián de privacidad | Oculta correo, teléfono y clave; no persiste el texto | Aprobado |
 | CP 31 | Panel de impacto | Consolida cuatro bitácoras y actividad reciente | Aprobado |
+| CP 32 | Email SMTP local | Mensaje visible en Mailpit con destinatario, asunto y cuerpo | Aprobado en Safari |
+| CP 33 | Hoja CSV local | Fila persistida en `registro-nexora.csv` | Aprobado |
+| CP 34 | Outbox WhatsApp | Mensaje persistido en JSONL sin envío externo | Aprobado |
+| CP 35 | Archivos de productividad | Tareas Markdown, estudio Markdown y calendario ICS válidos | Aprobado |
+
+### Evidencia funcional de automatización local
+
+El 26 de septiembre de 2026 se levantaron n8n 2.40.7, Mailpit y el puente SMTP mediante Docker Desktop. Se envió un correo desde `POST /webhook/nexora` a `docente@ejemplo.com`; n8n respondió **“Email entregado correctamente al buzón local”** y Mailpit mostró el remitente `noreply@nexora.local`, el asunto **“NEXORA AI - Prueba local”** y el cuerpo completo. La verificación se realizó en Safari sobre `http://localhost:8025`.
+
+En la misma ronda se probaron las otras cinco acciones. Se creó una fila CSV, un mensaje en el outbox local de WhatsApp, un checklist Markdown, un plan de estudio Markdown y una invitación de calendario ICS. Los nueve tests JavaScript y los cuatro tests Python finalizaron correctamente. Ninguna de estas pruebas transmitió datos o correos fuera de la Mac.
 
 ### Evidencia funcional en producción
 
@@ -882,7 +899,7 @@ El resultado clave es que la información pasa de voz a texto, de texto a resume
 
 ## Limitaciones y mejoras futuras
 
-La aplicación no persiste conversaciones ni archivos multimedia. n8n conserva únicamente una bitácora JSONL de las solicitudes locales; los borradores de comunicación y calendario no se envían sin una integración y aprobación posteriores. La precisión depende del modelo, el audio, la imagen y las instrucciones. El proyecto no verifica hechos de manera independiente y el consumo puede generar costos. La conversación de voz necesita HTTPS, permiso de micrófono y acceso al modelo Realtime. La versión Vercel limita cada audio o imagen codificada a menos de 4 MB y no puede acceder al `localhost` de la Mac. La narración acepta hasta 2500 caracteres por solicitud y la generación de imágenes puede requerir verificación de la organización de OpenAI. La moderación es una señal de apoyo y no una decisión definitiva.
+La aplicación no persiste conversaciones ni archivos multimedia. n8n conserva bitácoras y artefactos de demostración dentro de `n8n-local/`; Mailpit conserva temporalmente los correos locales mientras sus contenedores estén disponibles. Estos mensajes no llegan a Gmail, Outlook ni a un destinatario real. La precisión depende del modelo, el audio, la imagen y las instrucciones. El proyecto no verifica hechos de manera independiente y el consumo puede generar costos. La conversación de voz necesita HTTPS, permiso de micrófono y acceso al modelo Realtime. La versión Vercel limita cada audio o imagen codificada a menos de 4 MB y no puede acceder al `localhost` de la Mac. La narración acepta hasta 2500 caracteres por solicitud y la generación de imágenes puede requerir verificación de la organización de OpenAI. La moderación es una señal de apoyo y no una decisión definitiva.
 
 Mejoras propuestas: usuarios y roles; persistencia con PostgreSQL o Supabase; búsqueda semántica y documentos PDF; edición iterativa de imágenes; respuestas en streaming; métricas de tokens y costos; firma HMAC para el webhook; aprobación de acciones; plantillas por curso; caché de resultados; y pruebas end to end.
 
@@ -890,7 +907,7 @@ Mejoras propuestas: usuarios y roles; persistencia con PostgreSQL o Supabase; b�
 
 NEXORA AI demuestra que se pueden integrar lenguaje, visión, generación de imágenes, voz sintética, conversación de voz, transcripción, moderación y automatización en una aplicación compacta. Streamlit mantiene una versión local fácil de explicar; Vercel publica la suite minimalista bajo HTTPS; OpenAI procesa distintas modalidades; y n8n representa las acciones externas.
 
-El proyecto evidencia que una integración responsable requiere validar entradas, manejar errores, separar credenciales, limitar el alcance y documentar los pasos. El workflow local permite enseñar una ejecución real y persistente sin enviar comunicaciones por accidente.
+El proyecto evidencia que una integración responsable requiere validar entradas, manejar errores, separar credenciales, limitar el alcance y documentar los pasos. El workflow local permite enseñar una ejecución real: envía un correo por SMTP a un buzón aislado y produce archivos comprobables sin contactar servicios externos.
 
 La solución queda preparada para evolucionar. La persistencia, autenticación, monitoreo y aprobación permitirían convertir el prototipo en una herramienta de uso continuo.
 
