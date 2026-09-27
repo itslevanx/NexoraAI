@@ -8,18 +8,18 @@
       "name": "Entrada NEXORA",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [-720, 0],
+      "position": [-900, 0],
       "webhookId": "nexora-local"
     },
     {
       "parameters": {
-        "jsCode": "const p = $json.body ?? $json;\nconst allowed = ['sheet', 'email', 'whatsapp', 'task', 'study', 'calendar'];\nif (!allowed.includes(p.action)) throw new Error('Acción no válida');\nconst content = String(p.content ?? '').trim();\nif (!content) throw new Error('El contenido está vacío');\nif (content.length > 10000) throw new Error('El contenido supera 10 000 caracteres');\nconst urgentWords = /urgente|hoy|inmediato|prioridad alta|asap/i;\nconst mediumWords = /mañana|esta semana|pendiente|importante/i;\nconst priority = urgentWords.test(content) ? 'alta' : mediumWords.test(content) ? 'media' : 'normal';\nconst labels = { sheet: 'Registro local', email: 'Borrador de email', whatsapp: 'Borrador de WhatsApp', task: 'Plan de tareas', study: 'Sesión de estudio', calendar: 'Evento de calendario' };\nreturn [{ json: { requestId: `nx-${Date.now().toString(36)}`, action: p.action, actionLabel: labels[p.action], recipient: String(p.recipient ?? '').trim(), subject: String(p.subject ?? 'Solicitud NEXORA').trim(), content, priority, source: 'NEXORA AI', receivedAt: new Date().toISOString(), approvalRequired: ['email', 'whatsapp', 'calendar'].includes(p.action) } }];"
+        "jsCode": "const p = $json.body ?? $json;\nconst allowed = ['sheet', 'email', 'whatsapp', 'task', 'study', 'calendar'];\nif (!allowed.includes(p.action)) throw new Error('Acción no válida');\nconst content = String(p.content ?? '').trim();\nif (!content) throw new Error('El contenido está vacío');\nif (content.length > 10000) throw new Error('El contenido supera 10 000 caracteres');\nconst recipient = String(p.recipient ?? '').trim();\nif (p.action === 'email' && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(recipient)) throw new Error('Escribe un correo destinatario válido');\nconst urgentWords = /urgente|hoy|inmediato|prioridad alta|asap/i;\nconst mediumWords = /mañana|esta semana|pendiente|importante/i;\nconst priority = urgentWords.test(content) ? 'alta' : mediumWords.test(content) ? 'media' : 'normal';\nconst labels = { sheet: 'Registro CSV local', email: 'Email local', whatsapp: 'WhatsApp local', task: 'Plan de tareas', study: 'Sesión de estudio', calendar: 'Evento de calendario' };\nreturn [{ json: { requestId: `nx-${Date.now().toString(36)}`, action: p.action, actionLabel: labels[p.action], recipient, subject: String(p.subject ?? 'Solicitud NEXORA').trim() || 'Solicitud NEXORA', content, priority, source: 'NEXORA AI', receivedAt: new Date().toISOString(), approvalRequired: false } }];"
       },
       "id": "validate-enrich",
       "name": "Validar, priorizar y enriquecer",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-470, 0]
+      "position": [-660, 0]
     },
     {
       "parameters": {
@@ -29,17 +29,59 @@
       "name": "Guardar bitácora local",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-210, 0]
+      "position": [-420, 0]
     },
     {
       "parameters": {
-        "jsCode": "const p = $json;\nconst lines = p.content.split(/\\n|[.;](?:\\s+|$)/).map(x => x.trim()).filter(Boolean).slice(0, 8);\nlet automation;\nswitch (p.action) {\n  case 'sheet': automation = { type: 'local_record', columns: { id: p.requestId, fecha: p.receivedAt, asunto: p.subject, contenido: p.content, prioridad: p.priority } }; break;\n  case 'email': automation = { type: 'email_draft', to: p.recipient || 'POR DEFINIR', subject: p.subject, body: p.content, status: 'esperando aprobación humana' }; break;\n  case 'whatsapp': automation = { type: 'whatsapp_draft', to: p.recipient || 'POR DEFINIR', message: p.content, status: 'esperando aprobación humana' }; break;\n  case 'task': automation = { type: 'task_plan', priority: p.priority, checklist: lines.map((text, index) => ({ order: index + 1, text, done: false })) }; break;\n  case 'study': automation = { type: 'study_session', blocks: [{ minutes: 10, activity: 'Lectura y conceptos', material: p.content }, { minutes: 20, activity: 'Práctica activa', material: 'Explicar sin mirar y crear ejemplos' }, { minutes: 10, activity: 'Autoevaluación', material: 'Responder cinco preguntas y revisar errores' }], totalMinutes: 40 }; break;\n  case 'calendar': automation = { type: 'calendar_draft', title: p.subject, description: p.content, attendee: p.recipient || null, status: 'esperando fecha y aprobación' }; break;\n}\nreturn [{ json: { ok: true, app: 'NEXORA AI', requestId: p.requestId, action: p.action, label: p.actionLabel, priority: p.priority, approvalRequired: p.approvalRequired, storedLocally: p.storedLocally, message: `${p.actionLabel} preparado correctamente en n8n local`, automation, nextSteps: p.approvalRequired ? ['Revisar destinatario y contenido', 'Aprobar manualmente antes de conectar un servicio real'] : ['Revisar el resultado', 'Continuar el flujo desde NEXORA'] } }];"
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\nconst p = $json;\nconst root = '/files/outputs';\nfs.mkdirSync(root, { recursive: true });\nconst lines = p.content.split(/\\n|[.;](?:\\s+|$)/).map(x => x.trim()).filter(Boolean).slice(0, 8);\nconst safe = value => String(value).replace(/[\\r\\n]/g, ' ').trim();\nconst csv = value => `\\\"${String(value).replace(/\\\"/g, '\\\"\\\"')}\\\"`;\nlet automation;\nswitch (p.action) {\n  case 'sheet': {\n    const file = path.join(root, 'registro-nexora.csv');\n    if (!fs.existsSync(file)) fs.writeFileSync(file, 'id,fecha,asunto,contenido,prioridad\\n', 'utf8');\n    fs.appendFileSync(file, [p.requestId, p.receivedAt, p.subject, p.content, p.priority].map(csv).join(',') + '\\n', 'utf8');\n    automation = { type: 'local_csv', file, columns: { id: p.requestId, fecha: p.receivedAt, asunto: p.subject, contenido: p.content, prioridad: p.priority }, status: 'fila guardada' };\n    break;\n  }\n  case 'email':\n    automation = { type: 'email_delivery', to: p.recipient, subject: p.subject, body: p.content, status: 'enviando al buzón local' };\n    break;\n  case 'whatsapp': {\n    const file = path.join(root, 'whatsapp-outbox.jsonl');\n    const entry = { id: p.requestId, to: p.recipient || 'POR DEFINIR', message: p.content, createdAt: p.receivedAt, status: 'listo para demostración local' };\n    fs.appendFileSync(file, JSON.stringify(entry) + '\\n', 'utf8');\n    automation = { type: 'whatsapp_local_outbox', file, ...entry };\n    break;\n  }\n  case 'task': {\n    const file = path.join(root, `${p.requestId}-tareas.md`);\n    const checklist = lines.map((text, index) => ({ order: index + 1, text, done: false }));\n    fs.writeFileSync(file, `# ${safe(p.subject)}\\n\\nPrioridad: ${p.priority}\\n\\n${checklist.map(x => `- [ ] ${x.text}`).join('\\n')}\\n`, 'utf8');\n    automation = { type: 'task_plan', file, priority: p.priority, checklist, status: 'archivo Markdown creado' };\n    break;\n  }\n  case 'study': {\n    const file = path.join(root, `${p.requestId}-estudio.md`);\n    const blocks = [{ minutes: 10, activity: 'Lectura y conceptos', material: p.content }, { minutes: 20, activity: 'Práctica activa', material: 'Explicar sin mirar y crear ejemplos' }, { minutes: 10, activity: 'Autoevaluación', material: 'Responder cinco preguntas y revisar errores' }];\n    fs.writeFileSync(file, `# ${safe(p.subject)}\\n\\n${blocks.map(x => `## ${x.minutes} min · ${x.activity}\\n${x.material}`).join('\\n\\n')}\\n`, 'utf8');\n    automation = { type: 'study_session', file, blocks, totalMinutes: 40, status: 'plan guardado' };\n    break;\n  }\n  case 'calendar': {\n    const start = new Date(Date.now() + 24 * 60 * 60 * 1000);\n    start.setHours(15, 0, 0, 0);\n    const end = new Date(start.getTime() + 60 * 60 * 1000);\n    const icsDate = date => date.toISOString().replace(/[-:]/g, '').replace(/\\.\\d{3}Z$/, 'Z');\n    const file = path.join(root, `${p.requestId}-evento.ics`);\n    const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//NEXORA AI//Local//ES','BEGIN:VEVENT',`UID:${p.requestId}@nexora.local`,`DTSTAMP:${icsDate(new Date())}`,`DTSTART:${icsDate(start)}`,`DTEND:${icsDate(end)}`,`SUMMARY:${safe(p.subject)}`,`DESCRIPTION:${safe(p.content)}`,'END:VEVENT','END:VCALENDAR',''].join('\\r\\n');\n    fs.writeFileSync(file, ics, 'utf8');\n    automation = { type: 'calendar_ics', file, title: p.subject, scheduledFor: start.toISOString(), status: 'invitación ICS creada' };\n    break;\n  }\n}\nreturn [{ json: { ok: true, app: 'NEXORA AI', requestId: p.requestId, action: p.action, label: p.actionLabel, priority: p.priority, approvalRequired: false, storedLocally: p.storedLocally, message: `${p.actionLabel} ejecutado correctamente en n8n local`, automation, nextSteps: p.action === 'email' ? ['Abrir http://localhost:8025 para ver el correo'] : ['Revisar el artefacto dentro de n8n-local/outputs'] } }];"
       },
       "id": "build-automation",
-      "name": "Construir resultado útil",
+      "name": "Construir artefacto local",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [50, 0]
+      "position": [-180, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            { "id": "is-email", "leftValue": "={{ $json.action }}", "rightValue": "email", "operator": { "type": "string", "operation": "equals" } }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "route-email",
+      "name": "¿Es un correo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [60, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://mailer:3001/send",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { to: $json.automation.to, subject: $json.automation.subject, text: $json.automation.body } }}",
+        "options": {}
+      },
+      "id": "send-local-email",
+      "name": "Enviar correo local",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Construir artefacto local').item.json;\nreturn [{ json: { ...base, message: 'Email entregado correctamente al buzón local', automation: { ...base.automation, type: 'email_sent', status: 'entregado por SMTP', mailboxUrl: $json.mailboxUrl, messageId: $json.messageId }, nextSteps: ['Abrir http://localhost:8025', 'Mostrar el mensaje recibido durante la exposición'] } }];"
+      },
+      "id": "confirm-local-email",
+      "name": "Confirmar correo local",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [540, -100]
     },
     {
       "parameters": { "respondWith": "json", "responseBody": "={{ $json }}", "options": {} },
@@ -47,19 +89,22 @@
       "name": "Responder a NEXORA",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
-      "position": [310, 0]
+      "position": [780, 0]
     }
   ],
   "pinData": {},
   "connections": {
     "Entrada NEXORA": { "main": [[{ "node": "Validar, priorizar y enriquecer", "type": "main", "index": 0 }]] },
     "Validar, priorizar y enriquecer": { "main": [[{ "node": "Guardar bitácora local", "type": "main", "index": 0 }]] },
-    "Guardar bitácora local": { "main": [[{ "node": "Construir resultado útil", "type": "main", "index": 0 }]] },
-    "Construir resultado útil": { "main": [[{ "node": "Responder a NEXORA", "type": "main", "index": 0 }]] }
+    "Guardar bitácora local": { "main": [[{ "node": "Construir artefacto local", "type": "main", "index": 0 }]] },
+    "Construir artefacto local": { "main": [[{ "node": "¿Es un correo?", "type": "main", "index": 0 }]] },
+    "¿Es un correo?": { "main": [[{ "node": "Enviar correo local", "type": "main", "index": 0 }], [{ "node": "Responder a NEXORA", "type": "main", "index": 0 }]] },
+    "Enviar correo local": { "main": [[{ "node": "Confirmar correo local", "type": "main", "index": 0 }]] },
+    "Confirmar correo local": { "main": [[{ "node": "Responder a NEXORA", "type": "main", "index": 0 }]] }
   },
   "active": false,
   "settings": { "executionOrder": "v1", "saveManualExecutions": true, "timezone": "America/Lima" },
-  "versionId": "7e1f267f-f85b-442f-8ab2-6d61a3c11ee2",
+  "versionId": "b8279a1b-9d59-4fc2-99c2-8c51420bce91",
   "meta": { "templateCredsSetupCompleted": true, "instanceId": "nexora-local" },
   "tags": []
 }

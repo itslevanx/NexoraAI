@@ -191,14 +191,14 @@
           <div class="intro compact">
             <p class="kicker">Productividad</p>
             <h1 id="automateTitle">Automatiza con n8n</h1>
-            <p>Prepara un registro, correo o mensaje y envíalo a tu workflow.</p>
+            <p>Ejecuta acciones locales verificables y revisa los correos en el buzón de demostración.</p>
           </div>
           <form id="automationForm" class="form-card">
             <label>Acción
               <select id="automationAction">
-                <option value="sheet">Registrar en Google Sheets</option>
-                <option value="email">Enviar email</option>
-                <option value="whatsapp">Enviar WhatsApp</option>
+                <option value="sheet">Registrar en hoja local CSV</option>
+                <option value="email">Enviar email al buzón local</option>
+                <option value="whatsapp">Preparar WhatsApp en outbox local</option>
                 <option value="task">Crear plan de tareas</option>
                 <option value="study">Preparar sesión de estudio</option>
                 <option value="calendar">Preparar evento de calendario</option>
@@ -215,6 +215,10 @@
             </label>
             <button class="primary wide" type="submit">Ejecutar automatización</button>
           </form>
+          <div class="local-automation-links">
+            <a class="secondary link-button" href="http://localhost:8025" target="_blank" rel="noreferrer">Abrir buzón local</a>
+            <a class="secondary link-button" href="http://localhost:5678" target="_blank" rel="noreferrer">Abrir n8n</a>
+          </div>
           <pre id="automationResult" class="automation-result">El resultado del workflow aparecerá aquí.</pre>
         </section>
       </main>

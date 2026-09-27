@@ -258,9 +258,9 @@ def page_automations(webhook: str) -> None:
     st.title("Automatizaciones con n8n")
     st.caption("Envía una instrucción estructurada al flujo incluido en `automations/nexora-n8n.json`.")
     action_map = {
-        "Registrar en la bitácora local": "sheet",
-        "Preparar email": "email",
-        "Preparar WhatsApp": "whatsapp",
+        "Registrar en hoja local CSV": "sheet",
+        "Enviar email al buzón local": "email",
+        "Preparar WhatsApp en outbox local": "whatsapp",
         "Crear plan de tareas": "task",
         "Preparar sesión de estudio": "study",
         "Preparar evento de calendario": "calendar",
@@ -296,8 +296,9 @@ def page_automations(webhook: str) -> None:
             except requests.RequestException as exc:
                 st.error(f"No se pudo contactar el webhook: {exc}")
     st.markdown("#### ¿Cómo funciona?")
-    st.markdown("1. NEXORA valida el payload.  2. n8n asigna prioridad y lo guarda en una bitácora JSONL local.  3. El workflow crea un registro, borrador, checklist, plan de estudio o evento listo para revisión.")
-    st.info("El flujo funciona sin nube y no envía mensajes por accidente. Los borradores de email, WhatsApp y calendario exigen aprobación humana antes de conectar credenciales reales.")
+    st.markdown("1. NEXORA valida el payload.  2. n8n asigna prioridad y conserva una bitácora JSONL.  3. El workflow crea el CSV, entrega el email al buzón local, prepara el outbox de WhatsApp, genera tareas, un plan de estudio o un archivo de calendario.")
+    st.link_button("Abrir buzón de correo local", "http://localhost:8025", use_container_width=True)
+    st.info("El correo se entrega de verdad dentro de la Mac mediante SMTP y aparece en Mailpit. No sale a Internet. WhatsApp y calendario se generan como artefactos locales para una demostración segura.")
 
     st.divider()
     st.subheader("Laboratorios avanzados")

@@ -16,6 +16,10 @@ def test_required_files_exist():
         "automations/nexora-laboratorio-reuniones.json",
         "automations/nexora-guardian-privacidad.json",
         "automations/nexora-panel-impacto.json",
+        "local-mailer/Dockerfile",
+        "local-mailer/server.mjs",
+        "scripts/start_n8n_local.sh",
+        "scripts/demo_n8n_local.sh",
         "docs/images/arquitectura-nexora.png",
         "docs/images/experiencia-multimodal.png",
         "docs/images/mapa-workflows-n8n.png",
@@ -49,11 +53,13 @@ def test_n8n_workflow_is_json():
     assert data["name"] == "NEXORA AI - Automatizaciones locales inteligentes"
     assert len(data["nodes"]) >= 4
     assert "Guardar bitácora local" in {node["name"] for node in data["nodes"]}
+    assert "Enviar correo local" in {node["name"] for node in data["nodes"]}
     source = "\n".join(
         node.get("parameters", {}).get("jsCode", "") for node in data["nodes"]
     )
     for action in ["sheet", "email", "whatsapp", "task", "study", "calendar"]:
         assert action in source
+    assert any(node["type"] == "n8n-nodes-base.httpRequest" for node in data["nodes"])
 
 
 def test_advanced_n8n_workflows_are_unique_and_callable():

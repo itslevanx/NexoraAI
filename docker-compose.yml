@@ -1,6 +1,37 @@
 services:
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  mailer:
+    build:
+      context: ./local-mailer
+    restart: unless-stopped
+    environment:
+      - PORT=3001
+      - SMTP_HOST=mailpit
+      - SMTP_PORT=1025
+      - MAILBOX_URL=http://localhost:8025
+    depends_on:
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
   n8n:
     image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
     ports:
       - "5678:5678"
     environment:
@@ -19,6 +50,9 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n-local:/files
+    depends_on:
+      mailer:
+        condition: service_healthy
 
 volumes:
   n8n_data:
