@@ -24,6 +24,7 @@ def test_required_files_exist():
         "docs/images/experiencia-multimodal.png",
         "docs/images/mapa-workflows-n8n.png",
         "docs/images/seguridad-datos.png",
+        "docs/images/arquitectura-publicidad.png",
         "docs/screenshots/nexora-listado-publicado.png",
         "docs/screenshots/nexora-workflow-centro-local.png",
         "docs/screenshots/nexora-workflow-coach-estudio.png",
@@ -39,6 +40,7 @@ def test_required_files_exist():
         "api/realtime-session.js",
         "api/automation.js",
         "api/studio.js",
+        "api/publicidad.js",
         "api/speech.js",
         "api/image.js",
         "api/vision.js",
@@ -92,3 +94,17 @@ def test_documentation_mentions_multimodal_capabilities():
     for local_feature in ["bitácora", "seis acciones", "cinco workflows", "localhost:5678"]:
         assert local_feature in readme
         assert local_feature in documentation
+
+
+def test_publicidad_is_documented_and_configured():
+    readme = (ROOT / "README.md").read_text()
+    documentation = (ROOT / "docs/DOCUMENTACION_COMPLETA.md").read_text()
+    web = (ROOT / "public/index.html").read_text()
+    javascript = (ROOT / "public/app.js").read_text()
+    vercel = json.loads((ROOT / "vercel.json").read_text())
+    for phrase in ["Publicidad", "10 segundos", "30 segundos", "música"]:
+        assert phrase.lower() in readme.lower()
+        assert phrase.lower() in documentation.lower()
+    assert 'data-view="advertising"' in web
+    assert "captureStream" in javascript
+    assert "camera=(self)" in vercel["headers"][0]["headers"][-1]["value"]

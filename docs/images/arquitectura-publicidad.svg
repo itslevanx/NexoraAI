@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Arquitectura del módulo Publicidad</title>
+  <desc id="desc">Flujo desde cámara o archivo hacia guion OpenAI, composición local y descarga del video.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#080808"/>
+      <stop offset="1" stop-color="#181818"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e00034"/>
+      <stop offset="1" stop-color="#ff6433"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#000" flood-opacity=".35"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#8b8b8b"/>
+    </marker>
+  </defs>
+  <rect width="1600" height="900" rx="40" fill="url(#bg)"/>
+  <rect x="0" y="0" width="18" height="900" fill="url(#accent)"/>
+  <text x="100" y="105" fill="#fff" font-family="Arial, sans-serif" font-size="48" font-weight="700">Publicidad UTP en NEXORA AI</text>
+  <text x="100" y="155" fill="#9a9a9a" font-family="Arial, sans-serif" font-size="24">La foto permanece en el navegador; OpenAI sólo prepara el microguion.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="90" y="255" width="300" height="330" rx="28" fill="#101010" stroke="#363636" stroke-width="2"/>
+    <circle cx="240" cy="350" r="58" fill="#202020" stroke="#e00034" stroke-width="4"/>
+    <path d="M204 360h72v48h-72zM220 338l12-16h24l12 16" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/>
+    <circle cx="240" cy="383" r="14" fill="none" stroke="#fff" stroke-width="7"/>
+    <text x="240" y="470" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Cámara o archivo</text>
+    <text x="240" y="508" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">JPG PNG WEBP</text>
+    <text x="240" y="540" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">máximo 10 MB</text>
+
+    <rect x="505" y="255" width="300" height="330" rx="28" fill="#101010" stroke="#363636" stroke-width="2"/>
+    <rect x="585" y="300" width="140" height="105" rx="18" fill="#202020" stroke="#e00034" stroke-width="4"/>
+    <path d="M615 335h80M615 357h62M615 379h72" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+    <text x="655" y="470" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Guion con OpenAI</text>
+    <text x="655" y="508" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">Titular mensaje y CTA</text>
+    <text x="655" y="540" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">sin enviar la fotografía</text>
+
+    <rect x="920" y="255" width="300" height="330" rx="28" fill="#101010" stroke="#363636" stroke-width="2"/>
+    <rect x="1014" y="292" width="112" height="150" rx="18" fill="#202020" stroke="#e00034" stroke-width="4"/>
+    <path d="M1035 326h70M1035 348h48M1035 392h70" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+    <path d="M1045 416l13-13 13 13 18-25 16 25" fill="none" stroke="#ff6433" stroke-width="7" stroke-linejoin="round"/>
+    <text x="1070" y="470" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Compositor local</text>
+    <text x="1070" y="508" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">Canvas movimiento textos</text>
+    <text x="1070" y="540" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">y música Web Audio</text>
+
+    <rect x="1335" y="255" width="180" height="330" rx="28" fill="#101010" stroke="#363636" stroke-width="2"/>
+    <circle cx="1425" cy="355" r="58" fill="#202020" stroke="#e00034" stroke-width="4"/>
+    <path d="M1425 320v70M1398 366l27 27 27-27" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="1425" y="470" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="25" font-weight="700">Descarga</text>
+    <text x="1425" y="508" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="18">MP4 o WebM</text>
+    <text x="1425" y="540" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="18">10 a 30 s</text>
+  </g>
+
+  <path d="M405 420h80" stroke="#8b8b8b" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M820 420h80" stroke="#8b8b8b" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M1235 420h80" stroke="#8b8b8b" stroke-width="5" marker-end="url(#arrow)"/>
+
+  <rect x="90" y="690" width="1425" height="92" rx="22" fill="#0c0c0c" stroke="#303030" stroke-width="2"/>
+  <circle cx="140" cy="736" r="15" fill="#e00034"/>
+  <text x="175" y="746" fill="#d9d9d9" font-family="Arial, sans-serif" font-size="23">Privacidad por diseño</text>
+  <text x="430" y="746" fill="#929292" font-family="Arial, sans-serif" font-size="22">La imagen y el video no salen del dispositivo. Sólo el enfoque textual llega al endpoint serverless.</text>
+</svg>

@@ -2,7 +2,7 @@
 
 ![Logo de NEXORA AI](assets/nexora-logo.svg)
 
-NEXORA AI es una suite académica multimodal que integra conversación, herramientas de texto, visión, generación de imágenes, voz sintética, transcripción, moderación y automatización mediante n8n. Incluye una versión local en Streamlit y una experiencia serverless publicada en Vercel, sin incrustar credenciales en el código.
+NEXORA AI es una suite académica multimodal que integra conversación, herramientas de texto, visión, generación de imágenes, publicidad audiovisual, voz sintética, transcripción, moderación y automatización mediante n8n. Incluye una versión local en Streamlit y una experiencia serverless publicada en Vercel, sin incrustar credenciales en el código.
 
 ## Estado del proyecto
 
@@ -15,6 +15,7 @@ NEXORA AI es una suite académica multimodal que integra conversación, herramie
 | Studio IA | Implementado | Once herramientas para redactar, estudiar, programar, traducir, extraer y analizar |
 | Visión | Implementado | Analiza PNG, JPG y WEBP con una pregunta personalizada |
 | Generación de imágenes | Implementado | Crea imágenes descargables en tres formatos |
+| Publicidad UTP | Implementado | Convierte una foto tomada o cargada en un video promocional de 10 a 30 segundos con guion IA y música |
 | Texto a voz | Implementado | Narra resultados en MP3 con aviso de voz IA |
 | Moderación | Implementado | Clasifica contenido y muestra categorías detectadas |
 | Transcripción | Implementado | Acepta grabación directa y archivos compatibles; 25 MB en Streamlit y 4 MB en Vercel |
@@ -47,6 +48,21 @@ NEXORA AI es una suite académica multimodal que integra conversación, herramie
 - La clave estándar solo se utiliza en el endpoint del servidor; nunca se incrusta en JavaScript.
 
 La experiencia publicada conserva también el chat contextual, la grabación o carga de audio, la edición de la transcripción, el resumen, la descarga TXT, la reutilización en chat y el formulario para n8n. La voz es una función adicional y no reemplaza las capacidades anteriores.
+
+### Publicidad audiovisual UTP
+
+- Abre la cámara del dispositivo o acepta una foto JPG, PNG o WEBP de hasta 10 MB.
+- Ofrece duraciones de 10, 15, 20 y 30 segundos y formatos vertical 9:16 u horizontal 16:9.
+- Solicita a OpenAI únicamente un titular, un mensaje de apoyo y una llamada a la acción; la fotografía no sale del navegador.
+- Compone localmente un movimiento de cámara, transiciones, identidad UTP, barra de progreso y música original sintetizada con Web Audio.
+- Exporta el resultado con audio mediante `MediaRecorder`; Safari prioriza MP4 y otros navegadores pueden descargar WebM.
+- Usa un guion institucional seguro cuando la API no está disponible, por lo que la exportación sigue funcionando sin exponer secretos.
+
+![Arquitectura del creador de Publicidad UTP](docs/images/arquitectura-publicidad.png)
+
+La generación audiovisual no llama a un endpoint de video de OpenAI. La documentación oficial informa que los modelos Sora 2 y Videos API dejaron de estar disponibles el 24 de septiembre de 2026 y no tienen reemplazo directo. NEXORA utiliza OpenAI para el microguion y un compositor local para producir el archivo final.
+
+![Prueba real del video promocional en Safari](docs/screenshots/nexora-publicidad-video.png)
 
 ### Chat inteligente
 
@@ -130,6 +146,7 @@ El capítulo **Integración con n8n** de [`DOCUMENTACION_COMPLETA.md`](docs/DOCU
         │ Transcriptions      │  │ prioridad      │
         │ Vision + Images     │  └──────┬─────────┘
         │ Speech + Moderation │         │
+        │ Guion publicitario │         │
         │ Realtime + WebRTC   │         │
         └─────────────────────┘         │
                          Bitácora tareas estudio borradores
@@ -144,6 +161,7 @@ Streamlit actúa como capa de servidor y utiliza la clave únicamente en memoria
 | Python 3 | Lógica principal de la aplicación |
 | Streamlit | Interfaz local y manejo de sesión |
 | HTML, CSS y JavaScript | Interfaz minimalista desplegada |
+| Canvas, Web Audio y MediaRecorder | Composición y exportación local del video publicitario |
 | Vercel | Hosting HTTPS y funciones serverless |
 | WebRTC y Realtime API | Conversación de voz a voz |
 | OpenAI Python SDK | Chat y transcripción |
@@ -164,7 +182,7 @@ Streamlit actúa como capa de servidor y utiliza la clave únicamente en memoria
 NexoraAI/
 ├── app.py                              # Aplicación Streamlit
 ├── public/                             # Interfaz web minimalista para Vercel
-├── api/                                # Texto, visión, imagen, voz, moderación, Realtime y n8n
+├── api/                                # Texto, visión, imagen, publicidad, voz, moderación, Realtime y n8n
 ├── package.json                        # Validación de JavaScript
 ├── vercel.json                         # Configuración de despliegue
 ├── assets/nexora-logo.svg              # Logo vectorial principal
@@ -173,7 +191,8 @@ NexoraAI/
 ├── n8n-local/.gitkeep                   # Carpeta local para la bitácora ignorada por Git
 ├── docs/
 │   ├── DOCUMENTACION_COMPLETA.md       # Fuente del informe académico
-│   ├── images/                         # Cuatro láminas técnicas en SVG y PNG
+│   ├── images/                         # Cinco láminas técnicas en SVG y PNG
+│   ├── screenshots/                    # Evidencia funcional obtenida en Safari
 │   └── Documentacion_NEXORA_AI.docx    # Documento Word final
 ├── tests/test_smoke.py                 # Pruebas básicas
 ├── scripts/build_documentation.py      # Generador del Word académico
@@ -244,9 +263,9 @@ El directorio raíz ya incluye una aplicación estática y funciones serverless 
 2. Mantener **Framework Preset** en `Other` y el directorio raíz sin cambios.
 3. Añadir `OPENAI_API_KEY` y, opcionalmente, `N8N_WEBHOOK_URL` en **Settings → Environment Variables** para producción, vista previa y desarrollo.
 4. Ejecutar el despliegue.
-5. Autorizar el micrófono en el navegador y probar **Voz**.
+5. Autorizar el micrófono para **Voz** y la cámara para **Publicidad** cuando se utilicen esas funciones.
 
-La interfaz desplegada incluye voz a voz, chat contextual, Studio IA, visión, generación de imágenes, voz sintética, moderación, grabación, carga y edición de transcripciones, resumen, descarga TXT, reutilización en chat y automatizaciones n8n. Por el límite del cuerpo de las funciones serverless, los audios e imágenes web aceptan archivos menores de 4 MB; la versión Streamlit conserva su límite de audio de 25 MB.
+La interfaz desplegada incluye voz a voz, chat contextual, Studio IA, visión, generación de imágenes, publicidad audiovisual, voz sintética, moderación, grabación, carga y edición de transcripciones, resumen, descarga TXT, reutilización en chat y automatizaciones n8n. Por el límite del cuerpo de las funciones serverless, los audios e imágenes enviados a OpenAI aceptan archivos menores de 4 MB; Publicidad admite fotos de hasta 10 MB porque permanecen en el navegador. La versión Streamlit conserva su límite de audio de 25 MB.
 
 La arquitectura de voz sigue la recomendación oficial: el navegador usa WebRTC y un endpoint confiable crea la sesión con la clave del servidor. Para evitar que Vercel interprete de forma incompleta el cuerpo `application/sdp`, el navegador encapsula en JSON la oferta original devuelta por `createOffer()` y el endpoint la reconstruye sin alterar sus finales de línea `CRLF`, valida el encabezado `v=0` y limita su tamaño a 128 KB antes de formar la solicitud multipart hacia OpenAI. En Safari se envía `offer.sdp` directamente, como indica el ejemplo oficial, para no depender de una `localDescription` transitoria mientras se reúnen candidatos ICE. Esto evita tanto **“La oferta WebRTC no es válida”** como una oferta truncada con error `EOF`. Consulta la [guía WebRTC de OpenAI](https://developers.openai.com/api/docs/guides/voice-webrtc).
 
@@ -260,6 +279,7 @@ El 25 de septiembre de 2026 se verificó en Safari la instancia `https://nexora-
 |---|---|---|
 | `/api/chat` | Chat contextual | Al menos un mensaje |
 | `/api/studio` | Once herramientas de texto | Modo permitido y 30 000 caracteres |
+| `/api/publicidad` | Microguion para el video UTP | Tono permitido, duración 10 a 30 s y enfoque máximo de 600 caracteres |
 | `/api/vision` | Análisis de imágenes | PNG, JPG o WEBP menor de 4 MB |
 | `/api/image` | Generación de imágenes | Prompt y tamaño permitido |
 | `/api/speech` | Texto a voz MP3 | Máximo 2500 caracteres |
@@ -276,6 +296,16 @@ El 25 de septiembre de 2026 se verificó en Safari la instancia `https://nexora-
 4. En Visión, cargar una imagen de prueba sin información sensible y formular una pregunta.
 5. En Imágenes, describir la pieza, elegir formato y descargar el JPEG.
 6. En Seguridad, interpretar el resultado como señal para revisión humana, no como una decisión absoluta.
+
+## Uso de Publicidad
+
+1. Abrir **Publicidad** y elegir **Abrir cámara** o **Subir foto**.
+2. Escribir un enfoque opcional, elegir 10, 15, 20 o 30 segundos, formato y estilo.
+3. Pulsar **Crear video promocional** y mantener la pestaña visible durante la composición en tiempo real.
+4. Reproducir el resultado para revisar imagen, textos y música.
+5. Pulsar **Descargar video**; la extensión será MP4 o WebM según el navegador.
+
+La fotografía y el video final no se cargan a Vercel ni a OpenAI. Sólo el enfoque textual de la campaña se envía a `/api/publicidad` para redactar el microguion.
 
 ## Configuración de n8n
 
@@ -382,7 +412,7 @@ python -m py_compile app.py
 npm run check
 ```
 
-Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workflow, cantidad mínima de nodos y sintaxis de Python. Las llamadas reales a OpenAI no forman parte de las pruebas automáticas porque requieren una clave, saldo y acceso a red.
+Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workflow, cantidad mínima de nodos, sintaxis, validación del endpoint de Publicidad y extracción segura del JSON del microguion. Las llamadas reales a OpenAI no forman parte de las pruebas automáticas porque requieren una clave, saldo y acceso a red.
 
 ## Seguridad y privacidad
 
@@ -392,6 +422,7 @@ Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workf
 - El webhook recibe datos de la tarea, no la clave de OpenAI.
 - La app aplica timeout y reintentos limitados.
 - Los audios, imágenes, texto y prompts se envían a OpenAI; no se deben usar datos sensibles en la demo.
+- En Publicidad, la foto y el video se procesan localmente; sólo el enfoque textual se envía a OpenAI.
 - La narración se identifica como voz generada por IA.
 - Los endpoints validan modos, tipos MIME, tamaños y longitud antes del envío.
 - Las acciones reales deben configurarse con credenciales protegidas y aprobación cuando corresponda.
@@ -403,9 +434,10 @@ Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workf
 3. Preguntar: “Explícame la computación cuántica con una analogía y crea tres preguntas de repaso”.
 4. Convertir la respuesta en guía de estudio y reproducirla con voz IA.
 5. Analizar una imagen académica o generar un afiche de ejemplo.
-6. Grabar una nota de voz de 10 a 15 segundos, transcribirla y resumirla.
-7. Enviar el contenido al webhook n8n y mostrar la ejecución visual.
-8. Explicar moderación, límites y que las credenciales permanecen fuera del código.
+6. Tomar o cargar una foto, crear un video UTP de 10 segundos y reproducir su música.
+7. Grabar una nota de voz de 10 a 15 segundos, transcribirla y resumirla.
+8. Enviar el contenido al webhook n8n y mostrar la ejecución visual.
+9. Explicar moderación, límites y que las credenciales permanecen fuera del código.
 
 ## Limitaciones
 
@@ -418,6 +450,9 @@ Las pruebas verifican archivos esenciales, lectura del JSON, identidad del workf
 - El análisis visual y la moderación son ayudas; requieren revisión humana.
 - El modelo debe estar disponible en la cuenta del usuario.
 - El consumo de API puede generar costos.
+- La composición de Publicidad ocurre en tiempo real: un video de 30 segundos tarda aproximadamente 30 segundos y requiere mantener la pestaña activa.
+- El contenedor final depende de `MediaRecorder`: Safari produce MP4 cuando está disponible y otros navegadores pueden producir WebM.
+- Sora 2 y Videos API no están disponibles desde el 24 de septiembre de 2026; el módulo no intenta llamar a esos endpoints retirados.
 
 ## Mejoras propuestas
 
@@ -445,6 +480,8 @@ Incluye problema, objetivos, alcance, requisitos, casos de uso, arquitectura, c�
 - [Guía de generación de imágenes de OpenAI](https://developers.openai.com/api/docs/guides/image-generation)
 - [Guía de texto a voz de OpenAI](https://developers.openai.com/api/docs/guides/text-to-speech)
 - [Guía de moderación de OpenAI](https://developers.openai.com/api/docs/guides/moderation)
+- [Estado del modelo Sora 2 Pro y retiro de Videos API](https://developers.openai.com/api/docs/models/sora-2-pro)
+- [Sitio oficial de la Universidad Tecnológica del Perú](https://www.utp.edu.pe/)
 - [Documentación de Streamlit](https://docs.streamlit.io/)
 - [Documentación de n8n](https://docs.n8n.io/)
 - [Documentación de Docker Compose](https://docs.docker.com/compose/)

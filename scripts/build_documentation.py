@@ -133,7 +133,7 @@ def add_cover(doc: Document) -> None:
     title.add_run("Documentación integral del proyecto NEXORA AI")
     subtitle = doc.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = subtitle.add_run("Chat  Voz en tiempo real  Transcripción  Automatización")
+    run = subtitle.add_run("Chat  Voz en tiempo real  Publicidad audiovisual  Transcripción  Automatización")
     run.font.name = "Aptos"
     run.font.size = Pt(13)
     run.font.color.rgb = RGBColor(80, 80, 80)
@@ -141,8 +141,8 @@ def add_cover(doc: Document) -> None:
     intro.alignment = WD_ALIGN_PARAGRAPH.CENTER
     intro.paragraph_format.space_before = Pt(28)
     intro.add_run(
-        "Informe técnico y manual de uso para la implementación local en Streamlit "
-        "y el despliegue serverless en Vercel."
+        "Informe técnico y manual de uso para la implementación local en Streamlit, "
+        "la creación de videos promocionales y el despliegue serverless en Vercel."
     )
     doc.add_page_break()
 
@@ -156,9 +156,7 @@ def add_contents(doc: Document, lines: list[str]) -> None:
     doc.add_page_break()
 
 
-def add_table(doc: Document, rows: list[list[str]]) -> None:
-    if not rows:
-        return
+def add_table_block(doc: Document, rows: list[list[str]]) -> None:
     column_count = max(len(row) for row in rows)
     table = doc.add_table(rows=0, cols=column_count)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -185,6 +183,44 @@ def add_table(doc: Document, rows: list[list[str]]) -> None:
             elif row_index % 2 == 0:
                 set_cell_shading(cell, "F3F3F3")
     doc.add_paragraph().paragraph_format.space_after = Pt(2)
+
+
+def add_table(doc: Document, rows: list[list[str]]) -> None:
+    if not rows:
+        return
+    if len(rows) <= 12:
+        add_table_block(doc, rows)
+        return
+    previous = doc.paragraphs[-1] if doc.paragraphs else None
+    if previous is not None and previous.style.name.startswith("Heading"):
+        previous.paragraph_format.page_break_before = True
+    else:
+        doc.add_page_break()
+    header, body = rows[0], rows[1:]
+    legend = doc.add_paragraph()
+    legend.paragraph_format.keep_with_next = True
+    legend.paragraph_format.space_after = Pt(8)
+    legend_run = legend.add_run(" · ".join(header))
+    legend_run.bold = True
+    legend_run.font.size = Pt(9)
+    legend_run.font.color.rgb = RGBColor(90, 90, 90)
+    for index, values in enumerate(body):
+        paragraph = doc.add_paragraph()
+        paragraph.paragraph_format.keep_together = True
+        paragraph.paragraph_format.space_before = Pt(3)
+        paragraph.paragraph_format.space_after = Pt(5)
+        paragraph.paragraph_format.left_indent = Inches(0.12)
+        paragraph.paragraph_format.right_indent = Inches(0.12)
+        title = " · ".join(values[:2])
+        title_run = paragraph.add_run(title)
+        title_run.bold = True
+        if len(values) > 2:
+            paragraph.add_run().add_break()
+            add_inline(paragraph, values[2])
+        if index % 2:
+            shading = OxmlElement("w:shd")
+            shading.set(qn("w:fill"), "F3F3F3")
+            paragraph._p.get_or_add_pPr().append(shading)
 
 
 def add_figure(doc: Document, source: str, caption: str) -> None:
@@ -285,7 +321,7 @@ def build() -> None:
     for section in doc.sections:
         section.start_type = WD_SECTION.NEW_PAGE if section is not doc.sections[0] else section.start_type
     doc.core_properties.title = "Documentación integral del proyecto NEXORA AI"
-    doc.core_properties.subject = "Chat, voz, transcripción, Vercel y automatizaciones n8n"
+    doc.core_properties.subject = "Chat, voz, publicidad audiovisual, transcripción, Vercel y automatizaciones n8n"
     doc.core_properties.author = "Equipo NEXORA AI"
     doc.save(OUTPUT)
     print(OUTPUT)
