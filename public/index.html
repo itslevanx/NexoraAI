@@ -19,6 +19,7 @@
           <button class="nav-link active" data-view="voice">Voz</button>
           <button class="nav-link" data-view="chat">Chat</button>
           <button class="nav-link" data-view="studio">Studio IA</button>
+          <button class="nav-link" data-view="advertising">Publicidad</button>
           <button class="nav-link" data-view="transcribe">Transcribir</button>
           <button class="nav-link" data-view="automate">Automatizar</button>
         </nav>
@@ -145,6 +146,93 @@
           </section>
         </section>
 
+        <section id="advertisingView" class="view" aria-labelledby="advertisingTitle">
+          <div class="intro compact">
+            <p class="kicker">Creador audiovisual</p>
+            <h1 id="advertisingTitle">Tu foto. Una historia UTP.</h1>
+            <p>Toma una foto o elige una imagen y conviértela en un video promocional con movimiento, mensajes creados con IA y música original.</p>
+          </div>
+
+          <div class="advertising-grid">
+            <form id="advertisingForm" class="form-card advertising-form">
+              <div class="source-heading">
+                <div><strong>1. Elige la imagen</strong><span>La foto se procesa únicamente en este dispositivo.</span></div>
+                <div class="source-actions">
+                  <button id="startCamera" class="secondary" type="button">Abrir cámara</button>
+                  <label class="secondary upload-button" for="advertisingFile">Subir foto</label>
+                  <input id="advertisingFile" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp" />
+                </div>
+              </div>
+
+              <div id="advertisingStage" class="advertising-stage empty">
+                <video id="advertisingCamera" autoplay muted playsinline hidden></video>
+                <img id="advertisingPhoto" alt="Foto seleccionada para el video promocional" hidden />
+                <div id="advertisingEmpty" class="stage-empty">
+                  <span class="stage-icon">◉</span>
+                  <strong>Tu imagen aparecerá aquí</strong>
+                  <small>JPG, PNG o WEBP · máximo 10 MB</small>
+                </div>
+              </div>
+
+              <div id="cameraActions" class="camera-actions" hidden>
+                <button id="capturePhoto" class="primary" type="button">Tomar foto</button>
+                <button id="closeCamera" class="secondary" type="button">Cerrar cámara</button>
+              </div>
+
+              <label>Enfoque de la campaña
+                <textarea id="advertisingBrief" rows="3" maxlength="600" placeholder="Ejemplo: estudiantes de ingeniería, innovación y vida universitaria"></textarea>
+              </label>
+
+              <div class="field-pair">
+                <label>Duración
+                  <select id="advertisingDuration">
+                    <option value="10">10 segundos</option>
+                    <option value="15" selected>15 segundos</option>
+                    <option value="20">20 segundos</option>
+                    <option value="30">30 segundos</option>
+                  </select>
+                </label>
+                <label>Formato
+                  <select id="advertisingFormat">
+                    <option value="portrait">Vertical · 9:16</option>
+                    <option value="landscape">Horizontal · 16:9</option>
+                  </select>
+                </label>
+              </div>
+
+              <label>Estilo
+                <select id="advertisingTone">
+                  <option value="inspirador">Inspirador</option>
+                  <option value="tecnologico">Tecnológico</option>
+                  <option value="energetico">Energético</option>
+                  <option value="institucional">Institucional</option>
+                </select>
+              </label>
+
+              <button id="createAdvertisingVideo" class="primary wide" type="submit" disabled>Crear video promocional</button>
+              <p class="privacy advertising-note">La IA prepara el guion. La animación, la música y el archivo final se generan localmente en tu navegador.</p>
+            </form>
+
+            <section class="advertising-output" aria-live="polite">
+              <div class="output-heading">
+                <div><span>2. Resultado</span><small id="advertisingStatus">Esperando una imagen</small></div>
+                <span id="advertisingBadge" class="duration-badge">15 s</span>
+              </div>
+              <div class="render-shell">
+                <canvas id="advertisingCanvas" width="720" height="1280" hidden></canvas>
+                <video id="advertisingResult" controls playsinline hidden></video>
+                <div id="advertisingPlaceholder" class="render-placeholder">
+                  <span>UTP</span>
+                  <p>La vista previa del video aparecerá aquí.</p>
+                </div>
+              </div>
+              <div id="advertisingProgress" class="progress-track" hidden><span></span></div>
+              <a id="downloadAdvertising" class="secondary link-button wide" download="publicidad-utp.mp4" hidden>Descargar video</a>
+              <p class="ai-disclosure">Guion asistido por IA. Música sintetizada y video compuesto localmente.</p>
+            </section>
+          </div>
+        </section>
+
         <section id="chatView" class="view" aria-labelledby="chatTitle">
           <div class="intro compact">
             <p class="kicker">Texto</p>
@@ -223,7 +311,7 @@
         </section>
       </main>
 
-      <footer><span>NEXORA AI</span><span>Texto · Voz · Visión · Imágenes · Automatización</span></footer>
+      <footer><span>NEXORA AI</span><span>Texto · Voz · Visión · Imágenes · Publicidad · Automatización</span></footer>
     </div>
 
     <dialog id="settingsDialog">
