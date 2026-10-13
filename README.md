@@ -2,214 +2,139 @@
 
 ![Logo de NEXORA AI](assets/nexora-logo.svg)
 
-NEXORA AI es una suite académica multimodal que integra conversación, herramientas de texto, visión, generación de imágenes, publicidad audiovisual, voz sintética, transcripción, moderación y automatización mediante n8n. Incluye una versión local en Streamlit y una experiencia serverless publicada en Vercel, sin incrustar credenciales en el código.
+NEXORA AI es una suite académica multimodal con chat, herramientas de texto, visión, generación de imágenes, publicidad audiovisual, voz en tiempo real, síntesis de voz, transcripción y moderación. Incluye una aplicación local en Streamlit y una experiencia web serverless publicada en Vercel, sin credenciales incrustadas en el código.
+
+## Aplicación publicada
+
+[Abrir NEXORA AI](https://nexora-ai-blue-three.vercel.app/)
 
 ## Estado del proyecto
 
-**Aplicación publicada:** [nexora-ai-blue-three.vercel.app](https://nexora-ai-blue-three.vercel.app/)
-
-| Componente | Estado | Descripción |
+| Componente | Estado | Tecnología principal |
 |---|---|---|
-| Chat con IA | Implementado | Utiliza la Responses API y conserva el contexto de la sesión |
-| Voz a voz | Implementado | Conversación natural mediante Realtime API y WebRTC |
-| Studio IA | Implementado | Once herramientas para redactar, estudiar, programar, traducir, extraer y analizar |
-| Visión | Implementado | Analiza PNG, JPG y WEBP con una pregunta personalizada |
-| Generación de imágenes | Implementado | Crea imágenes descargables en tres formatos |
-| Publicidad UTP | Implementado | Google Veo transforma una foto y cualquier concepto creativo en una campaña UTP cinematográfica de 10 a 30 segundos con narración, música y montaje de marca |
-| Texto a voz | Implementado | Narra resultados en MP3 con aviso de voz IA |
-| Moderación | Implementado | Clasifica contenido y muestra categorías detectadas |
-| Transcripción | Implementado | Acepta grabación directa y archivos compatibles; 25 MB en Streamlit y 4 MB en Vercel |
-| Resumen de audio | Implementado | Convierte la transcripción en ideas, decisiones y pendientes |
-| Exportación | Implementado | Permite descargar la transcripción en formato TXT |
-| Ecosistema n8n local | Implementado | Cinco workflows publicados: centro local, estudio, reuniones, privacidad y métricas |
-| Acciones externas reales | Requiere credenciales | Los borradores exigen revisión antes de conectar correo, WhatsApp o calendario |
-| Pruebas de humo | Implementado | Verifican archivos esenciales y validez del workflow |
+| Chat y Studio IA | Implementado | OpenAI Responses API |
+| Voz a voz | Implementado | OpenAI Realtime API y WebRTC |
+| Visión | Implementado | Entrada multimodal de OpenAI |
+| Generación de imágenes | Implementado | OpenAI Image API |
+| Publicidad UTP | Implementado | Google Veo 3.1 Fast y montaje local |
+| Texto a voz | Implementado | OpenAI Speech API |
+| Transcripción y resumen | Implementado | OpenAI Transcriptions y Responses API |
+| Moderación | Implementado | OpenAI Moderations API |
 
 ## Funcionalidades
 
-### Studio IA multimodal
+### Studio IA
 
 - Resume, reescribe, corrige y traduce contenido.
-- Crea guías de estudio, exámenes con respuestas y guiones de exposición.
-- Genera ideas, emails profesionales y análisis de argumentos.
+- Crea guías de estudio, exámenes, guiones, ideas y correos.
 - Explica o revisa código y extrae datos estructurados.
-- Convierte el resultado en voz IA, lo descarga o lo continúa en el chat.
-- Analiza imágenes y texto visible con una instrucción personalizada.
-- Genera imágenes cuadradas, horizontales o verticales.
-- Revisa texto con el modelo de moderación y presenta categorías para revisión humana.
+- Analiza imágenes con una instrucción personalizada.
+- Genera imágenes en formato cuadrado, horizontal o vertical.
+- Convierte resultados en voz y aplica moderación para revisión humana.
 
-### Conversación de voz en tiempo real
+### Voz en tiempo real
 
-- Mantiene una conversación directa de voz a voz con `gpt-realtime-2.1`.
-- Utiliza WebRTC para transportar el micrófono y el audio generado con baja latencia.
-- Detecta automáticamente cuándo comienza y termina cada turno.
-- Permite interrumpir, silenciar y finalizar la llamada.
-- Muestra una transcripción en vivo cuando el servicio entrega eventos de texto.
-- La clave estándar solo se utiliza en el endpoint del servidor; nunca se incrusta en JavaScript.
-
-La experiencia publicada conserva también el chat contextual, la grabación o carga de audio, la edición de la transcripción, el resumen, la descarga TXT, la reutilización en chat y el formulario para n8n. La voz es una función adicional y no reemplaza las capacidades anteriores.
+- Mantiene una conversación directa mediante `gpt-realtime-2.1`.
+- Utiliza WebRTC para transportar micrófono y audio con baja latencia.
+- Detecta turnos, permite interrumpir, silenciar y finalizar la llamada.
+- Mantiene la clave de OpenAI exclusivamente en el servidor.
 
 ### Publicidad audiovisual UTP
 
-- Abre la cámara del dispositivo o acepta una foto JPG, PNG o WEBP de hasta 10 MB.
-- Ofrece duraciones de 10, 15, 20 y 30 segundos y formatos vertical 9:16 u horizontal 16:9.
-- Envía una versión optimizada de la foto a Google Veo 3.1 Fast mediante `GEMINI_API_KEY`, almacenada sólo en Vercel.
-- Convierte cualquier instrucción creativa en publicidad UTP: la idea del usuario dirige la escena, pero la narración, identidad, cierre y llamada a la acción mantienen la marca universitaria.
-- Genera varias tomas de 4, 6 u 8 segundos con audio nativo y las monta localmente para entregar exactamente 10, 15, 20 o 30 segundos.
-- Superpone textos UTP exactos durante el montaje para evitar letras o marcas deformadas por el modelo.
-- Muestra el costo estimado antes de consumir saldo: US$1.00, US$1.60, US$2.00 o US$3.00, respectivamente, usando Veo Fast 720p.
-- Exporta el resultado mediante `MediaRecorder`; Safari prioriza MP4 y otros navegadores pueden descargar WebM.
-- Exige un código de acceso validado en el servidor antes de generar, consultar o descargar; la sesión firmada permanece sólo en `sessionStorage` durante ocho horas.
+- Acepta una foto tomada con la cámara o un archivo JPG, PNG o WEBP de hasta 10 MB.
+- Reinterpreta cualquier concepto creativo como una campaña cinematográfica de la Universidad Tecnológica del Perú.
+- Genera tomas con Google Veo 3.1 Fast, narración y música integradas.
+- Entrega videos de 10, 15, 20 o 30 segundos en formato vertical 9:16 u horizontal 16:9.
+- Añade textos e identidad UTP exactos durante el montaje local.
+- Muestra el costo estimado antes de generar.
+- Protege el módulo con un código validado en el servidor y una sesión firmada de ocho horas.
+- Mantiene `GEMINI_API_KEY` en Vercel; nunca la expone al navegador.
 
-![Arquitectura del creador de Publicidad UTP](docs/images/arquitectura-publicidad.png)
+![Arquitectura del módulo Publicidad UTP](docs/images/arquitectura-publicidad.png)
 
-Publicidad es el único módulo que usa Google Gemini. Chat, Voz, Studio IA, Imágenes, Visión, Transcripción, Speech y Moderación continúan utilizando OpenAI. La captura histórica de `docs/screenshots/nexora-publicidad-video.png` corresponde al compositor local anterior y se conserva únicamente como evidencia de evolución; el flujo Veo queda pendiente de validación manual por decisión del propietario del proyecto.
+Publicidad es el único módulo que utiliza Google Gemini. Chat, Voz, Studio IA, Imágenes, Visión, Transcripción, Speech y Moderación continúan usando OpenAI.
 
-### Chat inteligente
+La documentación específica está disponible en:
 
-- Envía preguntas a un modelo disponible en la cuenta de OpenAI.
-- Mantiene los últimos mensajes como contexto durante la sesión.
-- Incluye instrucciones orientadas a productividad y apoyo académico.
-- Permite cambiar el modelo sin editar el código.
-- Puede reiniciar la conversación desde la interfaz.
+- [Guía técnica en Markdown](docs/PUBLICIDAD_UTP.md)
+- [Documento para presentación](docs/Documentacion_Publicidad_UTP.docx)
 
 ### Transcripción de audio
 
-- Graba audio directamente desde el navegador.
-- Acepta MP3, MP4, MPEG, MPGA, M4A, WAV y WEBM.
-- Valida el límite de 25 MB antes de hacer la solicitud.
-- Utiliza `gpt-transcribe` para transformar voz en texto.
+- Graba audio desde el navegador o acepta MP3, MP4, MPEG, MPGA, M4A, WAV y WEBM.
+- Convierte voz en texto con `gpt-transcribe`.
 - Genera un resumen con idea central, puntos clave, decisiones y pendientes.
-- Permite descargar el texto o reutilizarlo dentro del chat.
-
-### Automatizaciones con n8n
-
-- Ejecuta cinco workflows independientes mediante webhooks locales.
-- Ofrece seis acciones: `sheet`, `email`, `whatsapp`, `task`, `study` y `calendar`.
-- Detecta prioridad alta, media o normal según el contenido.
-- Guarda cada solicitud en `n8n-local/nexora-events.jsonl` dentro de la Mac.
-- Entrega emails reales por SMTP a un buzón Mailpit visible en `http://localhost:8025`, sin salir de la Mac.
-- Crea una hoja CSV, un outbox local de WhatsApp, checklists Markdown, sesiones de estudio y calendarios ICS dentro de `n8n-local/outputs/`.
-- Valida y normaliza el contenido antes de procesarlo.
-- No requiere cuentas, credenciales ni suscripciones para la demostración local.
-- Incluye un coach que crea bloques de estudio, preguntas y repaso espaciado.
-- Convierte transcripciones de reuniones en actas con acuerdos, tareas y riesgos.
-- Detecta y oculta correos, teléfonos, documentos, números financieros y claves API sin guardar el contenido sensible.
-- Consolida toda la actividad en un panel de impacto local.
-
-| Workflow | Webhook | Resultado destacado |
-|---|---|---|
-| Centro local | `POST /webhook/nexora` | Seis acciones, correo SMTP local y artefactos verificables |
-| Coach de estudio adaptativo | `POST /webhook/nexora-study-coach` | Sesión por bloques, conceptos, preguntas y repaso espaciado |
-| Laboratorio de reuniones | `POST /webhook/nexora-meeting-lab` | Resumen, decisiones, responsables, tareas y riesgos |
-| Guardián de privacidad | `POST /webhook/nexora-privacy-guardian` | Puntaje de riesgo y versión redactada sin persistir secretos |
-| Panel de impacto local | `GET /webhook/nexora-impact-dashboard` | Totales, alertas, aprobaciones y actividad reciente |
-
-![Mapa de los cinco workflows n8n](docs/images/mapa-workflows-n8n.png)
-
-### Evidencia visual de n8n
-
-La documentación incluye capturas reales tomadas desde Safari sobre la instancia local. Se muestran los cinco workflows publicados, el recorrido de cada flujo y la configuración del Webhook de entrada.
-
-![Cinco workflows publicados en la instancia local](docs/screenshots/nexora-listado-publicado.png)
-
-| Evidencia | Archivo |
-|---|---|
-| Centro de automatizaciones | [`nexora-workflow-centro-local.png`](docs/screenshots/nexora-workflow-centro-local.png) |
-| Coach de estudio | [`nexora-workflow-coach-estudio.png`](docs/screenshots/nexora-workflow-coach-estudio.png) |
-| Laboratorio de reuniones | [`nexora-workflow-reuniones.png`](docs/screenshots/nexora-workflow-reuniones.png) |
-| Guardián de privacidad | [`nexora-workflow-privacidad.png`](docs/screenshots/nexora-workflow-privacidad.png) |
-| Panel de impacto | [`nexora-workflow-panel-impacto.png`](docs/screenshots/nexora-workflow-panel-impacto.png) |
-| Parámetros del Webhook | [`nexora-configuracion-webhook.png`](docs/screenshots/nexora-configuracion-webhook.png) |
-
-El capítulo **Integración con n8n** de [`DOCUMENTACION_COMPLETA.md`](docs/DOCUMENTACION_COMPLETA.md) explica la configuración y función de cada nodo. La versión Word incorpora las mismas capturas con pies de figura y tablas explicativas.
-
-### Experiencia visual
-
-- Identidad propia con icono de NEXORA AI.
-- Fondo negro, tipografía blanca y escala de grises.
-- Animaciones discretas que comunican escucha y respuesta.
-- Navegación adaptable para escritorio y móvil.
-- Controles de alto contraste sin colores decorativos intensos.
+- Permite descargar el texto o reutilizarlo en el chat.
 
 ## Arquitectura
 
 ```text
 Usuario
-  └── NEXORA AI · Streamlit local o web Vercel
-       ├── OpenAI Platform
-       │    ├── Chat, Studio, Visión e Imágenes
-       │    ├── Speech, Moderación y Transcripción
-       │    └── Realtime + WebRTC
-       ├── Google Gemini · sólo Publicidad
-       │    ├── Veo 3.1 Fast · imagen a video con audio
-       │    └── Operaciones asíncronas y descargas protegidas
-       └── n8n local
-            └── Validación, prioridad, bitácora y artefactos
+  └── NEXORA AI
+       ├── Streamlit local
+       └── Web en Vercel
+            ├── OpenAI
+            │    ├── Chat, Studio, Visión e Imágenes
+            │    ├── Speech, Moderación y Transcripción
+            │    └── Realtime y WebRTC
+            └── Google Gemini sólo para Publicidad
+                 ├── Veo 3.1 Fast
+                 ├── Operaciones asíncronas
+                 └── Descargas protegidas
 ```
 
-Streamlit actúa como capa local. Vercel protege `OPENAI_API_KEY` y `GEMINI_API_KEY` en funciones separadas; sólo Publicidad consume Gemini. n8n recibe únicamente el contenido necesario para la automatización y nunca recibe claves de IA.
+Vercel sirve la interfaz, ejecuta las funciones serverless y protege `OPENAI_API_KEY`, `GEMINI_API_KEY` y `PUBLICIDAD_ACCESS_CODE` como variables de entorno.
 
 ## Tecnologías
 
-| Tecnología | Uso en el proyecto |
+| Tecnología | Uso |
 |---|---|
-| Python 3 | Lógica principal de la aplicación |
-| Streamlit | Interfaz local y manejo de sesión |
-| HTML, CSS y JavaScript | Interfaz minimalista desplegada |
-| Google Veo 3.1 Fast | Tomas publicitarias cinematográficas con audio nativo a partir de una foto |
-| Canvas, Web Audio y MediaRecorder | Montaje, identidad UTP y exportación local del conjunto de tomas |
+| Python 3 y Streamlit | Aplicación local y manejo de sesión |
+| HTML5, CSS y JavaScript | Interfaz web adaptable |
 | Vercel | Hosting HTTPS y funciones serverless |
-| WebRTC y Realtime API | Conversación de voz a voz |
-| OpenAI Python SDK | Chat y transcripción |
-| Responses API | Generación de respuestas del asistente |
-| Image API | Generación de imágenes desde texto |
-| Speech API | Narración de texto en MP3 |
-| Moderations API | Clasificación de seguridad |
-| Entrada multimodal | Análisis de imágenes mediante Responses API |
-| Transcriptions API | Conversión de audio en texto |
-| n8n | Orquestación de automatizaciones |
-| Docker Compose | Ejecución local opcional de n8n |
-| Requests | Envío de payloads al webhook |
-| Pytest | Pruebas de humo |
+| OpenAI APIs | Texto, visión, imágenes, voz, transcripción y moderación |
+| WebRTC | Conversación de voz en tiempo real |
+| Google Veo 3.1 Fast | Generación de tomas publicitarias desde una foto |
+| Canvas API | Composición de marca, textos y transiciones |
+| Web Audio API | Mezcla del audio de las tomas |
+| MediaRecorder | Exportación del video final |
+| Node.js Crypto | Sesiones y enlaces temporales firmados |
+| Pytest | Pruebas automatizadas sin consumo de video |
 
-## Estructura del repositorio
+## Estructura principal
 
 ```text
 NexoraAI/
-├── app.py                              # Aplicación Streamlit
-├── public/                             # Interfaz web minimalista para Vercel
-├── api/                                # Texto, visión, imagen, publicidad, voz, moderación, Realtime y n8n
-├── package.json                        # Validación de JavaScript
-├── vercel.json                         # Configuración de despliegue
-├── assets/nexora-logo.svg              # Logo vectorial principal
-├── assets/nexora-icon.png              # Versión PNG para Streamlit y Word
-├── automations/                        # Cinco workflows importables de n8n
-├── n8n-local/.gitkeep                   # Carpeta local para la bitácora ignorada por Git
+├── app.py
+├── public/
+│   ├── index.html
+│   ├── app.js
+│   └── styles.css
+├── api/
+│   ├── publicidad.js
+│   ├── publicidad-acceso.js
+│   ├── publicidad-video.js
+│   └── resto de funciones serverless
+├── assets/
 ├── docs/
-│   ├── DOCUMENTACION_COMPLETA.md       # Fuente del informe académico
-│   ├── images/                         # Cinco láminas técnicas en SVG y PNG
-│   ├── screenshots/                    # Evidencia funcional obtenida en Safari
-│   └── Documentacion_NEXORA_AI.docx    # Documento Word final
-├── tests/test_smoke.py                 # Pruebas básicas
-├── scripts/build_documentation.py      # Generador del Word académico
-├── .streamlit/config.toml              # Tema y límite de carga
-├── .env.example                        # Variables de entorno de ejemplo
-├── docker-compose.yml                  # Servicio local de n8n
-├── requirements.txt                    # Dependencias Python
-├── run.sh                              # Inicio rápido macOS/Linux
-└── run.bat                             # Inicio rápido Windows
+│   ├── PUBLICIDAD_UTP.md
+│   ├── Documentacion_Publicidad_UTP.docx
+│   ├── images/
+│   └── screenshots/
+├── tests/
+├── scripts/
+├── requirements.txt
+└── vercel.json
 ```
 
 ## Requisitos
 
-- Python 3.10 o superior.
-- Una OpenAI API Key con saldo para todos los módulos excepto Publicidad.
+- Python 3.10 o superior para la versión local.
+- Una OpenAI API Key con saldo para los módulos generales.
 - Una Gemini API Key de nivel pagado para Publicidad con Veo 3.1 Fast.
-- Navegador actualizado.
-- Docker Desktop únicamente para ejecutar n8n localmente.
+- Un navegador actualizado con soporte para cámara y `MediaRecorder`.
 
-## Instalación rápida
+## Instalación local
 
 ### macOS o Linux
 
@@ -220,7 +145,7 @@ chmod +x run.sh
 
 ### Windows
 
-Ejecutar `run.bat` desde el Explorador de archivos o desde CMD.
+Ejecutar `run.bat` desde el Explorador de archivos o CMD.
 
 ### Instalación manual
 
@@ -231,181 +156,57 @@ python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
-En Windows, la activación se realiza con `.venv\Scripts\activate`. La interfaz estará disponible normalmente en `http://localhost:8501`.
+En Windows, la activación se realiza con `.venv\Scripts\activate`.
 
-## Configuración de OpenAI
-
-La forma más sencilla para una exposición es pegar la clave en **OpenAI API Key**. El campo oculta su contenido y la clave no se escribe en disco.
-
-También puede utilizarse un archivo `.env`:
-
-```bash
-cp .env.example .env
-```
+## Variables de entorno
 
 ```dotenv
 OPENAI_API_KEY=sk-proj-reemplazar
 OPENAI_MODEL=gpt-5-mini
 GEMINI_API_KEY=reemplazar-con-clave-de-google-ai-studio
 PUBLICIDAD_ACCESS_CODE=define-un-codigo-seguro
-N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 ```
 
-El archivo `.env` está excluido de Git. Nunca se debe publicar una clave real en el repositorio, una captura o el informe.
-
-En la versión Vercel se puede configurar `OPENAI_API_KEY` como variable cifrada del proyecto. Para una demostración rápida también es posible pegar la clave temporalmente en **Configuración**; se conserva solamente en la memoria de la pestaña y se envía al endpoint propio mediante HTTPS.
+El archivo `.env` está excluido de Git. Nunca se debe publicar una clave real en el repositorio, una captura o la documentación.
 
 ## Despliegue en Vercel
 
-El directorio raíz ya incluye una aplicación estática y funciones serverless compatibles con Vercel.
-
-1. Importar el repositorio `itslevanx/NexoraAI` desde el panel de Vercel.
-2. Mantener **Framework Preset** en `Other` y el directorio raíz sin cambios.
-3. Añadir `OPENAI_API_KEY`, `GEMINI_API_KEY`, `PUBLICIDAD_ACCESS_CODE` y, opcionalmente, `N8N_WEBHOOK_URL` en **Settings → Environment Variables** para producción, vista previa y desarrollo. El código real de Publicidad nunca debe escribirse en Git.
+1. Importar el repositorio en Vercel.
+2. Mantener `Other` como Framework Preset y usar el directorio raíz.
+3. Añadir `OPENAI_API_KEY`, `GEMINI_API_KEY` y `PUBLICIDAD_ACCESS_CODE` en los entornos necesarios.
 4. Ejecutar el despliegue.
-5. Autorizar el micrófono para **Voz** y la cámara para **Publicidad** cuando se utilicen esas funciones.
+5. Autorizar micrófono y cámara cuando el navegador lo solicite.
 
-La interfaz desplegada incluye voz a voz, chat contextual, Studio IA, visión, generación de imágenes, publicidad audiovisual, voz sintética, moderación, grabación, carga y edición de transcripciones, resumen, descarga TXT, reutilización en chat y automatizaciones n8n. Por el límite del cuerpo de las funciones serverless, los audios e imágenes enviados a OpenAI aceptan archivos menores de 4 MB. Publicidad admite una foto original de hasta 10 MB, la reduce en el navegador y envía a Gemini una copia JPEG menor de 3 MB. La versión Streamlit conserva su límite de audio de 25 MB.
-
-La arquitectura de voz sigue la recomendación oficial: el navegador usa WebRTC y un endpoint confiable crea la sesión con la clave del servidor. Para evitar que Vercel interprete de forma incompleta el cuerpo `application/sdp`, el navegador encapsula en JSON la oferta original devuelta por `createOffer()` y el endpoint la reconstruye sin alterar sus finales de línea `CRLF`, valida el encabezado `v=0` y limita su tamaño a 128 KB antes de formar la solicitud multipart hacia OpenAI. En Safari se envía `offer.sdp` directamente, como indica el ejemplo oficial, para no depender de una `localDescription` transitoria mientras se reúnen candidatos ICE. Esto evita tanto **“La oferta WebRTC no es válida”** como una oferta truncada con error `EOF`. Consulta la [guía WebRTC de OpenAI](https://developers.openai.com/api/docs/guides/voice-webrtc).
-
-### Prueba funcional en producción
-
-El 25 de septiembre de 2026 se verificó en Safari la instancia `https://nexora-ai-blue-three.vercel.app/`. Pasaron Chat, Studio de texto, narración, Visión, generación de imágenes, moderación, transcripción y resumen de audio, además de la conversación de voz WebRTC. La sesión de voz mostró **“Conversación activa”** y finalizó correctamente; ya no se reproduce el error **“La oferta WebRTC no es válida”**. Automatizar no se ejecutó en esta ronda, por alcance de la prueba.
-
-## Endpoints de la versión web
+## Endpoints web
 
 | Endpoint | Propósito | Validación principal |
 |---|---|---|
-| `/api/chat` | Chat contextual | Al menos un mensaje |
-| `/api/studio` | Once herramientas de texto | Modo permitido y 30 000 caracteres |
-| `/api/publicidad-acceso` | Desbloquear o renovar la sesión de Publicidad | Código cifrado en Vercel y sesión HMAC de ocho horas |
-| `/api/publicidad` | Iniciar y consultar las operaciones asíncronas de Veo | Sesión autorizada, clave Gemini del servidor, foto optimizada, prompt máximo de 600 caracteres y duración permitida |
-| `/api/publicidad-video` | Descargar de forma protegida cada toma generada | Sesión autorizada, token HMAC temporal y URI exclusiva de Google |
-| `/api/vision` | Análisis de imágenes | PNG, JPG o WEBP menor de 4 MB |
-| `/api/image` | Generación de imágenes | Prompt y tamaño permitido |
-| `/api/speech` | Texto a voz MP3 | Máximo 2500 caracteres |
+| `/api/chat` | Chat contextual | Mensajes válidos |
+| `/api/studio` | Herramientas de texto | Modo y tamaño permitidos |
+| `/api/vision` | Análisis de imágenes | Tipo y tamaño de archivo |
+| `/api/image` | Generación de imágenes | Prompt y formato permitido |
+| `/api/speech` | Texto a voz | Límite de caracteres |
 | `/api/moderate` | Clasificación de seguridad | Texto no vacío |
-| `/api/transcribe` | Audio a texto | Audio menor de 4 MB |
-| `/api/realtime-session` | Voz a voz por WebRTC | Oferta SDP válida |
-| `/api/automation` | Envío controlado a n8n | Acción y webhook HTTPS en producción |
-
-## Uso de Studio IA
-
-1. Abrir **Studio IA** y elegir Texto, Visión, Imágenes o Seguridad.
-2. En Texto, seleccionar una herramienta, añadir tono, idioma o nivel y pegar el contenido.
-3. Descargar el resultado, continuarlo en Chat o reproducirlo con voz IA.
-4. En Visión, cargar una imagen de prueba sin información sensible y formular una pregunta.
-5. En Imágenes, describir la pieza, elegir formato y descargar el JPEG.
-6. En Seguridad, interpretar el resultado como señal para revisión humana, no como una decisión absoluta.
+| `/api/transcribe` | Audio a texto | Tipo y tamaño de audio |
+| `/api/realtime-session` | Voz por WebRTC | Oferta SDP válida |
+| `/api/publicidad-acceso` | Acceso a Publicidad | Código del servidor y sesión HMAC |
+| `/api/publicidad` | Inicio y consulta de Veo | Sesión, foto, prompt y duración |
+| `/api/publicidad-video` | Descarga de tomas | Sesión y token temporal HMAC |
 
 ## Uso de Publicidad
 
-1. Abrir **Publicidad** —también disponible mediante `/publicidad`— e ingresar el código autorizado. El mismo bloqueo aparece al llegar por botón, enlace directo o recarga.
-2. Elegir **Abrir cámara** o **Subir foto**.
-3. Describir cualquier escena o concepto, elegir 10, 15, 20 o 30 segundos, formato y estilo. La aplicación siempre lo reinterpretará como publicidad UTP.
-4. Revisar el costo estimado y pulsar **Crear con Google Veo**. El diálogo de confirmación evita consumos accidentales.
-5. Mantener la pestaña abierta mientras Veo genera las tomas, NEXORA las descarga y realiza el montaje final.
-6. Reproducir el resultado y pulsar **Descargar video**; la extensión será MP4 o WebM según el navegador.
+1. Abrir **Publicidad** o acceder directamente a `/publicidad`.
+2. Ingresar el código autorizado.
+3. Abrir la cámara o subir una foto.
+4. Escribir el concepto creativo.
+5. Elegir duración, formato y estilo.
+6. Revisar el costo estimado y confirmar la generación.
+7. Mantener la pestaña abierta durante la generación y el montaje.
+8. Reproducir y descargar el video final.
 
-La foto optimizada y el concepto se transmiten a la función de Vercel y después a Google Gemini. La clave nunca llega al navegador. Google conserva temporalmente las tomas generadas; NEXORA las descarga mediante tokens firmados de una hora y compone el archivo final en memoria local.
+La fotografía optimizada y el concepto se envían a Google Gemini. La clave permanece en Vercel. Las tomas regresan mediante enlaces temporales firmados y el navegador compone el archivo final en memoria.
 
-## Configuración de n8n
-
-### Levantar n8n con Docker en la Mac
-
-```bash
-./scripts/start_n8n_local.sh
-```
-
-El comando construye y levanta tres servicios: n8n en `http://localhost:5678`, el puente SMTP interno y Mailpit en `http://localhost:8025`. También importa y publica los cinco workflows. n8n conserva su configuración en el volumen `n8n_data`; las bitácoras y los artefactos de demostración quedan dentro de `n8n-local/` y están excluidos de Git.
-
-La configuración de Docker habilita únicamente los módulos `fs` y `path` para los nodos Code, monta `./n8n-local` como `/files` y restringe el acceso de archivos a esa ruta. El servicio `mailer` recibe la orden de n8n, valida el destinatario y entrega el mensaje por SMTP a Mailpit. Ningún correo abandona la Mac.
-
-Para la demostración rápida:
-
-```bash
-./scripts/demo_n8n_local.sh
-```
-
-Después abre `http://localhost:8025`: aparecerá el mensaje recibido con remitente, destinatario, asunto y contenido.
-
-Para importar y publicar manualmente desde la terminal:
-
-```bash
-docker compose cp automations/nexora-n8n.json n8n:/tmp/nexora-n8n.json
-docker compose cp automations/nexora-coach-estudio.json n8n:/tmp/nexora-coach-estudio.json
-docker compose cp automations/nexora-laboratorio-reuniones.json n8n:/tmp/nexora-laboratorio-reuniones.json
-docker compose cp automations/nexora-guardian-privacidad.json n8n:/tmp/nexora-guardian-privacidad.json
-docker compose cp automations/nexora-panel-impacto.json n8n:/tmp/nexora-panel-impacto.json
-docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-n8n.json
-docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-coach-estudio.json
-docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-laboratorio-reuniones.json
-docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-guardian-privacidad.json
-docker compose exec -T n8n n8n import:workflow --input=/tmp/nexora-panel-impacto.json
-docker compose exec -T n8n n8n publish:workflow --id=nexoraLocalV2
-docker compose exec -T n8n n8n publish:workflow --id=nexoraStudyCoachV1
-docker compose exec -T n8n n8n publish:workflow --id=nexoraMeetingLabV1
-docker compose exec -T n8n n8n publish:workflow --id=nexoraPrivacyGuardianV1
-docker compose exec -T n8n n8n publish:workflow --id=nexoraImpactDashboardV1
-docker compose restart n8n
-```
-
-Comprobación rápida:
-
-```bash
-curl http://localhost:5678/healthz
-curl -X POST http://localhost:5678/webhook/nexora \
-  -H 'Content-Type: application/json' \
-  -d '{"action":"email","recipient":"docente@ejemplo.com","subject":"NEXORA AI - Demo","content":"Correo enviado por el workflow local."}'
-```
-
-### Activar los workflows
-
-1. Abrir los cinco workflows cuyo nombre comienza con **NEXORA AI**.
-2. Verificar las rutas de la tabla anterior.
-3. Activar o publicar cada workflow.
-4. Copiar `http://localhost:5678/webhook/nexora` en la barra lateral.
-5. Ejecutar una acción desde **Automatizaciones**.
-6. Para email, abrir `http://localhost:8025` y mostrar el mensaje recibido.
-
-### Conectar servicios externos opcionales
-
-El workflow local ya funciona sin cuentas de pago: valida, prioriza, registra la ejecución y produce un resultado comprobable. El correo se entrega dentro de Mailpit; CSV, WhatsApp, tareas, estudio y calendario se guardan en `n8n-local/outputs/`.
-
-- Conectar Google Sheets con la operación Append Row si el equipo desea sincronización.
-- Sustituir el puente SMTP local por Gmail, Outlook o un SMTP real únicamente cuando el equipo disponga de credenciales y destinatarios autorizados.
-- Conectar WhatsApp Business Cloud o Twilio únicamente con consentimiento.
-- Conectar Google Calendar u Outlook Calendar para crear eventos aprobados.
-- Configurar las credenciales únicamente dentro de n8n.
-- Mantener los nodos de validación y enrutamiento.
-- Probar primero con cuentas y datos del equipo.
-
-## Formato del webhook
-
-```json
-{
-  "action": "email",
-  "recipient": "docente@ejemplo.com",
-  "subject": "Resumen de la sesión",
-  "content": "Contenido revisado por el usuario",
-  "source": "NEXORA AI",
-  "timestamp": "2026-09-23T20:30:00"
-}
-```
-
-Respuesta local de ejemplo:
-
-```json
-{
-  "ok": true,
-  "app": "NEXORA AI",
-  "action": "task",
-  "priority": "alta",
-  "storedLocally": true,
-  "message": "Plan de tareas preparado correctamente en n8n local"
-}
-```
+La imagen se envía a Veo dentro de `instances[0].image` mediante `bytesBase64Encoded` y `mimeType`, que es el formato de predicción utilizado por el endpoint audiovisual.
 
 ## Pruebas
 
@@ -415,82 +216,47 @@ python -m py_compile app.py
 npm run check
 ```
 
-Las pruebas automatizadas preparadas verifican archivos esenciales, workflows, sintaxis, la identidad UTP de los prompts y validaciones de Publicidad sin consumir Gemini. Por indicación del propietario, esta actualización no ejecutó pruebas ni generaciones; la validación funcional de Veo se realizará manualmente.
+Las validaciones automatizadas no deben generar videos ni consumir saldo de Gemini. La verificación audiovisual final se realiza manualmente con autorización del propietario.
 
 ## Seguridad y privacidad
 
-- La clave ingresada permanece en la sesión de Streamlit.
-- En la versión web, una clave temporal de OpenAI puede vivir en la memoria de la pestaña; Publicidad nunca acepta `GEMINI_API_KEY` desde el navegador.
-- Publicidad valida `PUBLICIDAD_ACCESS_CODE` exclusivamente en Vercel y entrega una sesión HMAC de ocho horas; el código escrito no se almacena en el navegador.
-- `.env` y `.streamlit/secrets.toml` están ignorados por Git.
-- El webhook recibe datos de la tarea, no la clave de OpenAI.
-- La app aplica timeout y reintentos limitados.
-- Los audios, imágenes, texto y prompts se envían a OpenAI; no se deben usar datos sensibles en la demo.
-- En Publicidad, una copia optimizada de la foto y el concepto se envían a Google Gemini; no se debe usar material sensible ni imágenes sin autorización.
-- La narración se identifica como voz generada por IA.
-- Los endpoints de Publicidad rechazan generación, seguimiento y descarga sin una sesión autorizada, además de validar modos, tipos MIME, tamaños y longitud.
-- Las acciones reales deben configurarse con credenciales protegidas y aprobación cuando corresponda.
-
-## Demostración recomendada
-
-1. Presentar el problema: chat, notas de voz y tareas manuales están dispersos.
-2. Pegar la API key sin mostrarla al público.
-3. Preguntar: “Explícame la computación cuántica con una analogía y crea tres preguntas de repaso”.
-4. Convertir la respuesta en guía de estudio y reproducirla con voz IA.
-5. Analizar una imagen académica o generar un afiche de ejemplo.
-6. Tomar o cargar una foto, crear un video UTP de 10 segundos y reproducir su música.
-7. Grabar una nota de voz de 10 a 15 segundos, transcribirla y resumirla.
-8. Enviar el contenido al webhook n8n y mostrar la ejecución visual.
-9. Explicar moderación, límites y que las credenciales permanecen fuera del código.
+- Las claves se guardan como variables de entorno y no se incluyen en el cliente.
+- Publicidad exige una sesión HMAC válida para generar, consultar y descargar.
+- El código de acceso se compara en tiempo constante en el servidor.
+- La sesión de Publicidad permanece en `sessionStorage` y vence después de ocho horas.
+- La foto se optimiza en el navegador antes de enviarse a Gemini.
+- Los enlaces de descarga de las tomas expiran después de una hora.
+- No se deben usar datos sensibles ni fotografías sin autorización.
+- La moderación y el análisis automático requieren revisión humana.
 
 ## Limitaciones
 
-- El historial vive únicamente durante la sesión.
-- El workflow local produce registros, planes y borradores; no envía comunicaciones sin una integración y aprobación explícitas.
-- No existe autenticación de usuarios.
-- Los archivos están limitados a 25 MB en Streamlit y a menos de 4 MB en Vercel.
-- La narración admite hasta 2500 caracteres por solicitud.
-- La generación de imágenes puede requerir verificación de la organización y genera costos.
-- El análisis visual y la moderación son ayudas; requieren revisión humana.
-- El modelo debe estar disponible en la cuenta del usuario.
-- El consumo de API puede generar costos.
-- Veo puede tardar entre segundos y varios minutos por toma; después el montaje local tarda aproximadamente la duración final elegida.
-- El contenedor final depende de `MediaRecorder`: Safari produce MP4 cuando está disponible y otros navegadores pueden producir WebM.
-- La generación usa exclusivamente `veo-3.1-fast-generate-preview` en Publicidad; los demás módulos conservan OpenAI.
+- El historial general vive durante la sesión.
+- Los archivos enviados a las funciones web están sujetos a límites de tamaño.
+- Veo puede tardar varios minutos por toma.
+- La generación audiovisual consume saldo de Google Gemini.
+- Safari prioriza MP4 cuando está disponible; otros navegadores pueden exportar WebM.
+- El resultado de una IA generativa requiere revisión antes de publicarse.
 
-## Mejoras propuestas
+## Documentación
 
-- Autenticación y perfiles de usuario.
-- Persistencia en PostgreSQL o Supabase.
-- Biblioteca de transcripciones y búsquedas.
-- Respuestas en streaming.
-- Panel de costos y consumo.
-- Procesamiento de documentos PDF.
-- Aprobación de automatizaciones reales.
-- Monitoreo del despliegue y rotación programada de secretos.
-
-## Documentación académica
-
-- `docs/DOCUMENTACION_COMPLETA.md`: fuente editable del informe.
-- `docs/Documentacion_NEXORA_AI.docx`: documento listo para Microsoft Word.
-
-Incluye problema, objetivos, alcance, requisitos, casos de uso, arquitectura, código, instalación, manual de usuario, n8n, seguridad, pruebas, riesgos, conclusiones, glosario, bibliografía y anexos.
+- [Guía de Publicidad en Markdown](docs/PUBLICIDAD_UTP.md)
+- [Guía de Publicidad para presentación](docs/Documentacion_Publicidad_UTP.docx)
+- [Informe general histórico](docs/DOCUMENTACION_COMPLETA.md)
+- [Informe general en Word](docs/Documentacion_NEXORA_AI.docx)
 
 ## Fuentes oficiales
 
-- [Inicio rápido de OpenAI](https://developers.openai.com/api/docs/quickstart)
-- [Guía de transcripción de OpenAI](https://developers.openai.com/api/docs/guides/speech-to-text)
-- [Guía de visión de OpenAI](https://developers.openai.com/api/docs/guides/images-vision)
-- [Guía de generación de imágenes de OpenAI](https://developers.openai.com/api/docs/guides/image-generation)
-- [Guía de texto a voz de OpenAI](https://developers.openai.com/api/docs/guides/text-to-speech)
-- [Guía de moderación de OpenAI](https://developers.openai.com/api/docs/guides/moderation)
-- [Generación de video con Google Veo](https://ai.google.dev/gemini-api/docs/veo)
-- [Precios de Gemini API y Veo](https://ai.google.dev/gemini-api/docs/pricing)
-- [Sitio oficial de la Universidad Tecnológica del Perú](https://www.utp.edu.pe/)
-- [Documentación de Streamlit](https://docs.streamlit.io/)
-- [Documentación de n8n](https://docs.n8n.io/)
-- [Documentación de Docker Compose](https://docs.docker.com/compose/)
+- [OpenAI API](https://developers.openai.com/api/docs/)
+- [OpenAI Realtime con WebRTC](https://developers.openai.com/api/docs/guides/voice-webrtc)
+- [Google Veo](https://ai.google.dev/gemini-api/docs/veo)
+- [Precios de Gemini API](https://ai.google.dev/gemini-api/docs/pricing)
+- [Vercel Functions](https://vercel.com/docs/functions)
+- [MediaDevices](https://developer.mozilla.org/docs/Web/API/MediaDevices)
+- [Canvas API](https://developer.mozilla.org/docs/Web/API/Canvas_API)
+- [MediaRecorder](https://developer.mozilla.org/docs/Web/API/MediaRecorder)
+- [Universidad Tecnológica del Perú](https://www.utp.edu.pe/)
 
 ## Uso académico
 
-Proyecto preparado con fines académicos. Antes de utilizarlo con datos reales, el equipo debe definir una licencia, revisar las políticas de los servicios conectados y mantener la aprobación humana para acciones externas.
+Proyecto preparado con fines académicos. Antes de utilizarlo con datos reales, se deben revisar las políticas de los servicios conectados, establecer límites de gasto y mantener supervisión humana sobre el contenido generado.
