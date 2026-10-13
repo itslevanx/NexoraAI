@@ -41,6 +41,10 @@ def test_required_files_exist():
         "api/automation.js",
         "api/studio.js",
         "api/publicidad.js",
+        "api/publicidad-video.js",
+        "api/publicidad-acceso.js",
+        "api/_publicidad-auth.js",
+        "api/_gemini-video.js",
         "api/speech.js",
         "api/image.js",
         "api/vision.js",
@@ -107,4 +111,8 @@ def test_publicidad_is_documented_and_configured():
         assert phrase.lower() in documentation.lower()
     assert 'data-view="advertising"' in web
     assert "captureStream" in javascript
+    assert "Google Veo" in javascript
+    assert "GEMINI_API_KEY" in (ROOT / ".env.example").read_text()
+    assert "PUBLICIDAD_ACCESS_CODE" in (ROOT / ".env.example").read_text()
+    assert "advertisingLock" in web
     assert "camera=(self)" in vercel["headers"][0]["headers"][-1]["value"]

@@ -150,13 +150,27 @@
           <div class="intro compact">
             <p class="kicker">Creador audiovisual</p>
             <h1 id="advertisingTitle">Tu foto. Una historia UTP.</h1>
-            <p>Toma una foto o elige una imagen y conviértela en un video promocional con movimiento, mensajes creados con IA y música original.</p>
+            <p>Toma una foto o elige una imagen. Google Veo la convertirá en una campaña cinematográfica de la UTP con escenas, narración, música y diseño de marca.</p>
           </div>
 
-          <div class="advertising-grid">
+          <form id="advertisingLock" class="advertising-lock form-card" autocomplete="off">
+            <span class="lock-symbol" aria-hidden="true">UTP</span>
+            <div>
+              <p class="kicker">Acceso restringido</p>
+              <h2>Publicidad requiere autorización</h2>
+              <p>Ingresa el código asignado. La validación se realiza en el servidor y la sesión queda habilitada solo en este navegador.</p>
+            </div>
+            <label for="advertisingAccessCode">Código de acceso
+              <input id="advertisingAccessCode" type="password" required maxlength="100" autocomplete="current-password" />
+            </label>
+            <button class="primary wide" type="submit">Desbloquear Publicidad</button>
+            <small id="advertisingLockStatus" role="status">El código no se guarda en el navegador.</small>
+          </form>
+
+          <div id="advertisingContent" class="advertising-grid" hidden>
             <form id="advertisingForm" class="form-card advertising-form">
               <div class="source-heading">
-                <div><strong>1. Elige la imagen</strong><span>La foto se procesa únicamente en este dispositivo.</span></div>
+                <div><strong>1. Elige la imagen</strong><span>La foto se enviará a Google Gemini exclusivamente para generar el video.</span></div>
                 <div class="source-actions">
                   <button id="startCamera" class="secondary" type="button">Abrir cámara</button>
                   <label class="secondary upload-button" for="advertisingFile">Subir foto</label>
@@ -179,8 +193,9 @@
                 <button id="closeCamera" class="secondary" type="button">Cerrar cámara</button>
               </div>
 
-              <label>Enfoque de la campaña
-                <textarea id="advertisingBrief" rows="3" maxlength="600" placeholder="Ejemplo: estudiantes de ingeniería, innovación y vida universitaria"></textarea>
+              <label>Describe cualquier escena o concepto
+                <textarea id="advertisingBrief" rows="3" maxlength="600" placeholder="Ejemplo: crea una escena de frutinovelas con estética cinematográfica"></textarea>
+                <small class="cost-hint">Tu idea dirige la historia; el módulo siempre la convierte en una campaña de la UTP.</small>
               </label>
 
               <div class="field-pair">
@@ -191,6 +206,7 @@
                     <option value="20">20 segundos</option>
                     <option value="30">30 segundos</option>
                   </select>
+                  <small id="advertisingCost" class="cost-hint">Costo estimado de Veo: US$1.60 · se generan 16 s y se entrega un video de 15 s</small>
                 </label>
                 <label>Formato
                   <select id="advertisingFormat">
@@ -209,8 +225,8 @@
                 </select>
               </label>
 
-              <button id="createAdvertisingVideo" class="primary wide" type="submit" disabled>Crear video promocional</button>
-              <p class="privacy advertising-note">La IA prepara el guion. La animación, la música y el archivo final se generan localmente en tu navegador.</p>
+              <button id="createAdvertisingVideo" class="primary wide" type="submit" disabled>Crear con Google Veo</button>
+              <p class="privacy advertising-note">Siempre se generará publicidad para la UTP, incluso si describes una escena creativa distinta. Veo produce tomas con audio; NEXORA añade textos exactos e identidad UTP durante el montaje final.</p>
             </form>
 
             <section class="advertising-output" aria-live="polite">
@@ -223,12 +239,12 @@
                 <video id="advertisingResult" controls playsinline hidden></video>
                 <div id="advertisingPlaceholder" class="render-placeholder">
                   <span>UTP</span>
-                  <p>La vista previa del video aparecerá aquí.</p>
+                  <p>Las tomas cinematográficas generadas con Veo aparecerán aquí.</p>
                 </div>
               </div>
               <div id="advertisingProgress" class="progress-track" hidden><span></span></div>
               <a id="downloadAdvertising" class="secondary link-button wide" download="publicidad-utp.mp4" hidden>Descargar video</a>
-              <p class="ai-disclosure">Guion asistido por IA. Música sintetizada y video compuesto localmente.</p>
+              <p class="ai-disclosure">Video y audio generados con Google Veo. Montaje e identidad UTP añadidos localmente. Contenido creado con IA.</p>
             </section>
           </div>
         </section>

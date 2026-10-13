@@ -18,7 +18,10 @@ const state = {
   advertisingCamera: null,
   advertisingImage: null,
   advertisingImageUrl: "",
-  advertisingVideoUrl: ""
+  advertisingVideoUrl: "",
+  advertisingClipUrls: [],
+  advertisingAccessToken: sessionStorage.getItem("nexoraPublicidadToken") || "",
+  advertisingAudioContext: null
 };
 
 function toast(message) {
@@ -40,13 +43,23 @@ async function apiError(response) {
   try { return JSON.parse(text).error || text; } catch { return text || `Error HTTP ${response.status}`; }
 }
 
+function showView(name, updateUrl = false) {
+  const button = $(`[data-view="${name}"]`) || $('[data-view="voice"]');
+  $$('[data-view]').forEach((item) => item.classList.toggle("active", item === button));
+  $$('.view').forEach((view) => view.classList.remove("active"));
+  $(`#${button.dataset.view}View`).classList.add("active");
+  if (updateUrl) history.pushState({}, "", button.dataset.view === "advertising" ? "/publicidad" : `/#${button.dataset.view}`);
+}
+
 $$('[data-view]').forEach((button) => {
-  button.addEventListener("click", () => {
-    $$('[data-view]').forEach((item) => item.classList.toggle("active", item === button));
-    $$('.view').forEach((view) => view.classList.remove("active"));
-    $(`#${button.dataset.view}View`).classList.add("active");
-  });
+  button.addEventListener("click", () => showView(button.dataset.view, true));
 });
+
+window.addEventListener("popstate", () => showView(location.hash.slice(1)));
+const initialView = location.pathname === "/publicidad"
+  ? "advertising"
+  : location.hash === "#inicio" ? "voice" : location.hash.slice(1);
+if (initialView) showView(initialView);
 
 $$('[data-studio]').forEach((button) => {
   button.addEventListener("click", () => {
@@ -503,6 +516,62 @@ const ADVERTISING_FALLBACK = {
   cta: "Conoce más en utp.edu.pe"
 };
 
+function advertisingHeaders(extra = {}) {
+  const headers = { ...extra };
+  if (state.advertisingAccessToken) headers["x-publicidad-token"] = state.advertisingAccessToken;
+  return headers;
+}
+
+function lockAdvertising(message = "Ingresa el código autorizado para continuar.") {
+  state.advertisingAccessToken = "";
+  sessionStorage.removeItem("nexoraPublicidadToken");
+  $("#advertisingContent").hidden = true;
+  $("#advertisingLock").hidden = false;
+  $("#advertisingLockStatus").textContent = message;
+  stopAdvertisingCamera();
+}
+
+function unlockAdvertising(token) {
+  state.advertisingAccessToken = token;
+  sessionStorage.setItem("nexoraPublicidadToken", token);
+  $("#advertisingLock").hidden = true;
+  $("#advertisingContent").hidden = false;
+  $("#advertisingAccessCode").value = "";
+}
+
+async function requestAdvertisingAccess(code = "") {
+  const response = await fetch("/api/publicidad-acceso", {
+    method: "POST",
+    headers: advertisingHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify(code ? { code } : {})
+  });
+  if (!response.ok) throw new Error(await apiError(response));
+  const result = await response.json();
+  if (!result.token) throw new Error("El servidor no devolvió una sesión válida.");
+  unlockAdvertising(result.token);
+}
+
+$("#advertisingLock").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = event.submitter;
+  button.disabled = true;
+  button.textContent = "Verificando…";
+  try {
+    await requestAdvertisingAccess($("#advertisingAccessCode").value);
+    toast("Publicidad desbloqueada para esta sesión.");
+  } catch (error) {
+    lockAdvertising(error.message);
+    $("#advertisingAccessCode").focus();
+  } finally {
+    button.disabled = false;
+    button.textContent = "Desbloquear Publicidad";
+  }
+});
+
+if (state.advertisingAccessToken) {
+  requestAdvertisingAccess().catch(() => lockAdvertising("La sesión venció. Ingresa nuevamente el código."));
+}
+
 function stopAdvertisingCamera() {
   state.advertisingCamera?.getTracks().forEach((track) => track.stop());
   state.advertisingCamera = null;
@@ -595,32 +664,116 @@ function updateAdvertisingFormat() {
 }
 
 $("#advertisingFormat").addEventListener("change", updateAdvertisingFormat);
-$("#advertisingDuration").addEventListener("change", () => {
-  $("#advertisingBadge").textContent = `${$("#advertisingDuration").value} s`;
-});
 
-async function requestAdvertisingCopy() {
+const ADVERTISING_COSTS = {
+  10: { generated: 10, cost: 1 },
+  15: { generated: 16, cost: 1.6 },
+  20: { generated: 20, cost: 2 },
+  30: { generated: 30, cost: 3 }
+};
+
+function updateAdvertisingCost() {
+  const duration = Number($("#advertisingDuration").value);
+  const estimate = ADVERTISING_COSTS[duration];
+  $("#advertisingBadge").textContent = `${duration} s`;
+  $("#advertisingCost").textContent = `Costo estimado de Veo: US$${estimate.cost.toFixed(2)} · se generan ${estimate.generated} s y se entrega un video de ${duration} s`;
+}
+
+$("#advertisingDuration").addEventListener("change", updateAdvertisingCost);
+
+async function prepareAdvertisingImage() {
+  const source = state.advertisingImage;
+  const maxSide = 1280;
+  const scale = Math.min(1, maxSide / Math.max(source.naturalWidth, source.naturalHeight));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(source.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(source.naturalHeight * scale));
+  const context = canvas.getContext("2d", { alpha: false });
+  context.fillStyle = "#000";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(source, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", .84));
+  if (!blob) throw new Error("No fue posible preparar la foto para Google Veo.");
+  const image = await fileToBase64(blob);
+  return { image, mimeType: "image/jpeg" };
+}
+
+async function startAdvertisingGeneration() {
+  const prepared = await prepareAdvertisingImage();
   const response = await fetch("/api/publicidad", {
     method: "POST",
-    headers: apiHeaders({ "Content-Type": "application/json" }),
+    headers: advertisingHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
+      ...prepared,
       brief: $("#advertisingBrief").value.trim(),
       tone: $("#advertisingTone").value,
       duration: Number($("#advertisingDuration").value),
-      model: state.chatModel
+      format: $("#advertisingFormat").value
     })
   });
+  if (response.status === 401) lockAdvertising("La sesión venció. Ingresa nuevamente el código.");
   if (!response.ok) throw new Error(await apiError(response));
   return response.json();
 }
 
-function drawCoverImage(context, image, width, height, progress) {
-  const baseScale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
-  const scale = baseScale * (1.04 + progress * .09);
-  const drawWidth = image.naturalWidth * scale;
-  const drawHeight = image.naturalHeight * scale;
-  const drift = Math.sin(progress * Math.PI) * width * .025;
-  context.drawImage(image, (width - drawWidth) / 2 + drift, (height - drawHeight) / 2, drawWidth, drawHeight);
+const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+
+async function waitForAdvertisingClips(operations) {
+  const deadline = Date.now() + 7 * 60 * 1000;
+  while (Date.now() < deadline) {
+    const response = await fetch("/api/publicidad", {
+      method: "POST",
+      headers: advertisingHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ action: "status", operations })
+    });
+    if (response.status === 401) lockAdvertising("La sesión venció. Ingresa nuevamente el código.");
+    if (!response.ok) throw new Error(await apiError(response));
+    const status = await response.json();
+    const completed = status.results.filter((result) => result.done).length;
+    const failed = status.results.find((result) => result.error);
+    if (failed) throw new Error(failed.error);
+    $("#advertisingProgress span").style.width = `${8 + (completed / operations.length) * 62}%`;
+    $("#advertisingStatus").textContent = `Google Veo generando tomas · ${completed}/${operations.length}`;
+    if (status.done) {
+      const tokens = status.results.map((result) => result.downloadToken);
+      if (tokens.some((token) => !token)) throw new Error("Google terminó una toma, pero no entregó el video.");
+      return tokens;
+    }
+    await wait(10000);
+  }
+  throw new Error("Google Veo superó el tiempo de espera. Los videos generados se conservan temporalmente en Google.");
+}
+
+async function downloadAdvertisingClip(token, index) {
+  $("#advertisingStatus").textContent = `Descargando toma ${index + 1}…`;
+  const response = await fetch(`/api/publicidad-video?token=${encodeURIComponent(token)}`, {
+    headers: advertisingHeaders()
+  });
+  if (response.status === 401) lockAdvertising("La sesión venció. Ingresa nuevamente el código.");
+  if (!response.ok) throw new Error(await apiError(response));
+  const blob = await response.blob();
+  if (!blob.size) throw new Error("Google devolvió una toma vacía.");
+  const url = URL.createObjectURL(blob);
+  state.advertisingClipUrls.push(url);
+  const video = document.createElement("video");
+  video.src = url;
+  video.preload = "auto";
+  video.playsInline = true;
+  await new Promise((resolve, reject) => {
+    video.addEventListener("loadedmetadata", resolve, { once: true });
+    video.addEventListener("error", () => reject(new Error(`No fue posible abrir la toma ${index + 1}.`)), { once: true });
+    video.load();
+  });
+  return video;
+}
+
+function drawCoverVideo(context, video, width, height) {
+  const sourceWidth = video.videoWidth || width;
+  const sourceHeight = video.videoHeight || height;
+  const scale = Math.max(width / sourceWidth, height / sourceHeight);
+  const drawWidth = sourceWidth * scale;
+  const drawHeight = sourceHeight * scale;
+  context.drawImage(video, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
 }
 
 function drawWrappedText(context, text, x, y, maxWidth, lineHeight, maxLines = 3) {
@@ -644,16 +797,16 @@ function drawWrappedText(context, text, x, y, maxWidth, lineHeight, maxLines = 3
   return Math.min(lines.length, maxLines);
 }
 
-function drawAdvertisingFrame(context, image, copy, progress, format) {
+function drawAdvertisingFrame(context, video, copy, progress, format, clipProgress) {
   const { width, height } = context.canvas;
   const short = Math.min(width, height);
   const margin = short * .075;
   context.clearRect(0, 0, width, height);
   context.save();
-  drawCoverImage(context, image, width, height, progress);
+  drawCoverVideo(context, video, width, height);
   const shade = context.createLinearGradient(0, 0, 0, height);
-  shade.addColorStop(0, "rgba(0,0,0,.25)");
-  shade.addColorStop(.48, "rgba(0,0,0,.16)");
+  shade.addColorStop(0, "rgba(0,0,0,.18)");
+  shade.addColorStop(.48, "rgba(0,0,0,.08)");
   shade.addColorStop(1, "rgba(0,0,0,.92)");
   context.fillStyle = shade;
   context.fillRect(0, 0, width, height);
@@ -703,45 +856,10 @@ function drawAdvertisingFrame(context, image, copy, progress, format) {
   context.fillRect(margin, height - margin * .22, width - margin * 2, 3);
   context.fillStyle = "#e00034";
   context.fillRect(margin, height - margin * .22, (width - margin * 2) * progress, 3);
+  const transition = Math.min(1, clipProgress * 7, (1 - clipProgress) * 7);
+  context.fillStyle = `rgba(0,0,0,${Math.max(0, 1 - transition)})`;
+  context.fillRect(0, 0, width, height);
   context.restore();
-}
-
-function scheduleAdvertisingMusic(audioContext, destination, duration, tone) {
-  const master = audioContext.createGain();
-  const toneGain = tone === "institucional" ? .09 : tone === "energetico" ? .15 : .115;
-  master.gain.setValueAtTime(toneGain, audioContext.currentTime);
-  master.connect(destination);
-  const base = tone === "tecnologico" ? 146.83 : tone === "energetico" ? 164.81 : 130.81;
-  const chordRatios = [[1, 1.25, 1.5], [1.125, 1.406, 1.687], [.75, .9375, 1.125], [1, 1.2, 1.5]];
-  const start = audioContext.currentTime + .08;
-  for (let beat = 0; beat < duration * 2; beat += 1) {
-    const time = start + beat * .5;
-    if (beat % 4 === 0) {
-      const chord = chordRatios[(beat / 4) % chordRatios.length];
-      chord.forEach((ratio, index) => {
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        oscillator.type = index === 0 ? "triangle" : "sine";
-        oscillator.frequency.value = base * ratio;
-        gain.gain.setValueAtTime(0, time);
-        gain.gain.linearRampToValueAtTime(.12, time + .08);
-        gain.gain.exponentialRampToValueAtTime(.001, Math.min(start + duration, time + 1.85));
-        oscillator.connect(gain).connect(master);
-        oscillator.start(time);
-        oscillator.stop(Math.min(start + duration, time + 1.9));
-      });
-    }
-    const pulse = audioContext.createOscillator();
-    const pulseGain = audioContext.createGain();
-    pulse.type = "sine";
-    pulse.frequency.setValueAtTime(beat % 2 ? 82 : 92, time);
-    pulse.frequency.exponentialRampToValueAtTime(48, time + .12);
-    pulseGain.gain.setValueAtTime(.16, time);
-    pulseGain.gain.exponentialRampToValueAtTime(.001, time + .16);
-    pulse.connect(pulseGain).connect(master);
-    pulse.start(time);
-    pulse.stop(time + .17);
-  }
 }
 
 function supportedAdvertisingMimeType() {
@@ -755,7 +873,7 @@ function supportedAdvertisingMimeType() {
   return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || "";
 }
 
-async function renderAdvertisingVideo(copy) {
+async function renderAdvertisingVideo(videos, copy, clipDurations) {
   if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
     throw new Error("Este navegador no permite exportar video desde el lienzo. Usa una versión reciente de Safari, Chrome o Edge.");
   }
@@ -765,10 +883,12 @@ async function renderAdvertisingVideo(copy) {
   const format = $("#advertisingFormat").value;
   const canvasStream = canvas.captureStream(30);
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  const audioContext = new AudioContextClass();
+  if (!AudioContextClass) throw new Error("Este navegador no permite montar el audio generado por Veo.");
+  const audioContext = state.advertisingAudioContext || new AudioContextClass();
+  state.advertisingAudioContext = audioContext;
   await audioContext.resume();
   const destination = audioContext.createMediaStreamDestination();
-  scheduleAdvertisingMusic(audioContext, destination, duration, $("#advertisingTone").value);
+  videos.forEach((video) => audioContext.createMediaElementSource(video).connect(destination));
   const stream = new MediaStream([...canvasStream.getVideoTracks(), ...destination.stream.getAudioTracks()]);
   const mimeType = supportedAdvertisingMimeType();
   const options = { videoBitsPerSecond: 6_000_000, audioBitsPerSecond: 128_000 };
@@ -780,45 +900,80 @@ async function renderAdvertisingVideo(copy) {
     recorder.addEventListener("stop", () => resolve(new Blob(chunks, { type: recorder.mimeType || mimeType || "video/webm" })));
     recorder.addEventListener("error", () => reject(new Error("Safari no pudo completar la exportación del video.")));
   });
-  const startedAt = performance.now();
   const progressBar = $("#advertisingProgress span");
-  const animate = (now) => {
-    const progress = Math.min(1, (now - startedAt) / (duration * 1000));
-    drawAdvertisingFrame(context, state.advertisingImage, copy, progress, format);
-    progressBar.style.width = `${progress * 100}%`;
-    $("#advertisingStatus").textContent = `Componiendo video · ${Math.round(progress * 100)}%`;
-    if (progress < 1 && recorder.state === "recording") requestAnimationFrame(animate);
-  };
   recorder.start(250);
-  requestAnimationFrame(animate);
-  window.setTimeout(() => { if (recorder.state === "recording") recorder.stop(); }, duration * 1000 + 140);
+  let elapsed = 0;
+  for (let index = 0; index < videos.length && elapsed < duration; index += 1) {
+    const video = videos[index];
+    const remaining = duration - elapsed;
+    const useSeconds = Math.min(clipDurations[index], remaining);
+    video.currentTime = 0;
+    await video.play();
+    await new Promise((resolve) => {
+      const draw = () => {
+        const localTime = Math.min(useSeconds, video.currentTime);
+        const totalProgress = Math.min(1, (elapsed + localTime) / duration);
+        const clipProgress = Math.min(1, localTime / useSeconds);
+        drawAdvertisingFrame(context, video, copy, totalProgress, format, clipProgress);
+        progressBar.style.width = `${70 + totalProgress * 30}%`;
+        $("#advertisingStatus").textContent = `Montando campaña UTP · ${Math.round(totalProgress * 100)}%`;
+        if (localTime >= useSeconds || video.ended) resolve();
+        else requestAnimationFrame(draw);
+      };
+      requestAnimationFrame(draw);
+    });
+    video.pause();
+    elapsed += useSeconds;
+  }
+  if (recorder.state === "recording") recorder.stop();
   const blob = await completed;
   stream.getTracks().forEach((track) => track.stop());
   await audioContext.close();
+  state.advertisingAudioContext = null;
   return blob;
 }
 
 $("#advertisingForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!state.advertisingImage) return toast("Toma o selecciona una foto.");
+  const duration = Number($("#advertisingDuration").value);
+  const estimate = ADVERTISING_COSTS[duration];
+  if (!window.confirm(`Google Veo generará ${estimate.generated} segundos de material. Costo estimado: US$${estimate.cost.toFixed(2)}. ¿Continuar?`)) return;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (AudioContextClass && !state.advertisingAudioContext) {
+        try {
+            state.advertisingAudioContext = new AudioContextClass();
+            await state.advertisingAudioContext.resume();
+        } catch {
+            state.advertisingAudioContext = null;
+        }
+  }
   const button = event.submitter;
   button.disabled = true;
-  button.textContent = "Preparando campaña…";
+  button.textContent = "Enviando a Google Veo…";
   $("#advertisingProgress").hidden = false;
   $("#advertisingProgress span").style.width = "2%";
-  $("#advertisingPlaceholder").hidden = true;
+  $("#advertisingStatus").textContent = "Preparando fotografía y campaña UTP";
   $("#advertisingResult").hidden = true;
-  $("#advertisingCanvas").hidden = false;
+  $("#advertisingCanvas").hidden = true;
   $("#downloadAdvertising").hidden = true;
-  let copy = ADVERTISING_FALLBACK;
   try {
-    try {
-      copy = await requestAdvertisingCopy();
-    } catch {
-      toast("No se pudo crear el guion con IA; se usará el guion base.");
+    state.advertisingClipUrls.forEach((url) => URL.revokeObjectURL(url));
+    state.advertisingClipUrls = [];
+    const generation = await startAdvertisingGeneration();
+    $("#advertisingProgress span").style.width = "8%";
+    button.textContent = "Veo está creando las tomas…";
+    const tokens = await waitForAdvertisingClips(generation.operations);
+    button.textContent = "Descargando tomas…";
+    const videos = [];
+    for (let index = 0; index < tokens.length; index += 1) {
+      videos.push(await downloadAdvertisingClip(tokens[index], index));
+      $("#advertisingProgress span").style.width = `${70 + ((index + 1) / tokens.length) * 8}%`;
     }
-    button.textContent = "Creando video…";
-    const blob = await renderAdvertisingVideo(copy);
+    $("#advertisingPlaceholder").hidden = true;
+    $("#advertisingCanvas").hidden = false;
+    button.textContent = "Montando video final…";
+    const blob = await renderAdvertisingVideo(videos, generation.campaign || ADVERTISING_FALLBACK, generation.clipDurations);
     if (state.advertisingVideoUrl) URL.revokeObjectURL(state.advertisingVideoUrl);
     state.advertisingVideoUrl = URL.createObjectURL(blob);
     const result = $("#advertisingResult");
@@ -830,16 +985,21 @@ $("#advertisingForm").addEventListener("submit", async (event) => {
     download.href = state.advertisingVideoUrl;
     download.download = `publicidad-utp-${$("#advertisingDuration").value}s.${extension}`;
     download.hidden = false;
-    $("#advertisingStatus").textContent = "Video listo para reproducir y descargar";
-    toast("Video promocional terminado.");
+    $("#advertisingProgress span").style.width = "100%";
+    $("#advertisingStatus").textContent = "Campaña UTP lista para reproducir y descargar";
+    toast("Video cinematográfico UTP terminado.");
   } catch (error) {
     $("#advertisingStatus").textContent = "No fue posible crear el video";
     $("#advertisingPlaceholder").hidden = false;
     $("#advertisingCanvas").hidden = true;
     toast(error.message);
+    if (state.advertisingAudioContext && state.advertisingAudioContext.state !== "closed") {
+      state.advertisingAudioContext.close();
+      state.advertisingAudioContext = null;
+    }
   } finally {
     button.disabled = false;
-    button.textContent = "Crear video promocional";
+    button.textContent = "Crear con Google Veo";
   }
 });
 
@@ -882,4 +1042,6 @@ window.addEventListener("beforeunload", () => {
   stopAdvertisingCamera();
   if (state.advertisingImageUrl) URL.revokeObjectURL(state.advertisingImageUrl);
   if (state.advertisingVideoUrl) URL.revokeObjectURL(state.advertisingVideoUrl);
+  state.advertisingClipUrls.forEach((url) => URL.revokeObjectURL(url));
+  if (state.advertisingAudioContext && state.advertisingAudioContext.state !== "closed") state.advertisingAudioContext.close();
 });

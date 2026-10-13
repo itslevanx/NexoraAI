@@ -107,6 +107,14 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .automation-result { width: min(760px, 100%); min-height: 100px; margin: 16px auto 0; padding: 18px; overflow: auto; white-space: pre-wrap; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); color: var(--muted); line-height: 1.55; }
 .local-automation-links { width:min(760px,100%); margin:16px auto 0; display:flex; flex-wrap:wrap; gap:10px; }
 .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+[hidden] { display: none !important; }
+.advertising-lock { max-width: 640px; grid-template-columns: 88px minmax(0, 1fr); align-items: center; padding: 30px; }
+.advertising-lock > label, .advertising-lock > button, .advertising-lock > small { grid-column: 1 / -1; }
+.advertising-lock h2 { margin: 4px 0 10px; font-size: clamp(1.5rem, 4vw, 2.25rem); letter-spacing: -.035em; }
+.advertising-lock p { margin: 0; color: var(--muted); line-height: 1.55; }
+.advertising-lock .kicker { margin-bottom: 2px; font-size: .68rem; }
+.advertising-lock > small { color: #777; text-align: center; }
+.lock-symbol { width: 72px; height: 72px; display: grid; place-items: center; border: 2px solid #e00034; border-radius: 22px; font-size: 1.15rem; font-weight: 800; transform: rotate(-4deg); }
 .advertising-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr); gap: 22px; align-items: start; }
 .advertising-form { width: 100%; }
 .source-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
@@ -127,6 +135,7 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .camera-actions { justify-content: center; }
 .field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .advertising-note { margin: -4px 0 0; padding: 0; }
+.cost-hint { color: #8f8f8f; font-size: .72rem; line-height: 1.45; }
 .advertising-output { position: sticky; top: 18px; padding: 20px; border: 1px solid var(--line); border-radius: 22px; background: var(--panel); }
 .output-heading { min-height: 48px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .output-heading > div { display: grid; gap: 5px; }
@@ -179,4 +188,6 @@ dialog::backdrop { background: rgba(0,0,0,.82); backdrop-filter: blur(4px); }
 @media (max-width: 460px) {
   .field-pair { grid-template-columns: 1fr; }
   .advertising-form, .advertising-output { padding: 18px; }
+  .advertising-lock { grid-template-columns: 1fr; justify-items: center; text-align: center; padding: 24px 18px; }
+  .advertising-lock > * { grid-column: 1; }
 }
