@@ -88,9 +88,9 @@ Desarrollar una aplicación web de apoyo académico que integre conversación po
 14. Convertir resultados en voz sintética con aviso explícito al usuario.
 15. Clasificar contenido con un modelo de moderación y presentar un resultado comprensible.
 16. Implementar cuatro workflows avanzados adicionales para estudio, reuniones, privacidad y métricas.
-17. Incorporar un creador de publicidad que acepte cámara o archivo y produzca videos de 10 a 30 segundos.
-18. Mantener la fotografía y el archivo final dentro del navegador y enviar a OpenAI sólo el enfoque textual.
-19. Generar una banda sonora original, formatos 9:16 y 16:9 y descarga MP4 o WebM según el navegador.
+17. Incorporar un creador de publicidad que acepte cámara o archivo y produzca videos cinematográficos de 10 a 30 segundos con Google Veo.
+18. Convertir cualquier concepto creativo escrito por el usuario en una campaña cuyo propósito, narración, identidad y cierre promocionen siempre a la UTP.
+19. Mantener las claves de OpenAI y Gemini separadas en el servidor, generar audio nativo, admitir formatos 9:16 y 16:9 y descargar MP4 o WebM según el navegador.
 
 ## Alcance
 
@@ -118,7 +118,7 @@ Desarrollar una aplicación web de apoyo académico que integre conversación po
 - Moderación de texto mediante categorías de seguridad.
 - Creador de Publicidad UTP con cámara o carga de JPG, PNG y WEBP de hasta 10 MB.
 - Opciones de 10 segundos, 15 segundos, 20 segundos o 30 segundos y formatos vertical 9:16 u horizontal 16:9.
-- Microguion generado con OpenAI, composición local con Canvas, música Web Audio y descarga mediante MediaRecorder.
+- Tomas de 4, 6 u 8 segundos generadas con Google Veo 3.1 Fast, audio nativo, montaje UTP con Canvas y descarga mediante MediaRecorder.
 
 ### Funciones fuera del alcance
 
@@ -181,11 +181,12 @@ Desarrollar una aplicación web de apoyo académico que integre conversación po
 | RF 36 | Capturar una foto | El navegador abre la cámara con permiso explícito y permite tomar una imagen |
 | RF 37 | Cargar una foto | Se aceptan JPG, PNG o WEBP de hasta 10 MB y se muestra una vista previa |
 | RF 38 | Configurar la campaña | Se eligen enfoque, tono, formato y una duración entre 10 y 30 segundos |
-| RF 39 | Redactar el microguion | OpenAI devuelve titular, mensaje de apoyo y llamada a la acción controlados |
-| RF 40 | Componer el video | Canvas aplica movimiento, transiciones, identidad UTP y textos sincronizados |
-| RF 41 | Generar música | Web Audio sintetiza una banda sonora incluida en el archivo final |
+| RF 39 | Interpretar cualquier concepto | El prompt del usuario dirige la escena, pero la instrucción del servidor exige una campaña UTP |
+| RF 40 | Generar tomas cinematográficas | Veo anima la foto, diseña escenarios, produce narración en español, música y ambiente |
+| RF 41 | Montar la campaña | Canvas une las tomas, aplica transiciones e incorpora identidad y textos UTP exactos |
 | RF 42 | Exportar video | MediaRecorder produce un MP4 o WebM reproducible y descargable |
-| RF 43 | Proteger la fotografía | La foto y el video permanecen en el dispositivo; sólo se envía texto al servidor |
+| RF 43 | Proteger credenciales y descarga | La clave Gemini permanece en Vercel y las tomas se descargan con tokens HMAC temporales |
+| RF 44 | Restringir Publicidad | El módulo y sus tres rutas operativas exigen una sesión firmada obtenida con un código guardado sólo en Vercel |
 
 ## Requisitos no funcionales
 
@@ -207,7 +208,7 @@ Desarrollar una aplicación web de apoyo académico que integre conversación po
 | RNF 14 | Transparencia | La interfaz identifica explícitamente la voz sintética |
 | RNF 15 | Responsabilidad | El análisis visual separa observaciones de inferencias |
 | RNF 16 | Extensibilidad | Las herramientas de texto se definen mediante un mapa de modos |
-| RNF 17 | Privacidad audiovisual | La foto y el video publicitario no deben salir del navegador |
+| RNF 17 | Privacidad audiovisual | La interfaz debe informar que la foto optimizada se envía a Google y no admitir material sensible sin autorización |
 | RNF 18 | Compatibilidad multimedia | La exportación debe seleccionar un contenedor admitido por MediaRecorder |
 
 ## Casos de uso
@@ -274,16 +275,18 @@ Si falta la clave, la app solicita configurarla. Si OpenAI devuelve un error, se
 
 ### Crear un video publicitario UTP
 
-**Actor:** usuario. **Precondición:** navegador reciente con Canvas, Web Audio y MediaRecorder; permiso de cámara únicamente si se desea tomar la foto.
+**Actor:** usuario autorizado. **Precondición:** navegador reciente con Canvas, Web Audio y MediaRecorder; `GEMINI_API_KEY` y `PUBLICIDAD_ACCESS_CODE` en Vercel; permiso de cámara únicamente si se desea tomar la foto.
 
-1. El usuario abre Publicidad y toma una foto o carga un JPG, PNG o WEBP de hasta 10 MB.
-2. Añade un enfoque opcional y selecciona tono, formato vertical u horizontal y una duración de 10, 15, 20 o 30 segundos.
-3. `/api/publicidad` envía solamente el enfoque textual a OpenAI y recibe un titular, un mensaje de apoyo y una llamada a la acción.
-4. El navegador aplica movimiento de cámara, transiciones, textos UTP y una barra temporal sobre la fotografía.
-5. Web Audio sintetiza la música y MediaRecorder combina las pistas de video y audio.
-6. El resultado se reproduce en la interfaz y puede descargarse como MP4 o WebM.
+1. El usuario abre Publicidad e ingresa el código autorizado; `/api/publicidad-acceso` lo compara en tiempo constante y emite una sesión HMAC de ocho horas.
+2. Toma una foto o carga un JPG, PNG o WEBP de hasta 10 MB.
+3. Describe cualquier concepto creativo y selecciona tono, formato vertical u horizontal y una duración final de 10, 15, 20 o 30 segundos.
+4. La interfaz optimiza la foto a JPEG menor de 3 MB, muestra el costo aproximado y solicita confirmación.
+5. `/api/publicidad` valida la sesión, incorpora una instrucción invariable de marca UTP e inicia entre dos y cuatro operaciones asíncronas de Veo 3.1 Fast.
+6. El navegador consulta el estado cada diez segundos y descarga las tomas mediante tokens HMAC; ambos endpoints vuelven a exigir la sesión autorizada.
+7. Canvas une las tomas, añade transiciones, textos UTP y llamada a la acción; MediaRecorder conserva el audio nativo generado por Veo.
+8. El resultado se reproduce en la interfaz y puede descargarse como MP4 o WebM.
 
-Si OpenAI no está disponible, el navegador utiliza un microguion institucional seguro y mantiene operativa la exportación. La fotografía y el video no se transmiten a Vercel ni a OpenAI.
+Si Gemini rechaza o no termina una toma, la interfaz detiene el montaje e informa el error; no sustituye silenciosamente el resultado por una animación local. La foto optimizada sí se transmite a Google para hacer posible la generación cinematográfica.
 
 ### Narrar texto con voz IA
 
@@ -330,7 +333,7 @@ Usuario
   │
   └── Interfaz Vercel
        ├── HTML CSS JavaScript
-       ├── Publicidad local con Canvas Web Audio y MediaRecorder
+       ├── Publicidad con Gemini Veo + Canvas + MediaRecorder
        ├── Funciones serverless
        │    ├── Responses API
        │    ├── Transcriptions API
@@ -338,7 +341,8 @@ Usuario
        │    ├── Image API
        │    ├── Moderations API
        │    ├── Entrada multimodal de visión
-       │    ├── Responses API para microguion publicitario
+       │    ├── Gemini Veo: inicio y consulta de operaciones
+       │    ├── Descarga protegida mediante token HMAC
        │    └── Proxy controlado hacia n8n
        └── WebRTC directo con OpenAI Realtime API
 
@@ -351,7 +355,7 @@ n8n
 
 ![Arquitectura de privacidad y composición del módulo Publicidad](docs/images/arquitectura-publicidad.png)
 
-La lámina anterior separa dos recorridos. El enfoque textual pasa por la función serverless y OpenAI para producir un microguion. La fotografía permanece en el navegador y se combina con ese texto, una animación Canvas y música Web Audio. MediaRecorder genera el archivo final sin subir la imagen ni el video a un almacenamiento externo.
+La lámina anterior separa el recorrido OpenAI del recorrido audiovisual. Publicidad exige primero una sesión firmada obtenida con el código conservado en Vercel. Luego comprime la foto en el navegador, la envía a una función serverless autenticada con `GEMINI_API_KEY` y crea operaciones asíncronas de Veo. Las claves nunca se exponen al cliente. La interfaz consulta el estado, obtiene tokens firmados de corta duración, descarga las tomas con audio y las monta con Canvas y MediaRecorder. Todos los demás módulos continúan usando OpenAI.
 
 ### Componentes
 
@@ -360,14 +364,14 @@ La lámina anterior separa dos recorridos. El enfoque textual pasa por la funci�
 | Interfaz Streamlit | Renderizar vistas, recibir datos y mantener la sesión |
 | Interfaz Vercel | Ofrecer la experiencia pública minimalista y responsiva |
 | Endpoint Realtime | Crear la sesión WebRTC con la clave en el servidor |
-| Funciones serverless | Proteger credenciales y llamar a OpenAI o n8n |
+| Funciones serverless | Proteger credenciales y llamar a OpenAI, Google Gemini o n8n |
 | Módulo de chat | Preparar contexto y consumir Responses API |
 | Módulo de audio | Validar y consumir Transcriptions API |
 | Módulo de resumen | Estructurar el contenido transcrito |
 | Studio IA | Exponer once flujos textuales guiados y reutilizables |
 | Módulo de visión | Validar y analizar imágenes con Responses API |
 | Módulo de imágenes | Generar JPEG descargable con GPT Image |
-| Módulo de publicidad | Capturar o cargar una foto, solicitar el microguion y componer un video con música en el navegador |
+| Módulo de publicidad | Capturar o cargar una foto, generar tomas con Veo y montar una campaña UTP con audio |
 | Módulo de voz sintética | Convertir texto en MP3 con Speech API |
 | Módulo de moderación | Clasificar contenido potencialmente riesgoso |
 | Módulo de automatización | Construir payload y ejecutar POST |
@@ -376,7 +380,7 @@ La lámina anterior separa dos recorridos. El enfoque textual pasa por la funci�
 
 ### Decisiones de diseño
 
-Se mantiene una arquitectura monolítica ligera en Streamlit para ejecución local y se añade una arquitectura serverless para publicación. Vercel sirve la interfaz estática y ejecuta endpoints especializados que conservan la clave estándar fuera del JavaScript. La separación entre chat, Studio, visión, imágenes, publicidad, voz sintética, transcripción, moderación, Realtime y n8n facilita pruebas, límites por modalidad y evolución independiente. En voz, el endpoint crea la sesión y el navegador transporta audio por WebRTC, lo que reduce latencia. En Publicidad, OpenAI redacta únicamente el microguion y el navegador compone la fotografía, los textos, la música y el archivo final. n8n permanece desacoplado mediante HTTP, por lo que el workflow puede cambiar sin modificar los módulos de IA.
+Se mantiene una arquitectura monolítica ligera en Streamlit para ejecución local y se añade una arquitectura serverless para publicación. Vercel sirve la interfaz estática y ejecuta endpoints especializados que conservan las claves fuera del JavaScript. La separación entre chat, Studio, visión, imágenes, publicidad, voz sintética, transcripción, moderación, Realtime y n8n facilita límites por modalidad y evolución independiente. En voz, el endpoint crea la sesión y el navegador transporta audio por WebRTC. Publicidad es la única excepción tecnológica: usa Gemini Veo para las tomas y deja a OpenAI intacto en el resto de la suite. n8n permanece desacoplado mediante HTTP.
 
 El historial se limita a los últimos mensajes para reducir el contexto. La clave puede escribirse temporalmente o cargarse desde el entorno. La primera opción facilita la exposición y la segunda es adecuada para un despliegue controlado.
 
@@ -387,7 +391,8 @@ El historial se limita a los últimos mensajes para reducir el contexto. La clav
 | Python | Lógica, validación y comunicación con APIs |
 | Streamlit | Interfaz, chat, audio y estado |
 | HTML CSS JavaScript | Interfaz web minimalista y controles del navegador |
-| Canvas Web Audio MediaRecorder | Animación, música y exportación local de Publicidad |
+| Gemini API y Veo 3.1 Fast | Generación imagen-a-video de escenas UTP con narración, música y ambiente |
+| Canvas Web Audio MediaRecorder | Unión de tomas, identidad de marca y exportación local de Publicidad |
 | Vercel | Hosting HTTPS y funciones serverless |
 | WebRTC | Transporte bidireccional de audio en tiempo real |
 | Realtime API | Conversación de voz a voz |
@@ -474,11 +479,15 @@ texto = result.text
 
 ### Publicidad audiovisual
 
-La vista Publicidad acepta cámara o archivo y conserva la fotografía en un objeto local del navegador. `/api/publicidad` valida tono, duración y un enfoque de hasta 600 caracteres; después solicita a Responses API un JSON con `headline`, `supporting` y `cta`. La función no recibe la fotografía. Si la solicitud falla, la interfaz utiliza un guion base que evita interrumpir la demostración.
+La vista Publicidad comienza bloqueada incluso cuando se alcanza por enlace directo. `/api/publicidad-acceso` valida el código contra `PUBLICIDAD_ACCESS_CODE`, que existe sólo en Vercel, y entrega un token HMAC de ocho horas almacenado en `sessionStorage`. El código escrito se elimina del formulario y no se persiste. La generación, la consulta de operaciones y la descarga rechazan toda petición sin ese token.
 
-El compositor dibuja treinta cuadros por segundo en un Canvas de 720 por 1280 o 1280 por 720 píxeles. Aplica recorte proporcional, acercamiento gradual, degradado de legibilidad, marca UTP, tres fases textuales y una barra de progreso. Web Audio programa acordes y pulsos originales según el tono. `captureStream` combina los cuadros con un destino de audio y MediaRecorder selecciona MP4 con H.264 y AAC en Safari cuando está disponible o WebM con VP9 u Opus en navegadores compatibles. La composición ocurre en tiempo real y libera cámaras, pistas, contextos de audio y URL temporales al finalizar.
+Una vez autorizada, la vista acepta cámara o archivo. El navegador valida JPG, PNG o WEBP de hasta 10 MB y produce una copia JPEG de 1280 píxeles como máximo y menos de 3 MB. `/api/publicidad` valida tono, duración, formato y un concepto de hasta 600 caracteres. La instrucción controlada establece que cualquier concepto —incluido uno sin relación aparente con educación— debe transformarse en publicidad de la Universidad Tecnológica del Perú. El usuario define el universo creativo; la marca, narración y llamada a la acción permanecen UTP.
 
-La documentación oficial de OpenAI consultada el 11 de octubre de 2026 indica que Sora 2 y Videos API se retiraron el 24 de septiembre de 2026 y no tienen reemplazo directo. Por esa razón, el proyecto no llama a `/v1/videos`: utiliza OpenAI sólo para el microguion y produce el video en el dispositivo.
+Veo 3.1 Fast genera clips de 4, 6 u 8 segundos. Para producir las duraciones finales se usan estas combinaciones: `6+4` para 10 segundos, `8+8` recortado a 15, `8+8+4` para 20 y `8+8+8+6` para 30. Cada solicitud usa la foto como primer cuadro, formato 9:16 o 16:9, resolución 720p, música cinematográfica y narración adulta en español. La interfaz consulta las operaciones asíncronas cada diez segundos.
+
+Cuando cada toma está lista, `/api/publicidad` devuelve un token HMAC con una hora de vigencia. `/api/publicidad-video` valida el token, recupera el MP4 desde Google y transmite el contenido al navegador sin exponer la clave. Canvas conserva el audio nativo mediante Web Audio y añade transiciones, textos UTP exactos, llamada a la acción y barra de progreso. MediaRecorder selecciona MP4 en Safari cuando está disponible o WebM en otros navegadores.
+
+El costo estimado con Veo Fast 720p es US$0.10 por segundo generado: US$1.00 para 10 segundos, US$1.60 para una entrega de 15 segundos, US$2.00 para 20 y US$3.00 para 30. La interfaz muestra la estimación y exige confirmación antes de iniciar. Una regeneración vuelve a consumir saldo.
 
 ### Texto a voz
 
@@ -494,7 +503,9 @@ La documentación oficial de OpenAI consultada el 11 de octubre de 2026 indica q
 |---|---|---|
 | `/api/chat` | Conversación contextual | Responses |
 | `/api/studio` | Once transformaciones textuales | Responses |
-| `/api/publicidad` | Microguion publicitario UTP | Responses |
+| `/api/publicidad` | Inicio y consulta de operaciones publicitarias UTP | Gemini API / Veo 3.1 Fast |
+| `/api/publicidad-video` | Proxy protegido para cada toma generada | Gemini Files mediante token HMAC |
+| `/api/publicidad-acceso` | Valida el código y emite o renueva la sesión autorizada | Sin API externa |
 | `/api/vision` | Análisis multimodal | Responses |
 | `/api/image` | Generación visual | Images |
 | `/api/speech` | Narración MP3 | Audio Speech |
@@ -643,7 +654,7 @@ El workflow funciona de principio a fin sin suscripciones. La acción `email` en
 - OpenAI API Key y credenciales externas.
 - Audios, transcripciones y resúmenes.
 - Imágenes cargadas, prompts, resultados generados y narraciones.
-- Fotografías de Publicidad, guiones y videos exportados.
+- Fotografías de Publicidad, conceptos, tomas generadas y videos exportados.
 - URL de webhooks productivos.
 
 ### Controles implementados
@@ -658,9 +669,13 @@ El workflow funciona de principio a fin sin suscripciones. La acción `email` en
 - Timeout y manejo de errores.
 - Workflow local operativo, con efectos limitados al buzón Mailpit y a `n8n-local/outputs/`.
 - Correo local aislado de Internet, sin credenciales ni entrega a terceros.
-- La fotografía y el video de Publicidad permanecen en memoria local del navegador; el servidor recibe sólo el enfoque textual.
+- Publicidad reduce la fotografía antes de transmitirla a Google y avisa expresamente al usuario.
+- `GEMINI_API_KEY` sólo existe en Vercel y nunca se admite desde encabezados del navegador.
+- `PUBLICIDAD_ACCESS_CODE` sólo existe en Vercel; se compara en tiempo constante y nunca se incorpora al frontend, documentación o repositorio.
+- Un token HMAC de ocho horas se conserva únicamente en `sessionStorage`; las rutas de generación, estado y descarga vuelven a validarlo.
+- Las URI de descarga se encapsulan en tokens HMAC temporales y sólo aceptan el dominio oficial de Gemini.
 - Permiso de cámara solicitado únicamente después de pulsar Abrir cámara y pistas detenidas al cerrar la vista o la pestaña.
-- Guion de respaldo que mantiene la exportación local si OpenAI no responde.
+- Confirmación del costo estimado antes de iniciar cada generación de Veo.
 
 ### Controles recomendados
 
@@ -680,8 +695,10 @@ El workflow funciona de principio a fin sin suscripciones. La acción `email` en
 | Costos inesperados | Media | Medio | Límites y monitoreo |
 | Audio excesivo | Baja | Medio | Validación de 25 MB |
 | Imagen excesiva o inválida | Media | Medio | Límite de 4 MB y lista MIME |
-| Foto publicitaria sensible | Media | Alto | Procesamiento local, aviso visible y no transmisión de la imagen |
+| Foto publicitaria sensible | Media | Alto | Aviso visible, compresión y prohibición de cargar material sensible sin autorización |
 | Navegador sin exportación multimedia | Baja | Medio | Detección de MediaRecorder y mensaje de compatibilidad |
+| Saldo Gemini insuficiente | Media | Alto | Costo visible, confirmación previa y recarga automática desactivada |
+| Una toma de Veo falla o es bloqueada | Media | Medio | Detener el montaje y mostrar el error; el usuario decide si regenera |
 | Contenido generado incorrecto | Media | Alto | Revisión humana y aviso de limitaciones |
 | Mayor consumo por imágenes o voz | Media | Medio | Calidad baja, límites y demostraciones cortas |
 | Error de servicio | Media | Medio | Timeout y manejo controlado |
@@ -691,7 +708,8 @@ El workflow funciona de principio a fin sin suscripciones. La acción `email` en
 ### Requisitos previos
 
 - Python 3.10 o superior.
-- OpenAI API Key válida.
+- OpenAI API Key válida para la suite general.
+- Gemini API Key con facturación habilitada para Publicidad.
 - Docker Desktop si se utilizará n8n local.
 
 ### macOS y Linux
@@ -752,18 +770,20 @@ n8n queda disponible en `http://localhost:5678`, su configuración persiste en e
 
 1. Importar `itslevanx/NexoraAI` en Vercel.
 2. Seleccionar Other como preset y mantener el directorio raíz.
-3. Configurar `OPENAI_API_KEY` y, opcionalmente, una URL pública HTTPS de n8n en `N8N_WEBHOOK_URL`.
+3. Configurar `OPENAI_API_KEY`, `GEMINI_API_KEY`, `PUBLICIDAD_ACCESS_CODE` y, opcionalmente, una URL pública HTTPS de n8n en `N8N_WEBHOOK_URL`.
 4. Desplegar y abrir `https://nexora-ai-blue-three.vercel.app/`.
 5. Autorizar el micrófono para Voz y la cámara para Publicidad cuando se utilicen esas funciones.
 6. Comprobar Voz, Chat, Studio IA, Publicidad, Transcribir y Automatizar.
 
-La versión serverless limita los audios y las imágenes enviados a OpenAI a menos de 4 MB. Publicidad admite fotos de hasta 10 MB porque nunca las transmite al servidor. Streamlit mantiene el límite local de audio de 25 MB.
+La versión serverless limita los audios y las imágenes enviados a OpenAI a menos de 4 MB. Publicidad admite fotos originales de hasta 10 MB, pero las comprime a una copia JPEG menor de 3 MB antes de enviarlas a Gemini. Streamlit mantiene el límite local de audio de 25 MB.
 
 `localhost` solo es accesible desde la Mac: el despliegue de Vercel no puede llamar directamente al contenedor local. Para demostrar n8n sin publicar servicios se utiliza la interfaz Streamlit local. Una futura conexión Vercel-n8n requeriría un dominio HTTPS protegido o un túnel temporal administrado por el equipo.
 
 | Variable | Obligatoria | Propósito |
 |---|---|---|
 | OPENAI_API_KEY | No si se ingresa en la interfaz | Autenticar OpenAI |
+| GEMINI_API_KEY | Sí para Publicidad | Autenticar Gemini API y Veo sin exponer la clave al navegador |
+| PUBLICIDAD_ACCESS_CODE | Sí para Publicidad | Autorizar el módulo sin publicar el código en el cliente ni en Git |
 | OPENAI_MODEL | No | Modelo inicial del chat |
 | N8N_WEBHOOK_URL | No | Prellenar webhook |
 
@@ -806,14 +826,15 @@ El uso de visión e imágenes implica enviar esos datos a OpenAI. No deben carga
 
 ### Crear publicidad UTP
 
-1. Abrir Publicidad en la versión Vercel.
+1. Abrir Publicidad en la versión Vercel e ingresar el código autorizado.
 2. Seleccionar Abrir cámara y permitir acceso o usar Subir foto con una imagen JPG, PNG o WEBP de hasta 10 MB.
-3. Escribir un enfoque opcional y elegir 10, 15, 20 o 30 segundos, formato vertical u horizontal y estilo.
-4. Pulsar Crear video promocional y mantener la pestaña visible durante la composición.
-5. Reproducir el resultado para verificar movimiento, textos y música.
-6. Descargar el archivo MP4 o WebM indicado por el navegador.
+3. Describir cualquier escena o concepto y elegir 10, 15, 20 o 30 segundos, formato y estilo. NEXORA impondrá el propósito publicitario UTP incluso si el texto no menciona la universidad.
+4. Revisar el costo estimado, pulsar Crear con Google Veo y confirmar el consumo.
+5. Mantener la pestaña abierta mientras se generan, descargan y montan las tomas.
+6. Reproducir el resultado para verificar escenas, narración, textos, música e identidad UTP.
+7. Descargar el archivo MP4 o WebM indicado por el navegador.
 
-La fotografía y el video se procesan en el dispositivo. Sólo el enfoque textual se envía a OpenAI para redactar el microguion. La pieza es una demostración académica generada por NEXORA AI y no debe presentarse como material oficial de la universidad sin revisión y autorización institucional.
+La copia optimizada de la fotografía y el concepto se envían a Google Gemini. La pieza es contenido generado con IA y no debe presentarse como material oficial de la universidad ni utilizar signos distintivos sin revisión y autorización institucional.
 
 ### Transcribir audio
 
@@ -842,7 +863,7 @@ La fotografía y el video se procesan en el dispositivo. Sólo el enfoque textua
 
 ## Plan de pruebas
 
-Las pruebas automáticas no consumen OpenAI para evitar costos y dependencia de credenciales. Las pruebas reales deben ejecutarse con una cuenta controlada.
+Las pruebas automáticas están diseñadas para no consumir OpenAI ni Gemini. Por solicitud del propietario, la actualización de Veo no ejecutó pruebas ni llamadas reales; la verificación manual queda a su cargo con una cuenta controlada.
 
 | Código | Prueba | Resultado esperado | Estado |
 |---|---|---|---|
@@ -881,12 +902,13 @@ Las pruebas automáticas no consumen OpenAI para evitar costos y dependencia de 
 | CP 33 | Hoja CSV local | Fila persistida en `registro-nexora.csv` | Aprobado |
 | CP 34 | Outbox WhatsApp | Mensaje persistido en JSONL sin envío externo | Aprobado |
 | CP 35 | Archivos de productividad | Tareas Markdown, estudio Markdown y calendario ICS válidos | Aprobado |
-| CP 36 | Carga de foto publicitaria | Vista previa local y botón de creación habilitado | Aprobado en Safari |
-| CP 37 | Duraciones publicitarias | Opciones 10, 15, 20 y 30 segundos | Aprobado |
-| CP 38 | Exportación audiovisual | Video de 15 segundos reproducible con pista de audio | Aprobado en Safari |
-| CP 39 | Privacidad de Publicidad | La solicitud al servidor no contiene la fotografía | Aprobado por revisión de código |
-| CP 40 | Guion de respaldo | La composición continúa si `/api/publicidad` no está disponible | Aprobado en Safari local |
-| CP 41 | Pruebas del endpoint | Clave, longitud y extracción JSON se validan sin llamadas reales | Aprobado |
+| CP 36 | Carga de foto publicitaria | Vista previa local, optimización y botón habilitado | Pendiente de validación manual |
+| CP 37 | Duraciones publicitarias | Opciones finales de 10, 15, 20 y 30 segundos | Pendiente de validación manual |
+| CP 38 | Generación audiovisual | Veo entrega todas las tomas con narración y música | Pendiente; no se consumió saldo |
+| CP 39 | Marca obligatoria | Un prompt ajeno a educación sigue produciendo publicidad UTP | Pendiente de validación manual |
+| CP 40 | Descarga protegida | Tokens HMAC permiten descargar únicamente las tomas de Gemini | Pendiente de validación manual |
+| CP 41 | Montaje audiovisual | Video final reproducible con audio e identidad UTP | Pendiente de validación manual |
+| CP 42 | Acceso restringido | Código correcto desbloquea; código erróneo, enlace directo y rutas sin token quedan bloqueados | Pendiente de validación manual |
 
 ### Evidencia funcional de automatización local
 
@@ -894,9 +916,9 @@ El 26 de septiembre de 2026 se levantaron n8n 2.40.7, Mailpit y el puente SMTP m
 
 En la misma ronda se probaron las otras cinco acciones. Se creó una fila CSV, un mensaje en el outbox local de WhatsApp, un checklist Markdown, un plan de estudio Markdown y una invitación de calendario ICS. Los nueve tests JavaScript y los cuatro tests Python finalizaron correctamente. Ninguna de estas pruebas transmitió datos o correos fuera de la Mac.
 
-El 11 de octubre de 2026 se probó Publicidad en Safari con una imagen sintética del proyecto. La interfaz cargó la imagen, utilizó el guion de respaldo al ejecutarse desde un servidor estático, compuso un video vertical con música, mostró progreso en tiempo real y produjo un archivo de 15 segundos. Los controles nativos de Safari informaron una duración de 15 segundos y una pista de audio activa. La evidencia se conserva en `docs/screenshots/nexora-publicidad-video.png`.
+El 11 de octubre de 2026 se probó en Safari el compositor local anterior con una imagen sintética. Esa evidencia se conserva en `docs/screenshots/nexora-publicidad-video.png` únicamente como registro histórico y no demuestra el flujo actual con Veo. El 12 de octubre de 2026 se implementó la integración Gemini sin ejecutar generaciones ni pruebas, siguiendo la indicación expresa del propietario para que él controle el primer consumo.
 
-![Video publicitario de 15 segundos generado y reproducido en Safari](docs/screenshots/nexora-publicidad-video.png)
+![Evidencia histórica del compositor local anterior](docs/screenshots/nexora-publicidad-video.png)
 
 ### Evidencia funcional en producción
 
@@ -916,7 +938,7 @@ git status --short
 - La aplicación inicia sin errores y ninguna clave real aparece en Git.
 - Las seis áreas son accesibles.
 - La versión Vercel conserva las funciones centrales y añade voz en tiempo real, Studio IA multimodal y Publicidad.
-- Publicidad toma o carga una foto, ofrece 10 a 30 segundos y produce un video descargable con música sin transmitir la imagen.
+- Publicidad toma o carga una foto, la optimiza, genera tomas con Gemini Veo y produce un video descargable de 10 a 30 segundos con audio e identidad UTP.
 - Chat y transcripción solicitan una clave cuando falta.
 - n8n publica cinco workflows; el centro acepta seis acciones y los cuatro flujos avanzados entregan resultados especializados.
 - Los errores de red se muestran de forma controlada.
@@ -927,6 +949,8 @@ git status --short
 | Riesgo | Consecuencia | Respuesta |
 |---|---|---|
 | Falta de saldo | La demo no responde | Verificar cuenta antes de exponer |
+| Recarga automática accidental | Consumo superior al presupuesto | Mantenerla desactivada y confirmar el costo antes de cada generación |
+| Veo tarda varios minutos | Demora en la demo | Generar previamente un video de respaldo y mantener la pestaña abierta |
 | Modelo no disponible | Error en chat | Cambiar modelo en la barra lateral |
 | Micrófono bloqueado | No se graba | Usar audio preparado |
 | Cámara bloqueada | No se toma la foto | Subir una imagen preparada |
@@ -977,13 +1001,13 @@ El resultado clave es que la información pasa de voz a texto, de texto a resume
 
 ## Limitaciones y mejoras futuras
 
-La aplicación no persiste conversaciones ni archivos multimedia. n8n conserva bitácoras y artefactos de demostración dentro de `n8n-local/`; Mailpit conserva temporalmente los correos locales mientras sus contenedores estén disponibles. Estos mensajes no llegan a Gmail, Outlook ni a un destinatario real. La precisión depende del modelo, el audio, la imagen y las instrucciones. El proyecto no verifica hechos de manera independiente y el consumo puede generar costos. La conversación de voz necesita HTTPS, permiso de micrófono y acceso al modelo Realtime. La versión Vercel limita cada audio o imagen enviado a OpenAI a menos de 4 MB y no puede acceder al `localhost` de la Mac. Publicidad admite fotos locales de hasta 10 MB, pero compone en tiempo real: una pieza de 30 segundos tarda aproximadamente 30 segundos y requiere mantener la pestaña activa. El contenedor final depende del soporte de MediaRecorder; Safari utiliza MP4 cuando lo admite y otros navegadores pueden usar WebM. Sora 2 y Videos API fueron retirados el 24 de septiembre de 2026, por lo que no existe un endpoint de OpenAI utilizado para producir el video. La narración acepta hasta 2500 caracteres por solicitud y la generación de imágenes puede requerir verificación de la organización de OpenAI. La moderación es una señal de apoyo y no una decisión definitiva.
+La aplicación no persiste conversaciones de forma propia. n8n conserva artefactos locales; Google conserva temporalmente las tomas de Veo y el navegador mantiene copias en memoria hasta cerrar la pestaña. La precisión depende del modelo, la imagen y las instrucciones. El consumo genera costos y cada regeneración vuelve a cobrarse. La conversación de voz necesita HTTPS, permiso de micrófono y acceso al modelo Realtime. Publicidad acepta fotos originales de hasta 10 MB, las comprime a menos de 3 MB, genera de dos a cuatro clips y puede tardar varios minutos más el tiempo del montaje local. El contenedor final depende de MediaRecorder. La narración de Speech acepta hasta 2500 caracteres y la generación de imágenes puede requerir verificación de OpenAI. La moderación es una señal de apoyo y no una decisión definitiva.
 
 Mejoras propuestas: usuarios y roles; persistencia con PostgreSQL o Supabase; búsqueda semántica y documentos PDF; edición iterativa de imágenes; respuestas en streaming; métricas de tokens y costos; firma HMAC para el webhook; aprobación de acciones; plantillas por curso; caché de resultados; y pruebas end to end.
 
 ## Conclusiones
 
-NEXORA AI demuestra que se pueden integrar lenguaje, visión, generación de imágenes, publicidad audiovisual, voz sintética, conversación de voz, transcripción, moderación y automatización en una aplicación compacta. Streamlit mantiene una versión local fácil de explicar; Vercel publica la suite minimalista bajo HTTPS; OpenAI procesa distintas modalidades y redacta el microguion; el navegador compone el video publicitario sin transmitir la fotografía; y n8n representa las acciones externas.
+NEXORA AI demuestra que se pueden integrar lenguaje, visión, generación de imágenes, publicidad audiovisual, voz sintética, conversación de voz, transcripción, moderación y automatización en una aplicación compacta. Streamlit mantiene una versión local; Vercel publica la suite bajo HTTPS; OpenAI atiende todos los módulos generales; Gemini Veo se limita exclusivamente a Publicidad; el navegador monta la campaña final; y n8n representa las acciones externas.
 
 El proyecto evidencia que una integración responsable requiere validar entradas, manejar errores, separar credenciales, limitar el alcance y documentar los pasos. El workflow local permite enseñar una ejecución real: envía un correo por SMTP a un buzón aislado y produce archivos comprobables sin contactar servicios externos.
 
@@ -1021,6 +1045,10 @@ La solución queda preparada para evolucionar. La persistencia, autenticación, 
 | Canvas | Superficie gráfica del navegador utilizada para dibujar cada cuadro del video |
 | MediaRecorder | API del navegador que codifica pistas de audio y video |
 | Web Audio | API del navegador utilizada para sintetizar y mezclar la música |
+| Gemini API | API de Google utilizada exclusivamente por el módulo Publicidad |
+| Veo 3.1 Fast | Modelo imagen-a-video que genera tomas cortas con audio nativo |
+| Operación asíncrona | Trabajo que se inicia y cuyo estado se consulta hasta terminar |
+| Token HMAC | Credencial temporal firmada que autoriza una descarga concreta sin revelar la clave API |
 | Vercel | Plataforma de hosting y funciones serverless |
 | WebRTC | Protocolo de comunicación de audio en tiempo real |
 | Transcripción | Conversión de voz en texto |
@@ -1036,7 +1064,8 @@ OpenAI. Images and vision. https://developers.openai.com/api/docs/guides/images-
 OpenAI. Image generation. https://developers.openai.com/api/docs/guides/image-generation
 OpenAI. Text to speech. https://developers.openai.com/api/docs/guides/text-to-speech
 OpenAI. Moderation. https://developers.openai.com/api/docs/guides/moderation
-OpenAI. Sora 2 Pro deprecation notice. https://developers.openai.com/api/docs/models/sora-2-pro
+Google. Generate videos with Veo 3.1 in the Gemini API. https://ai.google.dev/gemini-api/docs/veo
+Google. Gemini Developer API pricing. https://ai.google.dev/gemini-api/docs/pricing
 Universidad Tecnológica del Perú. Portal institucional. https://www.utp.edu.pe/
 Streamlit. Documentation. https://docs.streamlit.io/  
 Vercel. Documentation. https://vercel.com/docs
@@ -1049,6 +1078,8 @@ Python Software Foundation. Python documentation. https://docs.python.org/3/
 ```dotenv
 OPENAI_API_KEY=sk-proj-reemplazar
 OPENAI_MODEL=gpt-5-mini
+GEMINI_API_KEY=reemplazar-con-clave-de-google-ai-studio
+PUBLICIDAD_ACCESS_CODE=define-un-codigo-seguro
 N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 ```
 
@@ -1075,7 +1106,11 @@ N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 | Cámara de Publicidad no abre | Permiso denegado o dispositivo ausente | Autorizar Safari o usar Subir foto |
 | Video no se exporta | MediaRecorder o captureStream no compatibles | Actualizar Safari Chrome o Edge y repetir con la pestaña visible |
 | Video se descarga como WebM | El navegador no admite MP4 para MediaRecorder | Reproducir WebM o convertirlo después; el contenido no cambia |
-| Guion IA no disponible | Falta de clave red o modelo | La interfaz utiliza automáticamente el guion base |
+| Publicidad muestra `GEMINI_API_KEY` ausente | El secreto no está en Vercel o falta redesplegar | Añadir la variable a Production, Preview y Development y crear un nuevo despliegue |
+| Publicidad permanece bloqueada | Código incorrecto, sesión vencida o `PUBLICIDAD_ACCESS_CODE` ausente | Revisar la variable de Vercel, ingresar el código nuevamente y redesplegar si se acaba de crear |
+| Veo informa saldo o cuota insuficiente | Facturación, créditos o límites | Revisar AI Studio Billing sin activar recarga automática |
+| Veo no termina | Latencia máxima o pestaña cerrada | Mantener la pestaña abierta hasta siete minutos y repetir sólo después de revisar el saldo |
+| Una toma es bloqueada | Filtros de seguridad, audio o imagen | Usar una foto autorizada de una persona adulta y reformular el concepto |
 
 ## Anexo C Lista de verificación
 
@@ -1087,7 +1122,8 @@ N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 - [ ] Ensayar con cronómetro.
 - [ ] Preparar audio y video de respaldo.
 - [ ] Preparar una imagen de prueba sin datos personales.
-- [x] Guardar captura real del video de Publicidad reproducible en Safari.
+- [x] Conservar como evidencia histórica la captura del compositor local anterior.
+- [ ] Generar el primer video con Veo y sustituir la captura histórica por evidencia actual.
 - [ ] Probar Publicidad en la URL de producción después de cada despliegue.
 - [ ] Comprobar Studio IA, voz sintética y moderación con la clave del equipo.
 - [ ] Revisar ortografía y formato institucional.
@@ -1109,7 +1145,7 @@ N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 | Generar imágenes | RF 33 | Vista Imágenes y endpoint image |
 | Revisar seguridad | RF 34 | Vista Seguridad y endpoint moderate |
 | Reutilizar resultados | RF 35 | Descarga y transferencia al chat |
-| Crear publicidad audiovisual | RF 36 a RF 42 | Vista Publicidad, microguion, Canvas, Web Audio y MediaRecorder |
-| Proteger la fotografía | RF 43 y RNF 17 | Composición local y payload sin imagen |
+| Crear publicidad audiovisual | RF 36 a RF 42 | Vista Publicidad, Gemini Veo, Canvas, Web Audio y MediaRecorder |
+| Proteger credenciales, acceso y descargas | RF 43, RF 44 y RNF 17 | Secretos de Vercel, sesión autorizada, token HMAC temporal y aviso de envío a Google |
 | Proteger credenciales | RNF 02 y RNF 03 | Gitignore y separación de servicios |
 | Documentar y probar | RNF 09 | README, informe, pytest y revisión visual |

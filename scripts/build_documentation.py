@@ -214,9 +214,12 @@ def add_table(doc: Document, rows: list[list[str]]) -> None:
         title = " · ".join(values[:2])
         title_run = paragraph.add_run(title)
         title_run.bold = True
-        if len(values) > 2:
+        for column_index, value in enumerate(values[2:], start=2):
             paragraph.add_run().add_break()
-            add_inline(paragraph, values[2])
+            if column_index < len(header):
+                label = paragraph.add_run(f"{header[column_index]}: ")
+                label.bold = True
+            add_inline(paragraph, value)
         if index % 2:
             shading = OxmlElement("w:shd")
             shading.set(qn("w:fill"), "F3F3F3")

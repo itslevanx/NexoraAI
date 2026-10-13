@@ -1,65 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
-  <title id="title">Arquitectura del módulo Publicidad</title>
-  <desc id="desc">Flujo desde cámara o archivo hacia guion OpenAI, composición local y descarga del video.</desc>
+  <title id="title">Arquitectura del módulo Publicidad de NEXORA AI</title>
+  <desc id="desc">Flujo protegido desde una fotografía hasta una campaña audiovisual UTP creada con Google Veo y montada en el navegador.</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#080808"/>
-      <stop offset="1" stop-color="#181818"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#e00034"/>
-      <stop offset="1" stop-color="#ff6433"/>
-    </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#000" flood-opacity=".35"/>
-    </filter>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
-      <path d="M0 0L10 5L0 10Z" fill="#8b8b8b"/>
-    </marker>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#050505"/><stop offset="1" stop-color="#151515"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#e00034"/><stop offset="1" stop-color="#ff6334"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="18" flood-opacity=".34"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#e00034"/></marker>
+    <style>
+      .title{font:700 48px Inter,Arial,sans-serif;fill:#fff;letter-spacing:-1.5px}.sub{font:400 23px Inter,Arial,sans-serif;fill:#a4a4a4}.stage{font:700 14px Inter,Arial,sans-serif;fill:#ff6385;letter-spacing:2px}.head{font:700 25px Inter,Arial,sans-serif;fill:#fff}.body{font:400 18px Inter,Arial,sans-serif;fill:#aaa}.small{font:500 16px Inter,Arial,sans-serif;fill:#d5d5d5}.box{fill:#111;stroke:#333;stroke-width:2}.flow{fill:none;stroke:#e00034;stroke-width:4;marker-end:url(#arrow)}
+    </style>
   </defs>
-  <rect width="1600" height="900" rx="40" fill="url(#bg)"/>
-  <rect x="0" y="0" width="18" height="900" fill="url(#accent)"/>
-  <text x="100" y="105" fill="#fff" font-family="Arial, sans-serif" font-size="48" font-weight="700">Publicidad UTP en NEXORA AI</text>
-  <text x="100" y="155" fill="#9a9a9a" font-family="Arial, sans-serif" font-size="24">La foto permanece en el navegador; OpenAI sólo prepara el microguion.</text>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect x="0" y="0" width="14" height="900" fill="url(#accent)"/>
+  <text class="title" x="92" y="100">Publicidad UTP · flujo protegido con Google Veo</text>
+  <text class="sub" x="92" y="142">Cualquier concepto creativo se reinterpreta como una campaña cinematográfica de la UTP.</text>
 
   <g filter="url(#shadow)">
-    <rect x="90" y="255" width="300" height="330" rx="28" fill="#101010" stroke="#363636" stroke-width="2"/>
-    <circle cx="240" cy="350" r="58" fill="#202020" stroke="#e00034" stroke-width="4"/>
-    <path d="M204 360h72v48h-72zM220 338l12-16h24l12 16" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/>
-    <circle cx="240" cy="383" r="14" fill="none" stroke="#fff" stroke-width="7"/>
-    <text x="240" y="470" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Cámara o archivo</text>
-    <text x="240" y="508" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">JPG PNG WEBP</text>
-    <text x="240" y="540" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">máximo 10 MB</text>
-
-    <rect x="505" y="255" width="300" height="330" rx="28" fill="#101010" stroke="#363636" stroke-width="2"/>
-    <rect x="585" y="300" width="140" height="105" rx="18" fill="#202020" stroke="#e00034" stroke-width="4"/>
-    <path d="M615 335h80M615 357h62M615 379h72" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
-    <text x="655" y="470" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Guion con OpenAI</text>
-    <text x="655" y="508" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">Titular mensaje y CTA</text>
-    <text x="655" y="540" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">sin enviar la fotografía</text>
-
-    <rect x="920" y="255" width="300" height="330" rx="28" fill="#101010" stroke="#363636" stroke-width="2"/>
-    <rect x="1014" y="292" width="112" height="150" rx="18" fill="#202020" stroke="#e00034" stroke-width="4"/>
-    <path d="M1035 326h70M1035 348h48M1035 392h70" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
-    <path d="M1045 416l13-13 13 13 18-25 16 25" fill="none" stroke="#ff6433" stroke-width="7" stroke-linejoin="round"/>
-    <text x="1070" y="470" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="26" font-weight="700">Compositor local</text>
-    <text x="1070" y="508" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">Canvas movimiento textos</text>
-    <text x="1070" y="540" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="19">y música Web Audio</text>
-
-    <rect x="1335" y="255" width="180" height="330" rx="28" fill="#101010" stroke="#363636" stroke-width="2"/>
-    <circle cx="1425" cy="355" r="58" fill="#202020" stroke="#e00034" stroke-width="4"/>
-    <path d="M1425 320v70M1398 366l27 27 27-27" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="1425" y="470" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="25" font-weight="700">Descarga</text>
-    <text x="1425" y="508" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="18">MP4 o WebM</text>
-    <text x="1425" y="540" text-anchor="middle" fill="#999" font-family="Arial, sans-serif" font-size="18">10 a 30 s</text>
+    <rect class="box" x="70" y="245" rx="28" width="260" height="300"/>
+    <rect class="box" x="370" y="245" rx="28" width="260" height="300"/>
+    <rect class="box" x="670" y="245" rx="28" width="260" height="300"/>
+    <rect class="box" x="970" y="245" rx="28" width="260" height="300"/>
+    <rect class="box" x="1270" y="245" rx="28" width="260" height="300"/>
   </g>
+  <path class="flow" d="M330 395H358"/><path class="flow" d="M630 395H658"/><path class="flow" d="M930 395H958"/><path class="flow" d="M1230 395H1258"/>
 
-  <path d="M405 420h80" stroke="#8b8b8b" stroke-width="5" marker-end="url(#arrow)"/>
-  <path d="M820 420h80" stroke="#8b8b8b" stroke-width="5" marker-end="url(#arrow)"/>
-  <path d="M1235 420h80" stroke="#8b8b8b" stroke-width="5" marker-end="url(#arrow)"/>
+  <g transform="translate(100 285)"><text class="stage">01 · ORIGEN</text><text class="head" y="52">Foto o archivo</text><text class="body" y="92">Cámara en vivo</text><text class="body" y="124">JPG, PNG o WEBP</text><text class="body" y="156">Concepto libre</text><circle cx="100" cy="215" r="35" fill="none" stroke="#e00034" stroke-width="4"/><circle cx="100" cy="215" r="13" fill="#e00034"/></g>
+  <g transform="translate(400 285)"><text class="stage">02 · AUTORIZACIÓN</text><text class="head" y="52">Acceso restringido</text><text class="body" y="92">Código validado</text><text class="body" y="124">en Vercel</text><text class="body" y="156">Sesión firmada · 8 h</text><rect x="68" y="190" width="70" height="62" rx="12" fill="none" stroke="#e00034" stroke-width="4"/><path d="M84 190v-20a19 19 0 0138 0v20" fill="none" stroke="#e00034" stroke-width="4"/></g>
+  <g transform="translate(700 285)"><text class="stage">03 · GENERACIÓN</text><text class="head" y="52">Google Veo 3.1</text><text class="body" y="92">2–4 tomas asíncronas</text><text class="body" y="124">Música + narración</text><text class="body" y="156">720p · 9:16 / 16:9</text><path d="M65 205l52-30v80l-52-30z" fill="#e00034"/><circle cx="133" cy="215" r="37" fill="none" stroke="#555" stroke-width="3"/></g>
+  <g transform="translate(1000 285)"><text class="stage">04 · MONTAJE</text><text class="head" y="52">Identidad UTP exacta</text><text class="body" y="92">Textos y CTA</text><text class="body" y="124">Transiciones locales</text><text class="body" y="156">Duración final exacta</text><rect x="62" y="184" width="96" height="66" rx="10" fill="none" stroke="#555" stroke-width="3"/><rect x="74" y="198" width="8" height="38" fill="#e00034"/><text x="92" y="226" font-family="Inter,Arial" font-weight="800" font-size="25" fill="#fff">UTP</text></g>
+  <g transform="translate(1300 285)"><text class="stage">05 · ENTREGA</text><text class="head" y="52">Campaña descargable</text><text class="body" y="92">10, 15, 20 o 30 s</text><text class="body" y="124">Audio incorporado</text><text class="body" y="156">MP4 o WebM</text><path d="M110 180v49m-22-20l22 22 22-22M73 247h74" fill="none" stroke="#e00034" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></g>
 
-  <rect x="90" y="690" width="1425" height="92" rx="22" fill="#0c0c0c" stroke="#303030" stroke-width="2"/>
-  <circle cx="140" cy="736" r="15" fill="#e00034"/>
-  <text x="175" y="746" fill="#d9d9d9" font-family="Arial, sans-serif" font-size="23">Privacidad por diseño</text>
-  <text x="430" y="746" fill="#929292" font-family="Arial, sans-serif" font-size="22">La imagen y el video no salen del dispositivo. Sólo el enfoque textual llega al endpoint serverless.</text>
+  <rect x="70" y="630" width="1460" height="165" rx="28" fill="#0c0c0c" stroke="#2d2d2d" stroke-width="2"/>
+  <text class="stage" x="110" y="677">SEGURIDAD Y PRIVACIDAD</text>
+  <circle cx="122" cy="724" r="5" fill="#e00034"/><text class="small" x="142" y="730">El código, GEMINI_API_KEY y OPENAI_API_KEY permanecen como variables cifradas de Vercel.</text>
+  <circle cx="122" cy="763" r="5" fill="#e00034"/><text class="small" x="142" y="769">La fotografía se envía solo a Gemini/Veo; el resto de NEXORA continúa utilizando OpenAI.</text>
+  <circle cx="862" cy="724" r="5" fill="#e00034"/><text class="small" x="882" y="730">Las rutas de generar, consultar y descargar exigen una sesión autorizada.</text>
+  <circle cx="862" cy="763" r="5" fill="#e00034"/><text class="small" x="882" y="769">La composición final se procesa localmente en Safari, Chrome o Edge.</text>
+  <text x="70" y="858" font-family="Inter,Arial" font-size="14" fill="#666">NEXORA AI · Arquitectura funcional del módulo Publicidad · 2026</text>
 </svg>
