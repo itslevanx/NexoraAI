@@ -20,6 +20,8 @@ const state = {
   advertisingImageUrl: "",
   advertisingVideoUrl: "",
   advertisingClipUrls: [],
+  advertisingCampaign: null,
+  advertisingClipDurations: [],
   advertisingAccessToken: sessionStorage.getItem("nexoraPublicidadToken") || "",
   advertisingAudioContext: null
 };
@@ -755,6 +757,10 @@ async function downloadAdvertisingClip(token, index) {
   if (!blob.size) throw new Error("Google devolvió una toma vacía.");
   const url = URL.createObjectURL(blob);
   state.advertisingClipUrls.push(url);
+  return url;
+}
+
+async function loadAdvertisingVideo(url, index) {
   const video = document.createElement("video");
   video.src = url;
   video.preload = "auto";
@@ -766,6 +772,76 @@ async function downloadAdvertisingClip(token, index) {
   });
   return video;
 }
+
+function prepareAdvertisingMontage(campaign, clipDurations) {
+  state.advertisingCampaign = campaign || ADVERTISING_FALLBACK;
+  state.advertisingClipDurations = clipDurations;
+  const finish = $("#finishAdvertisingVideo");
+  finish.textContent = `Finalizar video de ${$("#advertisingDuration").value} s`;
+  finish.hidden = false;
+  $("#advertisingProgress span").style.width = "78%";
+  $("#advertisingStatus").textContent = "Toma lista · pulsa Finalizar video";
+  toast("La toma de Veo está lista. Pulsa Finalizar video para que Safari autorice el montaje con audio.");
+}
+
+$("#recoverAdvertisingClip").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!new Set(["video/mp4", "video/webm"]).has(file.type)) return toast("Selecciona una toma MP4 o WEBM.");
+  if (file.size > 200 * 1024 * 1024) return toast("La toma debe pesar menos de 200 MB.");
+  try {
+    state.advertisingClipUrls.forEach((url) => URL.revokeObjectURL(url));
+    const url = URL.createObjectURL(file);
+    await loadAdvertisingVideo(url, 0);
+    state.advertisingClipUrls = [url];
+    $("#advertisingProgress").hidden = false;
+    prepareAdvertisingMontage(ADVERTISING_FALLBACK, [Number($("#advertisingDuration").value)]);
+  } catch (error) {
+    toast(error.message);
+  }
+});
+
+async function finishAdvertisingMontage() {
+  if (!state.advertisingClipUrls.length || !state.advertisingClipDurations.length) {
+    throw new Error("No hay tomas preparadas para montar.");
+  }
+  const videos = await Promise.all(state.advertisingClipUrls.map(loadAdvertisingVideo));
+  $("#advertisingPlaceholder").hidden = true;
+  $("#advertisingCanvas").hidden = false;
+  const blob = await renderAdvertisingVideo(videos, state.advertisingCampaign, state.advertisingClipDurations);
+  if (state.advertisingVideoUrl) URL.revokeObjectURL(state.advertisingVideoUrl);
+  state.advertisingVideoUrl = URL.createObjectURL(blob);
+  const result = $("#advertisingResult");
+  result.src = state.advertisingVideoUrl;
+  result.hidden = false;
+  $("#advertisingCanvas").hidden = true;
+  const download = $("#downloadAdvertising");
+  const extension = blob.type.includes("mp4") ? "mp4" : "webm";
+  download.href = state.advertisingVideoUrl;
+  download.download = `publicidad-utp-${$("#advertisingDuration").value}s.${extension}`;
+  download.hidden = false;
+  $("#advertisingProgress span").style.width = "100%";
+  $("#advertisingStatus").textContent = "Campaña UTP lista para reproducir y descargar";
+  toast("Video cinematográfico UTP terminado.");
+}
+
+$("#finishAdvertisingVideo").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  button.textContent = "Montando video final…";
+  try {
+    await finishAdvertisingMontage();
+    button.hidden = true;
+  } catch (error) {
+    $("#advertisingStatus").textContent = "No fue posible finalizar el montaje";
+    $("#advertisingPlaceholder").hidden = false;
+    $("#advertisingCanvas").hidden = true;
+    toast(error.message);
+  } finally {
+    button.disabled = false;
+    if (!button.hidden) button.textContent = `Reintentar montaje de ${$("#advertisingDuration").value} s`;
+  }
+});
 
 function drawCoverVideo(context, video, width, height) {
   const sourceWidth = video.videoWidth || width;
@@ -961,6 +1037,7 @@ $("#advertisingForm").addEventListener("submit", async (event) => {
   $("#advertisingResult").hidden = true;
   $("#advertisingCanvas").hidden = true;
   $("#downloadAdvertising").hidden = true;
+  $("#finishAdvertisingVideo").hidden = true;
   try {
     state.advertisingClipUrls.forEach((url) => URL.revokeObjectURL(url));
     state.advertisingClipUrls = [];
@@ -969,29 +1046,11 @@ $("#advertisingForm").addEventListener("submit", async (event) => {
     button.textContent = "Veo está creando las tomas…";
     const tokens = await waitForAdvertisingClips(generation.operations);
     button.textContent = "Descargando tomas…";
-    const videos = [];
     for (let index = 0; index < tokens.length; index += 1) {
-      videos.push(await downloadAdvertisingClip(tokens[index], index));
+      await downloadAdvertisingClip(tokens[index], index);
       $("#advertisingProgress span").style.width = `${70 + ((index + 1) / tokens.length) * 8}%`;
     }
-    $("#advertisingPlaceholder").hidden = true;
-    $("#advertisingCanvas").hidden = false;
-    button.textContent = "Montando video final…";
-    const blob = await renderAdvertisingVideo(videos, generation.campaign || ADVERTISING_FALLBACK, generation.clipDurations);
-    if (state.advertisingVideoUrl) URL.revokeObjectURL(state.advertisingVideoUrl);
-    state.advertisingVideoUrl = URL.createObjectURL(blob);
-    const result = $("#advertisingResult");
-    result.src = state.advertisingVideoUrl;
-    result.hidden = false;
-    $("#advertisingCanvas").hidden = true;
-    const download = $("#downloadAdvertising");
-    const extension = blob.type.includes("mp4") ? "mp4" : "webm";
-    download.href = state.advertisingVideoUrl;
-    download.download = `publicidad-utp-${$("#advertisingDuration").value}s.${extension}`;
-    download.hidden = false;
-    $("#advertisingProgress span").style.width = "100%";
-    $("#advertisingStatus").textContent = "Campaña UTP lista para reproducir y descargar";
-    toast("Video cinematográfico UTP terminado.");
+    prepareAdvertisingMontage(generation.campaign, generation.clipDurations);
   } catch (error) {
     $("#advertisingStatus").textContent = "No fue posible crear el video";
     $("#advertisingPlaceholder").hidden = false;

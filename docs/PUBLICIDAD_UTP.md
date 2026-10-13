@@ -115,6 +115,8 @@ Cuando las tomas están listas, el navegador:
 
 Esta separación evita depender de letras o logotipos dibujados por el modelo generativo. Veo produce la escena y el audio; Canvas controla la identidad textual final.
 
+En Safari, cuando Veo entrega la toma, la interfaz muestra **Finalizar video**. Ese segundo clic conserva la autorización de usuario que Safari exige para reproducir y grabar audio durante el montaje. Si el navegador se cerró después de descargar una toma, **Recuperar una toma de Veo ya generada** permite seleccionar el MP4 o WEBM y terminar el video sin consumir otra vez la API.
+
 ### Etapa 6 Entrega
 
 El archivo final se crea en memoria y no requiere almacenamiento permanente en el servidor. Safari prioriza MP4 con H 264 y AAC cuando el navegador lo soporta. Otros navegadores pueden producir WebM con VP9, VP8 u Opus.

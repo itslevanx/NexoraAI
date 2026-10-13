@@ -76,6 +76,14 @@ test("la ruta directa de Publicidad reescribe hacia la aplicación", () => {
   assert.deepEqual(rewrite, { source: "/publicidad", destination: "/" });
 });
 
+test("Safari puede finalizar o recuperar una toma sin regenerarla", () => {
+  const web = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
+  const client = readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.match(web, /id="finishAdvertisingVideo"/);
+  assert.match(web, /id="recoverAdvertisingClip"/);
+  assert.match(client, /Toma lista · pulsa Finalizar video/);
+});
+
 test("la sesión de Publicidad se firma y rechaza alteraciones", () => {
   const session = createAdvertisingSession("codigo-de-prueba");
   assert.equal(verifyAdvertisingSession(session.token, "codigo-de-prueba"), true);

@@ -472,6 +472,8 @@ Veo 3.1 Fast genera clips de 4, 6 u 8 segundos. Para producir las duraciones fin
 
 Cuando cada toma está lista, `/api/publicidad` devuelve un token HMAC con una hora de vigencia. `/api/publicidad-video` valida el token, recupera el MP4 desde Google y transmite el contenido al navegador sin exponer la clave. Canvas conserva el audio nativo mediante Web Audio y añade transiciones, textos UTP exactos, llamada a la acción y barra de progreso. MediaRecorder selecciona MP4 en Safari cuando está disponible o WebM en otros navegadores.
 
+Safari exige un gesto directo para reproducir y grabar audio. Por eso, después de descargar las tomas, la interfaz solicita pulsar **Finalizar video**. También permite recuperar un MP4 o WEBM ya generado y terminar el montaje sin consumir otra vez la API.
+
 El costo estimado con Veo Fast 720p es US$0.10 por segundo generado: US$0.80 para la entrega final de 10 segundos, US$1.60 para una entrega de 15 segundos, US$2.00 para 20 y US$3.00 para 30. La interfaz muestra la estimación y exige confirmación antes de iniciar. Una regeneración vuelve a consumir saldo.
 
 ### Texto a voz

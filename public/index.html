@@ -243,7 +243,14 @@
                 </div>
               </div>
               <div id="advertisingProgress" class="progress-track" hidden><span></span></div>
+              <button id="finishAdvertisingVideo" class="primary wide" type="button" hidden>Finalizar video de 10 s</button>
               <a id="downloadAdvertising" class="secondary link-button wide" download="publicidad-utp.mp4" hidden>Descargar video</a>
+              <details class="advertising-recovery">
+                <summary>Recuperar una toma de Veo ya generada</summary>
+                <label>Selecciona el MP4 o WEBM para terminar el montaje UTP sin consumir nuevamente la API.
+                  <input id="recoverAdvertisingClip" type="file" accept="video/mp4,video/webm">
+                </label>
+              </details>
               <p class="ai-disclosure">Video y audio generados con Google Veo. Montaje e identidad UTP añadidos localmente. Contenido creado con IA.</p>
             </section>
           </div>
