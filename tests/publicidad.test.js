@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 
 import handler, { buildCampaign, buildVeoRequest, scenePrompt } from "../api/publicidad.js";
 import { accessCodeMatches, createAdvertisingSession, verifyAdvertisingSession } from "../api/_publicidad-auth.js";
@@ -43,6 +44,12 @@ test("Veo recibe la imagen con el formato de predicción compatible", () => {
   });
   assert.equal("inlineData" in request.instances[0].image, false);
   assert.equal(request.parameters.durationSeconds, "6");
+});
+
+test("la ruta directa de Publicidad reescribe hacia la aplicación", () => {
+  const vercel = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
+  const rewrite = vercel.rewrites.find((entry) => entry.source === "/publicidad");
+  assert.deepEqual(rewrite, { source: "/publicidad", destination: "/" });
 });
 
 test("la sesión de Publicidad se firma y rechaza alteraciones", () => {

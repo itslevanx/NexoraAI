@@ -8,7 +8,7 @@
   },
   "rewrites": [
     { "source": "/", "destination": "/public/index.html" },
-    { "source": "/publicidad", "destination": "/public/index.html" },
+    { "source": "/publicidad", "destination": "/" },
     { "source": "/app.js", "destination": "/public/app.js" },
     { "source": "/styles.css", "destination": "/public/styles.css" },
     { "source": "/favicon.svg", "destination": "/public/favicon.svg" }
