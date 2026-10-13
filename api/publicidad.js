@@ -107,7 +107,7 @@ function buildVeoRequest({ image, mimeType, aspectRatio, seconds, prompt }) {
     }],
     parameters: {
       aspectRatio,
-      durationSeconds: String(seconds),
+      durationSeconds: seconds,
       resolution: "720p",
       personGeneration: "allow_adult"
     }
