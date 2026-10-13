@@ -96,20 +96,30 @@ function buildCampaign(tone) {
   };
 }
 
+function buildVeoRequest({ image, mimeType, aspectRatio, seconds, prompt }) {
+  return {
+    instances: [{
+      prompt,
+      image: {
+        bytesBase64Encoded: image,
+        mimeType
+      }
+    }],
+    parameters: {
+      aspectRatio,
+      durationSeconds: String(seconds),
+      resolution: "720p",
+      personGeneration: "allow_adult",
+      numberOfVideos: 1
+    }
+  };
+}
+
 async function startClip({ apiKey, image, mimeType, aspectRatio, seconds, prompt }) {
   const response = await fetch(`${GEMINI_BASE_URL}/models/${VEO_MODEL}:predictLongRunning`, {
     method: "POST",
     headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      instances: [{ prompt, image: { inlineData: { mimeType, data: image } } }],
-      parameters: {
-        aspectRatio,
-        durationSeconds: String(seconds),
-        resolution: "720p",
-        personGeneration: "allow_adult",
-        numberOfVideos: 1
-      }
-    })
+    body: JSON.stringify(buildVeoRequest({ image, mimeType, aspectRatio, seconds, prompt }))
   });
   if (!response.ok) throw new Error(await readGeminiError(response));
   const operation = await response.json();
@@ -184,4 +194,4 @@ export default async function handler(req, res) {
   }
 }
 
-export { buildCampaign, scenePrompt };
+export { buildCampaign, buildVeoRequest, scenePrompt };

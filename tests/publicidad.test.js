@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import handler, { buildCampaign, scenePrompt } from "../api/publicidad.js";
+import handler, { buildCampaign, buildVeoRequest, scenePrompt } from "../api/publicidad.js";
 import { accessCodeMatches, createAdvertisingSession, verifyAdvertisingSession } from "../api/_publicidad-auth.js";
 
 function responseRecorder() {
@@ -27,6 +27,22 @@ test("cualquier concepto creativo se reinterpreta como publicidad UTP", () => {
   assert.match(prompt, /frutinovelas/);
   assert.match(prompt, /Universidad Tecnológica del Perú/);
   assert.match(prompt, /must remain a UTP advertisement/);
+});
+
+test("Veo recibe la imagen con el formato de predicción compatible", () => {
+  const request = buildVeoRequest({
+    image: "aW1hZ2Vu",
+    mimeType: "image/jpeg",
+    aspectRatio: "9:16",
+    seconds: 6,
+    prompt: "Campaña UTP"
+  });
+  assert.deepEqual(request.instances[0].image, {
+    bytesBase64Encoded: "aW1hZ2Vu",
+    mimeType: "image/jpeg"
+  });
+  assert.equal("inlineData" in request.instances[0].image, false);
+  assert.equal(request.parameters.durationSeconds, "6");
 });
 
 test("la sesión de Publicidad se firma y rechaza alteraciones", () => {
