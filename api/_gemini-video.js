@@ -30,6 +30,17 @@ export function extractVideoUri(operation) {
     || "";
 }
 
+export function extractVideoFailure(operation) {
+  const direct = operation?.error?.message;
+  if (direct) return direct;
+  const reasons = operation?.response?.generateVideoResponse?.raiMediaFilteredReasons
+    || operation?.response?.raiMediaFilteredReasons
+    || operation?.metadata?.raiMediaFilteredReasons
+    || [];
+  if (Array.isArray(reasons) && reasons.length) return reasons.filter(Boolean).join(" ");
+  return "Google Veo terminó la toma sin entregar un archivo de video. El contenido pudo ser filtrado por sus controles de seguridad o audio.";
+}
+
 function encode(value) {
   return Buffer.from(value).toString("base64url");
 }

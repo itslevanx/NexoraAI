@@ -666,7 +666,7 @@ function updateAdvertisingFormat() {
 $("#advertisingFormat").addEventListener("change", updateAdvertisingFormat);
 
 const ADVERTISING_COSTS = {
-  10: { generated: 10, cost: 1 },
+  10: { generated: 8, cost: .8 },
   15: { generated: 16, cost: 1.6 },
   20: { generated: 20, cost: 2 },
   30: { generated: 30, cost: 3 }
@@ -907,11 +907,14 @@ async function renderAdvertisingVideo(videos, copy, clipDurations) {
     const video = videos[index];
     const remaining = duration - elapsed;
     const useSeconds = Math.min(clipDurations[index], remaining);
+    const sourceSeconds = Math.min(Number(video.duration) || useSeconds, useSeconds);
+    const playbackRate = sourceSeconds < useSeconds ? sourceSeconds / useSeconds : 1;
     video.currentTime = 0;
+    video.playbackRate = playbackRate;
     await video.play();
     await new Promise((resolve) => {
       const draw = () => {
-        const localTime = Math.min(useSeconds, video.currentTime);
+        const localTime = Math.min(useSeconds, video.currentTime / playbackRate);
         const totalProgress = Math.min(1, (elapsed + localTime) / duration);
         const clipProgress = Math.min(1, localTime / useSeconds);
         drawAdvertisingFrame(context, video, copy, totalProgress, format, clipProgress);
@@ -923,6 +926,7 @@ async function renderAdvertisingVideo(videos, copy, clipDurations) {
       requestAnimationFrame(draw);
     });
     video.pause();
+    video.playbackRate = 1;
     elapsed += useSeconds;
   }
   if (recorder.state === "recording") recorder.stop();

@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 
-import handler, { buildCampaign, buildVeoRequest, scenePrompt } from "../api/publicidad.js";
+import handler, { buildCampaign, buildDurationPlan, buildVeoRequest, scenePrompt } from "../api/publicidad.js";
+import { extractVideoFailure } from "../api/_gemini-video.js";
 import { accessCodeMatches, createAdvertisingSession, verifyAdvertisingSession } from "../api/_publicidad-auth.js";
 
 function responseRecorder() {
@@ -49,6 +50,24 @@ test("Veo recibe la imagen con el formato de predicción compatible", () => {
     resolution: "720p",
     personGeneration: "allow_adult"
   });
+});
+
+test("el video de diez segundos usa una sola toma de Veo", () => {
+  assert.deepEqual(buildDurationPlan(10), {
+    generationDurations: [8],
+    clipDurations: [10]
+  });
+});
+
+test("los filtros de Veo se muestran como un error comprensible", () => {
+  const operation = {
+    response: {
+      generateVideoResponse: {
+        raiMediaFilteredReasons: ["El audio solicitado fue filtrado."]
+      }
+    }
+  };
+  assert.equal(extractVideoFailure(operation), "El audio solicitado fue filtrado.");
 });
 
 test("la ruta directa de Publicidad reescribe hacia la aplicación", () => {

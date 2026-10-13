@@ -3,6 +3,7 @@ import {
   GEMINI_BASE_URL,
   VEO_MODEL,
   createDownloadToken,
+  extractVideoFailure,
   extractVideoUri,
   isValidOperationName,
   readGeminiError,
@@ -12,7 +13,7 @@ import { hasAdvertisingAccess, resolveAdvertisingAccessCode } from "./_publicida
 
 const TONES = new Set(["inspirador", "tecnologico", "energetico", "institucional"]);
 const DURATIONS = new Map([
-  [10, [6, 4]],
+  [10, [8]],
   [15, [8, 8]],
   [20, [8, 8, 4]],
   [30, [8, 8, 8, 6]]
@@ -96,6 +97,15 @@ function buildCampaign(tone) {
   };
 }
 
+function buildDurationPlan(duration) {
+  const generationDurations = DURATIONS.get(duration);
+  if (!generationDurations) throw new Error("Elige una duración de 10, 15, 20 o 30 segundos.");
+  return {
+    generationDurations,
+    clipDurations: duration === 10 ? [10] : generationDurations
+  };
+}
+
 function buildVeoRequest({ image, mimeType, aspectRatio, seconds, prompt }) {
   return {
     instances: [{
@@ -128,22 +138,21 @@ async function startClip({ apiKey, image, mimeType, aspectRatio, seconds, prompt
 
 async function startGeneration(body, apiKey) {
   const duration = Number(body.duration);
-  const clipDurations = DURATIONS.get(duration);
-  if (!clipDurations) throw new Error("Elige una duración de 10, 15, 20 o 30 segundos.");
+  const { generationDurations, clipDurations } = buildDurationPlan(duration);
   const tone = TONES.has(body.tone) ? body.tone : "inspirador";
   const brief = cleanText(body.brief, 600);
   const mimeType = String(body.mimeType || "");
   const image = parseImage(body.image, mimeType);
   const aspectRatio = body.format === "landscape" ? "16:9" : "9:16";
-  const operations = await Promise.all(clipDurations.map((seconds, index) => startClip({
+  const operations = await Promise.all(generationDurations.map((seconds, index) => startClip({
     apiKey,
     image,
     mimeType,
     aspectRatio,
     seconds,
-    prompt: scenePrompt({ brief, tone, index, total: clipDurations.length })
+    prompt: scenePrompt({ brief, tone, index, total: generationDurations.length })
   })));
-  const generatedSeconds = clipDurations.reduce((sum, value) => sum + value, 0);
+  const generatedSeconds = generationDurations.reduce((sum, value) => sum + value, 0);
   return {
     operations,
     clipDurations,
@@ -168,7 +177,7 @@ async function getStatus(body, apiKey) {
     return {
       name,
       done: Boolean(operation.done),
-      error: operation?.error?.message || "",
+      error: operation.done && !uri ? extractVideoFailure(operation) : operation?.error?.message || "",
       downloadToken: uri ? createDownloadToken(uri, apiKey) : ""
     };
   }));
@@ -193,4 +202,4 @@ export default async function handler(req, res) {
   }
 }
 
-export { buildCampaign, buildVeoRequest, scenePrompt };
+export { buildCampaign, buildDurationPlan, buildVeoRequest, scenePrompt };

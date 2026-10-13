@@ -134,7 +134,7 @@ El cálculo visible usa una referencia de **US$0.10 por segundo generado**. La d
 
 | Video final | Tomas solicitadas | Segundos generados | Estimación mostrada |
 |---:|---|---:|---:|
-| 10 s | 6 s y 4 s | 10 s | US$1.00 |
+| 10 s | una toma de 8 s adaptada durante el montaje | 10 s | US$0.80 |
 | 15 s | 8 s y 8 s | 16 s | US$1.60 |
 | 20 s | 8 s, 8 s y 4 s | 20 s | US$2.00 |
 | 30 s | 8 s, 8 s, 8 s y 6 s | 30 s | US$3.00 |

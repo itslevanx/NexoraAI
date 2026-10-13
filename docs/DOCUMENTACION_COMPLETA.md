@@ -468,11 +468,11 @@ La vista Publicidad comienza bloqueada incluso cuando se alcanza por enlace dire
 
 Una vez autorizada, la vista acepta cámara o archivo. El navegador valida JPG, PNG o WEBP de hasta 10 MB y produce una copia JPEG de 1280 píxeles como máximo y menos de 3 MB. `/api/publicidad` valida tono, duración, formato y un concepto de hasta 600 caracteres. La instrucción controlada establece que cualquier concepto —incluido uno sin relación aparente con educación— debe transformarse en publicidad de la Universidad Tecnológica del Perú. El usuario define el universo creativo; la marca, narración y llamada a la acción permanecen UTP.
 
-Veo 3.1 Fast genera clips de 4, 6 u 8 segundos. Para producir las duraciones finales se usan estas combinaciones: `6+4` para 10 segundos, `8+8` recortado a 15, `8+8+4` para 20 y `8+8+8+6` para 30. Cada solicitud usa la foto como primer cuadro, formato 9:16 o 16:9, resolución 720p, música cinematográfica y narración adulta en español. La interfaz consulta las operaciones asíncronas cada diez segundos.
+Veo 3.1 Fast genera clips de 4, 6 u 8 segundos. Para producir las duraciones finales se usa una toma de 8 segundos adaptada localmente a 10 segundos, `8+8` recortado a 15, `8+8+4` para 20 y `8+8+8+6` para 30. Cada solicitud usa la foto como primer cuadro, formato 9:16 o 16:9, resolución 720p, música cinematográfica y narración adulta en español. La interfaz consulta las operaciones asíncronas cada diez segundos.
 
 Cuando cada toma está lista, `/api/publicidad` devuelve un token HMAC con una hora de vigencia. `/api/publicidad-video` valida el token, recupera el MP4 desde Google y transmite el contenido al navegador sin exponer la clave. Canvas conserva el audio nativo mediante Web Audio y añade transiciones, textos UTP exactos, llamada a la acción y barra de progreso. MediaRecorder selecciona MP4 en Safari cuando está disponible o WebM en otros navegadores.
 
-El costo estimado con Veo Fast 720p es US$0.10 por segundo generado: US$1.00 para 10 segundos, US$1.60 para una entrega de 15 segundos, US$2.00 para 20 y US$3.00 para 30. La interfaz muestra la estimación y exige confirmación antes de iniciar. Una regeneración vuelve a consumir saldo.
+El costo estimado con Veo Fast 720p es US$0.10 por segundo generado: US$0.80 para la entrega final de 10 segundos, US$1.60 para una entrega de 15 segundos, US$2.00 para 20 y US$3.00 para 30. La interfaz muestra la estimación y exige confirmación antes de iniciar. Una regeneración vuelve a consumir saldo.
 
 ### Texto a voz
 
