@@ -1,19 +1,5 @@
 # Documentación integral del proyecto NEXORA AI
 
-## Datos para la carátula
-
-| Campo | Información que debe completar el equipo |
-|---|---|
-| Institución | Nombre de la universidad o instituto |
-| Facultad o programa | Nombre de la facultad o carrera |
-| Curso | Nombre del curso |
-| Proyecto | NEXORA AI |
-| Docente | Nombre completo del docente |
-| Integrantes | Nombres completos y códigos |
-| Ciclo y sección | Ciclo académico y sección |
-| Ciudad y país | Ciudad y país |
-| Fecha | Fecha de presentación |
-
 ## Resumen ejecutivo
 
 NEXORA AI es una suite web multimodal de apoyo académico y productividad con dos interfaces complementarias: una versión local en Python y Streamlit y una versión desplegable en Vercel. Integra chat contextual, once herramientas especializadas de texto, visión artificial, generación de imágenes, publicidad audiovisual, texto a voz, moderación, conversación de voz a voz mediante Realtime API y WebRTC, transcripción de audio y automatizaciones conectadas a n8n. El propósito es demostrar cómo una experiencia unificada puede procesar texto, voz e imágenes y entregar datos estructurados a flujos externos sin incrustar credenciales sensibles en el código.
@@ -30,7 +16,7 @@ Las actividades académicas producen información en distintos formatos: pregunt
 
 NEXORA AI aborda ese problema mediante una interfaz única. El usuario conversa con un asistente, convierte audio en texto y envía contenido estructurado a n8n. El proyecto no pretende reemplazar plataformas empresariales ni ofrecer un servicio público listo para producción. Su finalidad es académica: demostrar una arquitectura funcional, comprensible y segura.
 
-Este documento describe el problema, los objetivos, el alcance, los requisitos, la arquitectura, el funcionamiento, la seguridad, la instalación, el uso, las pruebas, los riesgos y las mejoras. El equipo puede utilizarlo como base para su informe y adaptar los campos institucionales sin modificar la descripción técnica.
+Este documento describe el problema, los objetivos, el alcance, los requisitos, la arquitectura, el funcionamiento, la seguridad, la instalación, el uso, las pruebas, los riesgos y las mejoras.
 
 ## Planteamiento del problema
 
@@ -137,7 +123,6 @@ Desarrollar una aplicación web de apoyo académico que integre conversación po
 | Docente | Evaluar la integración tecnológica | Observa demostración, arquitectura y pruebas |
 | Integrante técnico | Configurar y mantener el proyecto | Instala, revisa código y conecta servicios |
 | Administrador de n8n | Gestionar credenciales y workflows | Importa, activa y amplía la automatización |
-| Equipo del proyecto | Preparar documentación y exposición | Utiliza el informe, README y guion |
 
 ## Requisitos funcionales
 
@@ -384,7 +369,7 @@ Se mantiene una arquitectura monolítica ligera en Streamlit para ejecución loc
 
 El historial se limita a los últimos mensajes para reducir el contexto. La clave puede escribirse temporalmente o cargarse desde el entorno. La primera opción facilita la exposición y la segunda es adecuada para un despliegue controlado.
 
-## Tecnologías y organización
+## Tecnologías y estructura del proyecto
 
 | Tecnología | Responsabilidad |
 |---|---|
@@ -560,9 +545,9 @@ La captura muestra la configuración exacta del nodo **Entrada NEXORA**. Para pr
 ```json
 {
   "action": "task",
-  "recipient": "equipo de exposición",
-  "subject": "Preparar la sustentación",
-  "content": "Urgente: terminar diapositivas hoy. Ensayar la demostración.",
+  "recipient": "grupo de estudio",
+  "subject": "Organizar actividad",
+  "content": "Preparar los materiales y revisar las tareas pendientes.",
   "source": "NEXORA AI",
   "timestamp": "2026-09-23T20:30:00"
 }
@@ -963,42 +948,6 @@ git status --short
 | Respuesta multimodal incorrecta | Interpretación equivocada | Reformular y contrastar con la fuente |
 | Respuesta serverless grande | Error de plataforma | Mantener compresión, calidad baja y límites |
 
-## Estrategia de demostración
-
-- **Minuto 1:** problema, nombre e interfaz minimalista.
-- **Minuto 2:** conversación de voz a voz.
-- **Minuto 3:** Studio IA: guía de estudio, análisis visual o generación de imagen.
-- **Minuto 4:** grabación, transcripción, resumen, descarga y narración.
-- **Minuto 5:** ejecución en n8n, arquitectura, moderación y seguridad.
-
-Consulta sugerida: “Explica la computación cuántica con una analogía sencilla, resume la idea en cinco puntos y crea tres preguntas de repaso”.
-
-Nota de voz: “La reunión del equipo será el viernes a las cuatro. Debemos terminar la presentación, revisar las pruebas y asignar quién explicará la automatización”.
-
-El resultado clave es que la información pasa de voz a texto, de texto a resumen y de resumen a automatización sin copiarla entre herramientas.
-
-## Organización del equipo
-
-| Rol | Responsabilidades sugeridas |
-|---|---|
-| Coordinación | Controlar tiempos y consolidar entrega |
-| Desarrollo | Explicar app.py y APIs |
-| Automatización | Configurar y demostrar n8n |
-| Calidad | Ejecutar pruebas y reunir evidencias |
-| Documentación | Completar carátula, Word y referencias |
-| Exposición | Preparar guion y respaldos |
-
-### Evidencias necesarias
-
-- Pantalla principal, chat, Studio IA, transcripción y resumen.
-- Conversación de voz a voz y URL pública de Vercel.
-- Resultado de visión, imagen generada, narración y moderación.
-- Publicidad con foto cargada, video reproducible, música y descarga.
-- Workflow completo y ejecución exitosa en n8n.
-- Resultado de pytest.
-- Historial de commits atómicos.
-- URL del repositorio.
-
 ## Limitaciones y mejoras futuras
 
 La aplicación no persiste conversaciones de forma propia. n8n conserva artefactos locales; Google conserva temporalmente las tomas de Veo y el navegador mantiene copias en memoria hasta cerrar la pestaña. La precisión depende del modelo, la imagen y las instrucciones. El consumo genera costos y cada regeneración vuelve a cobrarse. La conversación de voz necesita HTTPS, permiso de micrófono y acceso al modelo Realtime. Publicidad acepta fotos originales de hasta 10 MB, las comprime a menos de 3 MB, genera de dos a cuatro clips y puede tardar varios minutos más el tiempo del montaje local. El contenedor final depende de MediaRecorder. La narración de Speech acepta hasta 2500 caracteres y la generación de imágenes puede requerir verificación de OpenAI. La moderación es una señal de apoyo y no una decisión definitiva.
@@ -1015,9 +964,7 @@ La solución queda preparada para evolucionar. La persistencia, autenticación, 
 
 ## Recomendaciones
 
-- Probar la demostración un día antes.
 - Utilizar una clave exclusiva y rotarla después.
-- Preparar un audio y video de respaldo.
 - Explicar que los servicios externos son extensiones opcionales y que los borradores requieren aprobación.
 - Registrar únicamente pruebas realizadas.
 - Mantener documentación y código sincronizados.
@@ -1112,24 +1059,7 @@ N8N_WEBHOOK_URL=http://localhost:5678/webhook/nexora
 | Veo no termina | Latencia máxima o pestaña cerrada | Mantener la pestaña abierta hasta siete minutos y repetir sólo después de revisar el saldo |
 | Una toma es bloqueada | Filtros de seguridad, audio o imagen | Usar una foto autorizada de una persona adulta y reformular el concepto |
 
-## Anexo C Lista de verificación
-
-- [ ] Completar carátula e integrantes.
-- [x] Insertar capturas reales de los cinco workflows, el listado publicado y la configuración del Webhook.
-- [ ] Confirmar que no exista una API key.
-- [ ] Ejecutar pruebas y registrar resultado.
-- [ ] Verificar la URL del repositorio.
-- [ ] Ensayar con cronómetro.
-- [ ] Preparar audio y video de respaldo.
-- [ ] Preparar una imagen de prueba sin datos personales.
-- [x] Conservar como evidencia histórica la captura del compositor local anterior.
-- [ ] Generar el primer video con Veo y sustituir la captura histórica por evidencia actual.
-- [ ] Probar Publicidad en la URL de producción después de cada despliegue.
-- [ ] Comprobar Studio IA, voz sintética y moderación con la clave del equipo.
-- [ ] Revisar ortografía y formato institucional.
-- [ ] Entregar el Word o PDF solicitado.
-
-## Anexo D Trazabilidad
+## Anexo C Trazabilidad
 
 | Objetivo | Requisito | Evidencia |
 |---|---|---|

@@ -491,17 +491,6 @@ Incluye problema, objetivos, alcance, requisitos, casos de uso, arquitectura, c�
 - [Documentación de n8n](https://docs.n8n.io/)
 - [Documentación de Docker Compose](https://docs.docker.com/compose/)
 
-## Datos del equipo
-
-Completar antes de la entrega:
-
-- Institución:
-- Curso:
-- Docente:
-- Integrantes:
-- Ciclo o sección:
-- Fecha:
-
 ## Uso académico
 
 Proyecto preparado con fines académicos. Antes de utilizarlo con datos reales, el equipo debe definir una licencia, revisar las políticas de los servicios conectados y mantener la aprobación humana para acciones externas.

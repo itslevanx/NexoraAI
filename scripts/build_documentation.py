@@ -325,7 +325,7 @@ def build() -> None:
         section.start_type = WD_SECTION.NEW_PAGE if section is not doc.sections[0] else section.start_type
     doc.core_properties.title = "Documentación integral del proyecto NEXORA AI"
     doc.core_properties.subject = "Chat, voz, publicidad audiovisual, transcripción, Vercel y automatizaciones n8n"
-    doc.core_properties.author = "Equipo NEXORA AI"
+    doc.core_properties.author = "NEXORA AI"
     doc.save(OUTPUT)
     print(OUTPUT)
 
