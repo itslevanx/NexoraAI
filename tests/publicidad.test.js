@@ -44,6 +44,7 @@ test("Veo recibe la imagen con el formato de predicción compatible", () => {
   });
   assert.equal("inlineData" in request.instances[0].image, false);
   assert.equal(request.parameters.durationSeconds, "6");
+  assert.equal("numberOfVideos" in request.parameters, false);
 });
 
 test("la ruta directa de Publicidad reescribe hacia la aplicación", () => {

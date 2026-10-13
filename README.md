@@ -206,7 +206,7 @@ El archivo `.env` está excluido de Git. Nunca se debe publicar una clave real e
 
 La fotografía optimizada y el concepto se envían a Google Gemini. La clave permanece en Vercel. Las tomas regresan mediante enlaces temporales firmados y el navegador compone el archivo final en memoria.
 
-La imagen se envía a Veo dentro de `instances[0].image` mediante `bytesBase64Encoded` y `mimeType`, que es el formato de predicción utilizado por el endpoint audiovisual.
+La imagen se envía a Veo dentro de `instances[0].image` mediante `bytesBase64Encoded` y `mimeType`. Los parámetros enviados se limitan a `aspectRatio`, `durationSeconds`, `resolution` y `personGeneration`; la API genera un solo video por operación sin declarar `numberOfVideos`, porque ese campo no es aceptado por el modelo configurado.
 
 ## Pruebas
 

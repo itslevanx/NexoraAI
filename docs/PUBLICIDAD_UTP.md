@@ -96,7 +96,7 @@ El endpoint `/api/publicidad` utiliza el modelo `veo-3.1-fast-generate-preview`.
 - continuidad con las demás tomas;
 - una única salida de video.
 
-La fotografía se coloca en `instances[0].image` con los campos `bytesBase64Encoded` y `mimeType`. Esta forma coincide con el esquema de predicción de Veo y evita que el modelo interprete la imagen como un bloque `inlineData` no compatible.
+La fotografía se coloca en `instances[0].image` con los campos `bytesBase64Encoded` y `mimeType`. Esta forma coincide con el esquema aceptado por el modelo configurado y evita que la imagen se interprete como un bloque `inlineData` no compatible. La configuración solo envía `aspectRatio`, `durationSeconds`, `resolution` y `personGeneration`; se omite `numberOfVideos` porque Veo ya entrega un único video por operación y ese campo es rechazado por este modelo.
 
 La generación es asíncrona. El navegador recibe identificadores de operación y consulta su estado cada diez segundos, con un límite aproximado de siete minutos.
 
