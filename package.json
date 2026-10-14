@@ -4,9 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check public/app.js && node --check api/realtime-session.js && node --check api/chat.js && node --check api/transcribe.js && node --check api/automation.js && node --check api/studio.js && node --check api/publicidad.js && node --check api/publicidad-video.js && node --check api/publicidad-acceso.js && node --check api/_publicidad-auth.js && node --check api/_gemini-video.js && node --check api/speech.js && node --check api/image.js && node --check api/vision.js && node --check api/moderate.js && node --check local-mailer/server.mjs && node --test tests/realtime-session.test.js tests/local-mailer.test.js tests/publicidad.test.js"
+    "check": "node --check public/app.js && node --check api/realtime-session.js && node --check api/chat.js && node --check api/transcribe.js && node --check api/automation.js && node --check api/studio.js && node --check api/publicidad.js && node --check api/publicidad-video.js && node --check api/publicidad-acceso.js && node --check api/publicidad-galeria.js && node --check api/_publicidad-auth.js && node --check api/_gemini-video.js && node --check api/_supabase.js && node --check api/speech.js && node --check api/image.js && node --check api/vision.js && node --check api/moderate.js && node --check local-mailer/server.mjs && node --check container/server.mjs && node --test tests/realtime-session.test.js tests/local-mailer.test.js tests/publicidad.test.js tests/publicidad-galeria.test.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.3"
+  },
+  "devDependencies": {
+    "supabase": "2.121.0"
   }
 }

@@ -18,6 +18,7 @@ const state = {
   advertisingCamera: null,
   advertisingImage: null,
   advertisingImageUrl: "",
+  advertisingRecordId: "",
   advertisingVideoUrl: "",
   advertisingClipUrls: [],
   advertisingCampaign: null,
@@ -539,6 +540,9 @@ function unlockAdvertising(token) {
   $("#advertisingLock").hidden = true;
   $("#advertisingContent").hidden = false;
   $("#advertisingAccessCode").value = "";
+  loadAdvertisingGallery().catch((error) => {
+    $("#advertisingGallery").textContent = error.message;
+  });
 }
 
 async function requestAdvertisingAccess(code = "") {
@@ -589,7 +593,136 @@ function stopAdvertisingCamera() {
   }
 }
 
-async function setAdvertisingPhoto(file) {
+async function galleryRequest(action, payload = {}) {
+  const response = await fetch("/api/publicidad-galeria", {
+    method: "POST",
+    headers: advertisingHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({ action, ...payload })
+  });
+  if (response.status === 401) lockAdvertising("La sesión venció. Ingresa nuevamente el código.");
+  if (!response.ok) throw new Error(await apiError(response));
+  return response.json();
+}
+
+async function uploadToSignedUrl(signedUrl, file) {
+  const form = new FormData();
+  form.append("cacheControl", "3600");
+  form.append("", file);
+  const response = await fetch(signedUrl, {
+    method: "PUT",
+    headers: { "x-upsert": "false" },
+    body: form
+  });
+  if (!response.ok) throw new Error("Supabase no pudo almacenar el archivo.");
+}
+
+function galleryStatusLabel(status) {
+  return ({
+    subiendo: "Subiendo",
+    capturada: "Fotografía",
+    generando: "Generando",
+    completada: "Video listo",
+    error: "Error"
+  })[status] || status;
+}
+
+function createGalleryCard(item) {
+  const card = document.createElement("article");
+  card.className = "gallery-card";
+  const media = document.createElement("div");
+  media.className = "gallery-media";
+  const preview = document.createElement(item.videoUrl ? "video" : "img");
+  preview.src = item.videoUrl || item.imageUrl;
+  if (item.videoUrl) {
+    preview.controls = true;
+    preview.playsInline = true;
+    preview.preload = "metadata";
+  } else {
+    preview.alt = "Fotografía archivada para Publicidad UTP";
+    preview.loading = "lazy";
+  }
+  const status = document.createElement("span");
+  status.className = `gallery-status ${item.status === "completada" ? "completed" : item.status === "error" ? "error" : ""}`;
+  status.textContent = galleryStatusLabel(item.status);
+  media.append(preview, status);
+
+  const copy = document.createElement("div");
+  copy.className = "gallery-copy";
+  const title = document.createElement("strong");
+  title.textContent = item.videoUrl ? "Campaña audiovisual UTP" : item.source === "camara" ? "Foto tomada con cámara" : "Imagen subida";
+  const description = document.createElement("p");
+  description.textContent = item.error_message || item.prompt || "Lista para crear una campaña de la UTP.";
+  const meta = document.createElement("div");
+  meta.className = "gallery-meta";
+  const date = new Date(item.created_at);
+  [date.toLocaleString("es-PE"), `${item.duration} s`, item.format === "landscape" ? "16:9" : "9:16"].forEach((value) => {
+    const badge = document.createElement("span");
+    badge.textContent = value;
+    meta.append(badge);
+  });
+  const actions = document.createElement("div");
+  actions.className = "gallery-actions";
+  const imageLink = document.createElement("a");
+  imageLink.className = "secondary link-button";
+  imageLink.href = item.imageUrl;
+  imageLink.target = "_blank";
+  imageLink.rel = "noopener";
+  imageLink.textContent = "Ver foto";
+  actions.append(imageLink);
+  if (item.videoUrl) {
+    const videoLink = document.createElement("a");
+    videoLink.className = "secondary link-button";
+    videoLink.href = item.videoUrl;
+    videoLink.target = "_blank";
+    videoLink.rel = "noopener";
+    videoLink.textContent = "Abrir video";
+    actions.append(videoLink);
+  }
+  copy.append(title, description, meta, actions);
+  card.append(media, copy);
+  return card;
+}
+
+async function loadAdvertisingGallery() {
+  const gallery = $("#advertisingGallery");
+  gallery.innerHTML = '<div class="gallery-empty">Cargando archivos almacenados…</div>';
+  const response = await fetch("/api/publicidad-galeria", { headers: advertisingHeaders() });
+  if (response.status === 401) lockAdvertising("La sesión venció. Ingresa nuevamente el código.");
+  if (!response.ok) throw new Error(await apiError(response));
+  const { items = [] } = await response.json();
+  $("#galleryTotal").textContent = items.length;
+  $("#galleryPhotos").textContent = items.filter((item) => item.imageUrl).length;
+  $("#galleryVideos").textContent = items.filter((item) => item.videoUrl).length;
+  gallery.replaceChildren();
+  if (!items.length) {
+    gallery.innerHTML = '<div class="gallery-empty">Todavía no hay fotografías ni videos almacenados.</div>';
+    return;
+  }
+  items.forEach((item) => gallery.append(createGalleryCard(item)));
+}
+
+$("#refreshAdvertisingGallery").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  try { await loadAdvertisingGallery(); }
+  catch (error) { toast(error.message); }
+  finally { button.disabled = false; }
+});
+
+async function archiveAdvertisingPhoto(file, source) {
+  const upload = await galleryRequest("crear-captura", { mimeType: file.type, source });
+  try {
+    await uploadToSignedUrl(upload.signedUrl, file);
+    await galleryRequest("confirmar-captura", { id: upload.id });
+    state.advertisingRecordId = upload.id;
+    await loadAdvertisingGallery();
+  } catch (error) {
+    await galleryRequest("actualizar-generacion", { id: upload.id, status: "error", error: error.message }).catch(() => {});
+    throw error;
+  }
+}
+
+async function setAdvertisingPhoto(file, source = "archivo") {
   if (!file) return;
   if (!new Set(["image/jpeg", "image/png", "image/webp"]).has(file.type)) {
     throw new Error("Usa una imagen JPG, PNG o WEBP.");
@@ -609,13 +742,17 @@ async function setAdvertisingPhoto(file) {
   preview.hidden = false;
   $("#advertisingEmpty").hidden = true;
   $("#advertisingStage").classList.remove("empty");
+  $("#createAdvertisingVideo").disabled = true;
+  $("#advertisingStatus").textContent = "Guardando fotografía en Supabase…";
+  await archiveAdvertisingPhoto(file, source);
   $("#createAdvertisingVideo").disabled = false;
-  $("#advertisingStatus").textContent = "Imagen lista para crear";
+  $("#advertisingStatus").textContent = "Imagen guardada y lista para crear";
 }
 
 $("#advertisingFile").addEventListener("change", async () => {
   try {
-    await setAdvertisingPhoto($("#advertisingFile").files[0]);
+    await setAdvertisingPhoto($("#advertisingFile").files[0], "archivo");
+    toast("Imagen almacenada en la galería.");
   } catch (error) { toast(error.message); }
 });
 
@@ -651,8 +788,8 @@ $("#capturePhoto").addEventListener("click", async () => {
   canvas.getContext("2d").drawImage(camera, 0, 0);
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", .92));
   try {
-    await setAdvertisingPhoto(new File([blob], "foto-utp.jpg", { type: "image/jpeg" }));
-    toast("Foto capturada.");
+    await setAdvertisingPhoto(new File([blob], "foto-utp.jpg", { type: "image/jpeg" }), "camara");
+    toast("Foto capturada y almacenada.");
   } catch (error) { toast(error.message); }
 });
 
@@ -701,6 +838,14 @@ async function prepareAdvertisingImage() {
 }
 
 async function startAdvertisingGeneration() {
+  if (!state.advertisingRecordId) throw new Error("La fotografía todavía no está almacenada.");
+  await galleryRequest("actualizar-generacion", {
+    id: state.advertisingRecordId,
+    prompt: $("#advertisingBrief").value.trim(),
+    tone: $("#advertisingTone").value,
+    duration: Number($("#advertisingDuration").value),
+    format: $("#advertisingFormat").value
+  });
   const prepared = await prepareAdvertisingImage();
   const response = await fetch("/api/publicidad", {
     method: "POST",
@@ -821,8 +966,20 @@ async function finishAdvertisingMontage() {
   download.download = `publicidad-utp-${$("#advertisingDuration").value}s.${extension}`;
   download.hidden = false;
   $("#advertisingProgress span").style.width = "100%";
-  $("#advertisingStatus").textContent = "Campaña UTP lista para reproducir y descargar";
-  toast("Video cinematográfico UTP terminado.");
+  let archived = false;
+  try {
+    const upload = await galleryRequest("preparar-video", { id: state.advertisingRecordId, mimeType: blob.type });
+    await uploadToSignedUrl(upload.signedUrl, new File([blob], download.download, { type: blob.type }));
+    await galleryRequest("completar-video", { id: state.advertisingRecordId, videoPath: upload.videoPath });
+    await loadAdvertisingGallery();
+    archived = true;
+  } catch (error) {
+    toast(`El video está listo, pero no se pudo archivar: ${error.message}`);
+  }
+  $("#advertisingStatus").textContent = archived
+    ? "Campaña UTP lista, almacenada y disponible para descargar"
+    : "Campaña UTP lista para descargar; archivo remoto pendiente";
+  if (archived) toast("Video cinematográfico UTP terminado y guardado.");
 }
 
 $("#finishAdvertisingVideo").addEventListener("click", async (event) => {
@@ -837,6 +994,17 @@ $("#finishAdvertisingVideo").addEventListener("click", async (event) => {
     $("#advertisingPlaceholder").hidden = false;
     $("#advertisingCanvas").hidden = true;
     toast(error.message);
+    if (state.advertisingRecordId) {
+      galleryRequest("actualizar-generacion", {
+        id: state.advertisingRecordId,
+        status: "error",
+        prompt: $("#advertisingBrief").value.trim(),
+        tone: $("#advertisingTone").value,
+        duration: Number($("#advertisingDuration").value),
+        format: $("#advertisingFormat").value,
+        error: error.message
+      }).then(loadAdvertisingGallery).catch(() => {});
+    }
   } finally {
     button.disabled = false;
     if (!button.hidden) button.textContent = `Reintentar montaje de ${$("#advertisingDuration").value} s`;
@@ -1059,6 +1227,17 @@ $("#advertisingForm").addEventListener("submit", async (event) => {
     if (state.advertisingAudioContext && state.advertisingAudioContext.state !== "closed") {
       state.advertisingAudioContext.close();
       state.advertisingAudioContext = null;
+    }
+    if (state.advertisingRecordId) {
+      galleryRequest("actualizar-generacion", {
+        id: state.advertisingRecordId,
+        status: "error",
+        prompt: $("#advertisingBrief").value.trim(),
+        tone: $("#advertisingTone").value,
+        duration: Number($("#advertisingDuration").value),
+        format: $("#advertisingFormat").value,
+        error: error.message
+      }).then(loadAdvertisingGallery).catch(() => {});
     }
   } finally {
     button.disabled = false;
