@@ -9,5 +9,6 @@ outputs/
 work/
 node_modules/
 .vercel/
+supabase/.temp/
 n8n-local/*.jsonl
 n8n-local/outputs/
