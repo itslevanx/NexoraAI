@@ -1,40 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
-  <title id="title">Arquitectura del módulo Publicidad de NEXORA AI</title>
-  <desc id="desc">Flujo protegido desde una fotografía hasta una campaña audiovisual UTP creada con Google Veo y montada en el navegador.</desc>
+  <title id="title">Arquitectura de captura, generación, almacenamiento y galería</title>
+  <desc id="desc">Una fotografía viaja por HTTPS hacia una API protegida, Supabase y Google Veo; el resultado aparece en una galería privada.</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#050505"/><stop offset="1" stop-color="#151515"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#050505"/><stop offset="1" stop-color="#171717"/></linearGradient>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#e00034"/><stop offset="1" stop-color="#ff6334"/></linearGradient>
-    <filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="18" flood-opacity=".34"/></filter>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#e00034"/></marker>
-    <style>
-      .title{font:700 48px Inter,Arial,sans-serif;fill:#fff;letter-spacing:-1.5px}.sub{font:400 23px Inter,Arial,sans-serif;fill:#a4a4a4}.stage{font:700 14px Inter,Arial,sans-serif;fill:#ff6385;letter-spacing:2px}.head{font:700 25px Inter,Arial,sans-serif;fill:#fff}.body{font:400 18px Inter,Arial,sans-serif;fill:#aaa}.small{font:500 16px Inter,Arial,sans-serif;fill:#d5d5d5}.box{fill:#111;stroke:#333;stroke-width:2}.flow{fill:none;stroke:#e00034;stroke-width:4;marker-end:url(#arrow)}
-    </style>
+    <style>.title{font:700 46px Inter,Arial,sans-serif;fill:#fff}.sub{font:400 22px Inter,Arial,sans-serif;fill:#aaa}.stage{font:700 13px Inter,Arial,sans-serif;fill:#ff6385;letter-spacing:2px}.head{font:700 24px Inter,Arial,sans-serif;fill:#fff}.body{font:400 17px Inter,Arial,sans-serif;fill:#aaa}.small{font:500 16px Inter,Arial,sans-serif;fill:#d5d5d5}.box{fill:#101010;stroke:#343434;stroke-width:2}.flow{fill:none;stroke:#e00034;stroke-width:4;marker-end:url(#arrow)}</style>
   </defs>
-  <rect width="1600" height="900" fill="url(#bg)"/>
-  <rect x="0" y="0" width="14" height="900" fill="url(#accent)"/>
-  <text class="title" x="92" y="100">Publicidad UTP · flujo protegido con Google Veo</text>
-  <text class="sub" x="92" y="142">Cualquier concepto creativo se reinterpreta como una campaña cinematográfica de la UTP.</text>
-
-  <g filter="url(#shadow)">
-    <rect class="box" x="70" y="245" rx="28" width="260" height="300"/>
-    <rect class="box" x="370" y="245" rx="28" width="260" height="300"/>
-    <rect class="box" x="670" y="245" rx="28" width="260" height="300"/>
-    <rect class="box" x="970" y="245" rx="28" width="260" height="300"/>
-    <rect class="box" x="1270" y="245" rx="28" width="260" height="300"/>
-  </g>
-  <path class="flow" d="M330 395H358"/><path class="flow" d="M630 395H658"/><path class="flow" d="M930 395H958"/><path class="flow" d="M1230 395H1258"/>
-
-  <g transform="translate(100 285)"><text class="stage">01 · ORIGEN</text><text class="head" y="52">Foto o archivo</text><text class="body" y="92">Cámara en vivo</text><text class="body" y="124">JPG, PNG o WEBP</text><text class="body" y="156">Concepto libre</text><circle cx="100" cy="215" r="35" fill="none" stroke="#e00034" stroke-width="4"/><circle cx="100" cy="215" r="13" fill="#e00034"/></g>
-  <g transform="translate(400 285)"><text class="stage">02 · AUTORIZACIÓN</text><text class="head" y="52">Acceso restringido</text><text class="body" y="92">Código validado</text><text class="body" y="124">en Vercel</text><text class="body" y="156">Sesión firmada · 8 h</text><rect x="68" y="190" width="70" height="62" rx="12" fill="none" stroke="#e00034" stroke-width="4"/><path d="M84 190v-20a19 19 0 0138 0v20" fill="none" stroke="#e00034" stroke-width="4"/></g>
-  <g transform="translate(700 285)"><text class="stage">03 · GENERACIÓN</text><text class="head" y="52">Google Veo 3.1</text><text class="body" y="92">2–4 tomas asíncronas</text><text class="body" y="124">Música + narración</text><text class="body" y="156">720p · 9:16 / 16:9</text><path d="M65 205l52-30v80l-52-30z" fill="#e00034"/><circle cx="133" cy="215" r="37" fill="none" stroke="#555" stroke-width="3"/></g>
-  <g transform="translate(1000 285)"><text class="stage">04 · MONTAJE</text><text class="head" y="52">Identidad UTP exacta</text><text class="body" y="92">Textos y CTA</text><text class="body" y="124">Transiciones locales</text><text class="body" y="156">Duración final exacta</text><rect x="62" y="184" width="96" height="66" rx="10" fill="none" stroke="#555" stroke-width="3"/><rect x="74" y="198" width="8" height="38" fill="#e00034"/><text x="92" y="226" font-family="Inter,Arial" font-weight="800" font-size="25" fill="#fff">UTP</text></g>
-  <g transform="translate(1300 285)"><text class="stage">05 · ENTREGA</text><text class="head" y="52">Campaña descargable</text><text class="body" y="92">10, 15, 20 o 30 s</text><text class="body" y="124">Audio incorporado</text><text class="body" y="156">MP4 o WebM</text><path d="M110 180v49m-22-20l22 22 22-22M73 247h74" fill="none" stroke="#e00034" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></g>
-
-  <rect x="70" y="630" width="1460" height="165" rx="28" fill="#0c0c0c" stroke="#2d2d2d" stroke-width="2"/>
-  <text class="stage" x="110" y="677">SEGURIDAD Y PRIVACIDAD</text>
-  <circle cx="122" cy="724" r="5" fill="#e00034"/><text class="small" x="142" y="730">El código, GEMINI_API_KEY y OPENAI_API_KEY permanecen como variables cifradas de Vercel.</text>
-  <circle cx="122" cy="763" r="5" fill="#e00034"/><text class="small" x="142" y="769">La fotografía se envía solo a Gemini/Veo; el resto de NEXORA continúa utilizando OpenAI.</text>
-  <circle cx="862" cy="724" r="5" fill="#e00034"/><text class="small" x="882" y="730">Las rutas de generar, consultar y descargar exigen una sesión autorizada.</text>
-  <circle cx="862" cy="763" r="5" fill="#e00034"/><text class="small" x="882" y="769">La composición final se procesa localmente en Safari, Chrome o Edge.</text>
-  <text x="70" y="858" font-family="Inter,Arial" font-size="14" fill="#666">NEXORA AI · Arquitectura funcional del módulo Publicidad · 2026</text>
+  <rect width="1600" height="900" fill="url(#bg)"/><rect width="14" height="900" fill="url(#accent)"/>
+  <text class="title" x="82" y="86">Publicidad UTP · captura, transmisión y persistencia</text>
+  <text class="sub" x="82" y="126">Arquitectura protegida con Vercel o Docker, Google Veo y Supabase.</text>
+  <g><rect class="box" x="62" y="205" width="230" height="245" rx="24"/><rect class="box" x="312" y="205" width="230" height="245" rx="24"/><rect class="box" x="562" y="205" width="230" height="245" rx="24"/><rect class="box" x="812" y="205" width="230" height="245" rx="24"/><rect class="box" x="1062" y="205" width="230" height="245" rx="24"/><rect class="box" x="1312" y="205" width="230" height="245" rx="24"/></g>
+  <path class="flow" d="M292 327h10"/><path class="flow" d="M542 327h10"/><path class="flow" d="M792 327h10"/><path class="flow" d="M1042 327h10"/><path class="flow" d="M1292 327h10"/>
+  <g transform="translate(87 240)"><text class="stage">01 · CAPTURA</text><text class="head" y="48">Cámara o archivo</text><text class="body" y="87">Foto en vivo</text><text class="body" y="117">JPG · PNG · WEBP</text><text class="body" y="147">Vista previa local</text><circle cx="93" cy="188" r="25" fill="none" stroke="#e00034" stroke-width="4"/><circle cx="93" cy="188" r="9" fill="#e00034"/></g>
+  <g transform="translate(337 240)"><text class="stage">02 · TRANSMISIÓN</text><text class="head" y="48">HTTPS firmado</text><text class="body" y="87">Fetch seguro</text><text class="body" y="117">Token HMAC</text><text class="body" y="147">Carga directa</text><path d="M70 188h50m-15-15l15 15-15 15" fill="none" stroke="#e00034" stroke-width="4"/></g>
+  <g transform="translate(587 240)"><text class="stage">03 · RECEPCIÓN</text><text class="head" y="48">API Node.js</text><text class="body" y="87">Vercel Functions</text><text class="body" y="117">o contenedor Docker</text><text class="body" y="147">Validación del flujo</text><rect x="62" y="166" width="76" height="48" rx="8" fill="none" stroke="#e00034" stroke-width="4"/></g>
+  <g transform="translate(837 240)"><text class="stage">04 · ALMACENAMIENTO</text><text class="head" y="48">Supabase</text><text class="body" y="87">PostgreSQL + RLS</text><text class="body" y="117">Storage privado</text><text class="body" y="147">Enlaces temporales</text><ellipse cx="94" cy="177" rx="36" ry="12" fill="none" stroke="#e00034" stroke-width="4"/><path d="M58 177v30c0 16 72 16 72 0v-30" fill="none" stroke="#e00034" stroke-width="4"/></g>
+  <g transform="translate(1087 240)"><text class="stage">05 · GENERACIÓN</text><text class="head" y="48">Google Veo</text><text class="body" y="87">Escena UTP</text><text class="body" y="117">Narración + música</text><text class="body" y="147">Montaje en navegador</text><path d="M70 169l50 28-50 28z" fill="#e00034"/></g>
+  <g transform="translate(1337 240)"><text class="stage">06 · VISUALIZACIÓN</text><text class="head" y="48">Galería privada</text><text class="body" y="87">Fotos y videos</text><text class="body" y="117">Fecha · estado</text><text class="body" y="147">Prompt · descarga</text><rect x="54" y="166" width="82" height="56" rx="8" fill="none" stroke="#e00034" stroke-width="4"/><circle cx="78" cy="188" r="7" fill="#e00034"/><path d="M60 214l25-20 18 15 13-10 14 15" fill="none" stroke="#e00034" stroke-width="3"/></g>
+  <rect x="62" y="525" width="1480" height="250" rx="26" fill="#0b0b0b" stroke="#303030" stroke-width="2"/>
+  <text class="stage" x="102" y="575">SEGURIDAD, DESPLIEGUE Y EVIDENCIA</text>
+  <circle cx="114" cy="621" r="5" fill="#e00034"/><text class="small" x="134" y="627">Bucket privado y tabla PostgreSQL protegida con RLS.</text>
+  <circle cx="114" cy="663" r="5" fill="#e00034"/><text class="small" x="134" y="669">Las claves secretas permanecen únicamente en el servidor.</text>
+  <circle cx="114" cy="705" r="5" fill="#e00034"/><text class="small" x="134" y="711">Docker Compose demuestra un despliegue reproducible.</text>
+  <circle cx="830" cy="621" r="5" fill="#e00034"/><text class="small" x="850" y="627">Cada captura se registra antes de consumir la API generativa.</text>
+  <circle cx="830" cy="663" r="5" fill="#e00034"/><text class="small" x="850" y="669">Las cargas y lecturas usan enlaces firmados temporales.</text>
+  <circle cx="830" cy="705" r="5" fill="#e00034"/><text class="small" x="850" y="711">La galería ofrece trazabilidad sin exponer credenciales.</text>
+  <text x="62" y="850" font-family="Inter,Arial" font-size="14" fill="#666">NEXORA AI · Arquitectura funcional del módulo Publicidad · 2026</text>
 </svg>

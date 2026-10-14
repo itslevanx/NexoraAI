@@ -19,6 +19,7 @@ Una persona autorizada puede:
 7. Generar varias tomas con movimiento, narración y música.
 8. Recibir un único video con duración exacta, identidad UTP y llamada a la acción.
 9. Reproducir y descargar el resultado desde el navegador.
+10. Consultar fotografías y videos anteriores desde una galería privada.
 
 Aunque el usuario pida una escena de ficción, comedia, tecnología, telenovela u otro género, el sistema conserva esa idea como dirección creativa y la convierte en una campaña UTP.
 
@@ -38,6 +39,8 @@ La interfaz actual mantiene la misma lógica de trabajo y añade:
 - confirmación antes de generar;
 - progreso de las operaciones asíncronas;
 - descarga final en MP4 o WebM según el navegador.
+- almacenamiento persistente en Supabase;
+- galería histórica con métricas, estados y enlaces temporales.
 
 ## Flujo completo
 
@@ -74,6 +77,8 @@ La interfaz admite una imagen original de hasta 10 MB. Antes de enviarla, JavaSc
 5. conserva una vista previa para el usuario.
 
 ### Etapa 3 Configuración creativa
+
+Antes de habilitar la generación, la fotografía se registra en PostgreSQL y se carga directamente a un bucket privado de Supabase mediante una URL firmada. Esto evita enviar archivos grandes a través de Vercel y garantiza que toda captura de cámara o imagen subida quede almacenada aunque el usuario todavía no genere un video.
 
 | Opción | Valores disponibles | Función |
 |---|---|---|
@@ -117,9 +122,19 @@ Esta separación evita depender de letras o logotipos dibujados por el modelo ge
 
 En Safari, cuando Veo entrega la toma, la interfaz muestra **Finalizar video**. Ese segundo clic conserva la autorización de usuario que Safari exige para reproducir y grabar audio durante el montaje. Si el navegador se cerró después de descargar una toma, **Recuperar una toma de Veo ya generada** permite seleccionar el MP4 o WEBM y terminar el video sin consumir otra vez la API.
 
-### Etapa 6 Entrega
+### Etapa 6 Almacenamiento y galería
 
-El archivo final se crea en memoria y no requiere almacenamiento permanente en el servidor. Safari prioriza MP4 con H 264 y AAC cuando el navegador lo soporta. Otros navegadores pueden producir WebM con VP9, VP8 u Opus.
+Supabase separa los datos estructurados de los archivos:
+
+- **PostgreSQL:** identificador, fecha, origen, estado, prompt, duración, formato y errores.
+- **Storage privado:** fotografía original y video final MP4 o WebM.
+- **Galería protegida:** consulta hasta los cien registros más recientes y genera enlaces firmados válidos durante una hora.
+
+La tabla `publicidad_items` tiene RLS habilitado y revoca el acceso de `anon` y `authenticated`. Solamente las funciones del servidor utilizan `SUPABASE_SECRET_KEY`. Esa clave nunca llega al navegador. Las cargas grandes se realizan con URLs firmadas de un solo objeto y vigencia limitada.
+
+### Etapa 7 Entrega
+
+El archivo final se crea primero en memoria y luego se almacena permanentemente en Supabase. Safari prioriza MP4 con H 264 y AAC cuando el navegador lo soporta. Otros navegadores pueden producir WebM con VP9, VP8 u Opus.
 
 El nombre de descarga sigue el patrón:
 
@@ -155,10 +170,13 @@ Los importes son aproximados. La tarifa real depende del precio vigente, la regi
 | Codificación | MediaRecorder y captureStream | Creación del archivo final en MP4 o WebM |
 | Sesión local | sessionStorage | Conservación temporal del token de acceso |
 | Backend | Vercel Functions con Node.js | Validación, prompts, operaciones y respuestas protegidas |
+| Base de datos | Supabase PostgreSQL | Metadatos, estados, fechas y trazabilidad |
+| Archivos | Supabase Storage privado | Persistencia de fotografías y videos finales |
 | Seguridad | Node.js Crypto | SHA 256, HMAC y comparación en tiempo constante |
 | Video generativo | Gemini API y Google Veo 3.1 Fast | Conversión de imagen y prompt en tomas con audio |
 | Transporte | HTTPS, Fetch y JSON | Comunicación entre navegador, Vercel y Google |
 | Despliegue | Vercel | Hosting, rutas, HTTPS y variables de entorno |
+| Contenedores | Docker y Docker Compose | Despliegue reproducible del frontend y la API |
 
 ## Componentes del código
 
@@ -170,9 +188,13 @@ Los importes son aproximados. La tarifa real depende del precio vigente, la regi
 | `api/publicidad-acceso.js` | Validación del código y creación de sesión |
 | `api/publicidad.js` | Inicio y consulta de operaciones de Veo |
 | `api/publicidad-video.js` | Descarga protegida de cada toma |
+| `api/publicidad-galeria.js` | Registro, carga firmada, consulta y actualización de la galería |
+| `api/_supabase.js` | Cliente administrativo aislado y validación de tipos de archivo |
 | `api/_publicidad-auth.js` | Firma HMAC, vencimiento y comparación segura |
 | `api/_gemini-video.js` | Cliente de Gemini, modelo, tokens temporales y validación de host |
 | `vercel.json` | Ruta pública `/publicidad` y configuración de funciones |
+| `supabase/migrations/*_publicidad_gallery.sql` | Tabla, RLS, trigger y bucket privado |
+| `Dockerfile` y `docker-compose.yml` | Contenedor de la plataforma y sus servicios locales |
 
 ## Endpoints del módulo
 
@@ -182,6 +204,8 @@ Los importes son aproximados. La tarifa real depende del precio vigente, la regi
 | `POST /api/publicidad` | Foto, concepto, duración, formato y estilo | Operaciones asíncronas |
 | `GET /api/publicidad?operation=...` | Identificador de operación | Estado o enlace temporal protegido |
 | `GET /api/publicidad-video` | URI, token y sesión | Flujo binario de la toma |
+| `GET /api/publicidad-galeria` | Sesión autorizada | Registros y enlaces firmados temporales |
+| `POST /api/publicidad-galeria` | Acción y metadatos | URL de carga, cambio de estado o confirmación |
 
 ## Cómo se garantiza la identidad UTP
 
@@ -200,6 +224,9 @@ Por ejemplo, si el concepto es “crea una escena de frutinovelas”, el sistema
 - Todos los endpoints audiovisuales exigen una sesión autorizada.
 - Las sesiones HMAC vencen después de ocho horas.
 - Los tokens de descarga vencen después de una hora.
+- El bucket de Supabase es privado y los enlaces de galería vencen después de una hora.
+- La tabla de historial utiliza RLS y no concede acceso directo a usuarios anónimos.
+- `SUPABASE_SECRET_KEY` permanece únicamente en Vercel o en el contenedor del servidor.
 - El servidor valida que la descarga provenga del host oficial de Google.
 - Se validan tipo MIME, tamaño, duración, estilo, formato y longitud del concepto.
 - La fotografía enviada a Gemini no debe contener datos sensibles ni personas sin autorización.
@@ -211,6 +238,8 @@ Por ejemplo, si el concepto es “crea una escena de frutinovelas”, el sistema
 |---|---|---|
 | `GEMINI_API_KEY` | Producción, vista previa o desarrollo | Clave de Google AI Studio con acceso a Veo |
 | `PUBLICIDAD_ACCESS_CODE` | Entornos autorizados | Código privado para desbloquear el módulo |
+| `SUPABASE_URL` | Servidor | URL del proyecto que almacena la galería |
+| `SUPABASE_SECRET_KEY` | Sólo servidor | Acceso administrativo a tabla y bucket privado |
 
 Los valores reales no deben aparecer en Git, capturas, presentaciones o documentación compartida.
 
@@ -229,6 +258,9 @@ La interfaz presenta mensajes específicos para:
 - tiempo máximo de espera;
 - descarga de toma rechazada;
 - navegador sin soporte de codificación compatible.
+- Supabase no configurado o carga firmada fallida;
+- fotografía guardada pero generación pendiente;
+- video generado localmente pero archivado remoto pendiente.
 
 ## Guion sugerido para la presentación
 
@@ -240,24 +272,28 @@ La interfaz presenta mensajes específicos para:
 6. **Arquitectura.** Usar la Figura 2 para explicar Veo, operaciones asíncronas y montaje local.
 7. **Identidad.** Aclarar que el servidor fuerza el contexto UTP y Canvas añade textos exactos.
 8. **Costos.** Mostrar la estimación antes de consumir saldo.
-9. **Seguridad.** Destacar que las claves no llegan al cliente y que las descargas son temporales.
-10. **Resultado.** Reproducir un video previamente generado y explicar que esta presentación no necesita hacer una nueva llamada a la API.
+9. **Persistencia.** Mostrar la galería y explicar la separación entre PostgreSQL y Storage.
+10. **Contenedores.** Mostrar `docker compose ps` y el endpoint `/health`.
+11. **Seguridad.** Destacar que las claves no llegan al cliente y que las descargas son temporales.
+12. **Resultado.** Reproducir un video previamente generado y explicar que esta presentación no necesita hacer una nueva llamada a la API.
 
 ## Lista de verificación para una demostración
 
 - Confirmar que el despliegue de Vercel está disponible.
 - Verificar que las variables de entorno existen sin mostrar sus valores.
-- Abrir `/publicidad` en Safari.
+- Abrir `/publicidad` en Chrome.
 - Probar el acceso antes de la exposición.
 - Revisar permisos de cámara y reproducción de audio.
 - Llevar un video ya generado como respaldo.
 - Confirmar saldo y límites de Google sólo si se hará una generación en vivo.
 - No mostrar el código de acceso ni las claves en pantalla.
 - Mantener la pestaña abierta durante el montaje.
+- Verificar que la galería muestre la fotografía almacenada.
+- Mostrar los contenedores con `docker compose ps` sin revelar variables de entorno.
 
 ## Alcance de esta actualización
 
-Esta actualización crea documentación y no ejecuta Google Veo, no genera videos y no consume saldo. La validación funcional completa queda a cargo del propietario del proyecto.
+Esta actualización implementa el almacenamiento privado, la galería, la recepción de archivos y el despliegue en contenedor, además de actualizar la documentación. Las pruebas realizadas no ejecutan Google Veo, no generan videos y no consumen saldo de las APIs de IA.
 
 ## Fuentes oficiales
 
@@ -268,4 +304,6 @@ Esta actualización crea documentación y no ejecuta Google Veo, no genera video
 - [Canvas API](https://developer.mozilla.org/docs/Web/API/Canvas_API)
 - [Web Audio API](https://developer.mozilla.org/docs/Web/API/Web_Audio_API)
 - [MediaRecorder](https://developer.mozilla.org/docs/Web/API/MediaRecorder)
+- [Supabase Storage](https://supabase.com/docs/guides/storage)
+- [Supabase Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security)
 - [Universidad Tecnológica del Perú](https://www.utp.edu.pe/)

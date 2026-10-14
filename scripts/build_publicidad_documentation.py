@@ -277,7 +277,7 @@ def build() -> None:
         }:
             doc.add_page_break()
             doc.add_heading(line[3:], level=1)
-        elif line == "### Etapa 5 Montaje en el navegador":
+        elif line == "### Etapa 6 Almacenamiento y galería":
             doc.add_page_break()
             doc.add_heading(line[4:], level=2)
         elif line.startswith("## "):

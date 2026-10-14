@@ -16,7 +16,7 @@ NEXORA AI es una suite académica multimodal con chat, herramientas de texto, vi
 | Voz a voz | Implementado | OpenAI Realtime API y WebRTC |
 | Visión | Implementado | Entrada multimodal de OpenAI |
 | Generación de imágenes | Implementado | OpenAI Image API |
-| Publicidad UTP | Implementado | Google Veo 3.1 Fast y montaje local |
+| Publicidad UTP | Implementado | Google Veo 3.1 Fast, Supabase y montaje local |
 | Texto a voz | Implementado | OpenAI Speech API |
 | Transcripción y resumen | Implementado | OpenAI Transcriptions y Responses API |
 | Moderación | Implementado | OpenAI Moderations API |
@@ -49,6 +49,8 @@ NEXORA AI es una suite académica multimodal con chat, herramientas de texto, vi
 - Muestra el costo estimado antes de generar.
 - Protege el módulo con un código validado en el servidor y una sesión firmada de ocho horas.
 - Mantiene `GEMINI_API_KEY` en Vercel; nunca la expone al navegador.
+- Guarda cada fotografía y video final en un bucket privado de Supabase.
+- Presenta una galería histórica con estado, fecha, prompt, formato y duración.
 
 ![Arquitectura del módulo Publicidad UTP](docs/images/arquitectura-publicidad.png)
 
@@ -77,13 +79,16 @@ Usuario
             │    ├── Chat, Studio, Visión e Imágenes
             │    ├── Speech, Moderación y Transcripción
             │    └── Realtime y WebRTC
-            └── Google Gemini sólo para Publicidad
-                 ├── Veo 3.1 Fast
-                 ├── Operaciones asíncronas
-                 └── Descargas protegidas
+            ├── Google Gemini sólo para Publicidad
+            │    ├── Veo 3.1 Fast
+            │    ├── Operaciones asíncronas
+            │    └── Descargas protegidas
+            └── Supabase sólo para Publicidad
+                 ├── PostgreSQL · metadatos y estados
+                 └── Storage privado · fotografías y videos
 ```
 
-Vercel sirve la interfaz, ejecuta las funciones serverless y protege `OPENAI_API_KEY`, `GEMINI_API_KEY` y `PUBLICIDAD_ACCESS_CODE` como variables de entorno.
+Vercel sirve la interfaz y las funciones serverless. Supabase conserva el historial audiovisual. La misma plataforma también puede ejecutarse en un contenedor Docker mediante `docker compose up --build`.
 
 ## Tecnologías
 
@@ -95,6 +100,9 @@ Vercel sirve la interfaz, ejecuta las funciones serverless y protege `OPENAI_API
 | OpenAI APIs | Texto, visión, imágenes, voz, transcripción y moderación |
 | WebRTC | Conversación de voz en tiempo real |
 | Google Veo 3.1 Fast | Generación de tomas publicitarias desde una foto |
+| Supabase PostgreSQL | Metadatos, estados y trazabilidad de capturas |
+| Supabase Storage | Fotografías y videos en un bucket privado |
+| Docker y Docker Compose | Despliegue reproducible de la plataforma y API |
 | Canvas API | Composición de marca, textos y transiciones |
 | Web Audio API | Mezcla del audio de las tomas |
 | MediaRecorder | Exportación del video final |
@@ -114,7 +122,12 @@ NexoraAI/
 │   ├── publicidad.js
 │   ├── publicidad-acceso.js
 │   ├── publicidad-video.js
+│   ├── publicidad-galeria.js
 │   └── resto de funciones serverless
+├── supabase/migrations/
+├── container/server.mjs
+├── Dockerfile
+├── docker-compose.yml
 ├── assets/
 ├── docs/
 │   ├── PUBLICIDAD_UTP.md
@@ -132,6 +145,7 @@ NexoraAI/
 - Python 3.10 o superior para la versión local.
 - Una OpenAI API Key con saldo para los módulos generales.
 - Una Gemini API Key de nivel pagado para Publicidad con Veo 3.1 Fast.
+- Un proyecto Supabase con la migración incluida aplicada.
 - Un navegador actualizado con soporte para cámara y `MediaRecorder`.
 
 ## Instalación local
@@ -165,6 +179,8 @@ OPENAI_API_KEY=sk-proj-reemplazar
 OPENAI_MODEL=gpt-5-mini
 GEMINI_API_KEY=reemplazar-con-clave-de-google-ai-studio
 PUBLICIDAD_ACCESS_CODE=define-un-codigo-seguro
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_SECRET_KEY=sb_secret_reemplazar
 ```
 
 El archivo `.env` está excluido de Git. Nunca se debe publicar una clave real en el repositorio, una captura o la documentación.
@@ -173,7 +189,7 @@ El archivo `.env` está excluido de Git. Nunca se debe publicar una clave real e
 
 1. Importar el repositorio en Vercel.
 2. Mantener `Other` como Framework Preset y usar el directorio raíz.
-3. Añadir `OPENAI_API_KEY`, `GEMINI_API_KEY` y `PUBLICIDAD_ACCESS_CODE` en los entornos necesarios.
+3. Añadir `OPENAI_API_KEY`, `GEMINI_API_KEY`, `PUBLICIDAD_ACCESS_CODE`, `SUPABASE_URL` y `SUPABASE_SECRET_KEY` en los entornos necesarios.
 4. Ejecutar el despliegue.
 5. Autorizar micrófono y cámara cuando el navegador lo solicite.
 
@@ -192,19 +208,21 @@ El archivo `.env` está excluido de Git. Nunca se debe publicar una clave real e
 | `/api/publicidad-acceso` | Acceso a Publicidad | Código del servidor y sesión HMAC |
 | `/api/publicidad` | Inicio y consulta de Veo | Sesión, foto, prompt y duración |
 | `/api/publicidad-video` | Descarga de tomas | Sesión y token temporal HMAC |
+| `/api/publicidad-galeria` | Capturas, cargas, estados y galería | Sesión HMAC, Supabase privado y enlaces firmados |
 
 ## Uso de Publicidad
 
 1. Abrir **Publicidad** o acceder directamente a `/publicidad`.
 2. Ingresar el código autorizado.
-3. Abrir la cámara o subir una foto.
+3. Abrir la cámara o subir una foto; la captura se guarda inmediatamente en Supabase.
 4. Escribir el concepto creativo.
 5. Elegir duración, formato y estilo.
 6. Revisar el costo estimado y confirmar la generación.
 7. Mantener la pestaña abierta durante la generación y el montaje.
 8. Reproducir y descargar el video final.
+9. Consultar la fotografía y el video terminado en la galería histórica.
 
-La fotografía optimizada y el concepto se envían a Google Gemini. La clave permanece en Vercel. Las tomas regresan mediante enlaces temporales firmados y el navegador compone el archivo final en memoria.
+La fotografía optimizada y el concepto se envían a Google Gemini. La clave permanece en Vercel. Las tomas regresan mediante enlaces temporales firmados y el navegador compone el archivo final en memoria. Después, la versión final se carga directamente a Supabase mediante una URL firmada temporal, sin exponer la clave secreta ni atravesar el límite de carga de Vercel.
 
 La imagen se envía a Veo dentro de `instances[0].image` mediante `bytesBase64Encoded` y `mimeType`. Los parámetros enviados se limitan a `aspectRatio`, `durationSeconds`, `resolution` y `personGeneration`; `durationSeconds` se transmite como número. La API genera un solo video por operación sin declarar `numberOfVideos`, porque ese campo no es aceptado por el modelo configurado.
 
@@ -221,6 +239,9 @@ Las validaciones automatizadas no deben generar videos ni consumir saldo de Gemi
 ## Seguridad y privacidad
 
 - Las claves se guardan como variables de entorno y no se incluyen en el cliente.
+- `SUPABASE_SECRET_KEY` se utiliza exclusivamente en el servidor.
+- El bucket `publicidad-utp` es privado; la galería recibe enlaces firmados que vencen en una hora.
+- La tabla tiene RLS habilitado y no concede acceso a los roles públicos.
 - Publicidad exige una sesión HMAC válida para generar, consultar y descargar.
 - El código de acceso se compara en tiempo constante en el servidor.
 - La sesión de Publicidad permanece en `sessionStorage` y vence después de ocho horas.
@@ -231,7 +252,7 @@ Las validaciones automatizadas no deben generar videos ni consumir saldo de Gemi
 
 ## Limitaciones
 
-- El historial general vive durante la sesión.
+- La galería de Publicidad conserva sus fotografías y videos de manera permanente en Supabase.
 - Los archivos enviados a las funciones web están sujetos a límites de tamaño.
 - Veo puede tardar varios minutos por toma.
 - La generación audiovisual consume saldo de Google Gemini.
