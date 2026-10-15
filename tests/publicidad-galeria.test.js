@@ -65,8 +65,11 @@ test("la migración crea tabla, RLS y bucket privado", () => {
 test("la interfaz contiene una galería y el despliegue tiene contenedor web", () => {
   const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
   const compose = readFileSync(new URL("../docker-compose.yml", import.meta.url), "utf8");
+  const styles = readFileSync(new URL("../public/styles.css", import.meta.url), "utf8");
   assert.match(html, /id="advertisingGallery"/);
   assert.match(html, /id="galleryVideos"/);
+  assert.match(html, /class="advertising-workspace"/);
+  assert.match(styles, /\.advertising-workspace\s*\{[^}]*grid-template-columns:/);
   assert.match(compose, /nexora:/);
   assert.match(compose, /SUPABASE_SECRET_KEY/);
 });

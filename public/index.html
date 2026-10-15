@@ -168,7 +168,8 @@
           </form>
 
           <div id="advertisingContent" class="advertising-grid" hidden>
-            <form id="advertisingForm" class="form-card advertising-form">
+            <div class="advertising-workspace">
+              <form id="advertisingForm" class="form-card advertising-form">
               <div class="source-heading">
                 <div><strong>1. Elige la imagen</strong><span>La foto se enviará a Google Gemini exclusivamente para generar el video.</span></div>
                 <div class="source-actions">
@@ -227,9 +228,9 @@
 
               <button id="createAdvertisingVideo" class="primary wide" type="submit" disabled>Crear con Google Veo</button>
               <p class="privacy advertising-note">Siempre se generará publicidad para la UTP, incluso si describes una escena creativa distinta. Veo produce tomas con audio; NEXORA añade textos exactos e identidad UTP durante el montaje final.</p>
-            </form>
+              </form>
 
-            <section class="advertising-output" aria-live="polite">
+              <section class="advertising-output" aria-live="polite">
               <div class="output-heading">
                 <div><span>2. Resultado</span><small id="advertisingStatus">Esperando una imagen</small></div>
                 <span id="advertisingBadge" class="duration-badge">15 s</span>
@@ -251,8 +252,9 @@
                   <input id="recoverAdvertisingClip" type="file" accept="video/mp4,video/webm">
                 </label>
               </details>
-              <p class="ai-disclosure">Video y audio generados con Google Veo. Montaje e identidad UTP añadidos localmente. Contenido creado con IA.</p>
-            </section>
+                <p class="ai-disclosure">Video y audio generados con Google Veo. Montaje e identidad UTP añadidos localmente. Contenido creado con IA.</p>
+              </section>
+            </div>
 
             <section class="advertising-gallery" aria-labelledby="galleryTitle">
               <div class="gallery-heading">

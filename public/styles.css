@@ -115,7 +115,9 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .advertising-lock .kicker { margin-bottom: 2px; font-size: .68rem; }
 .advertising-lock > small { color: #777; text-align: center; }
 .lock-symbol { width: 72px; height: 72px; display: grid; place-items: center; border: 2px solid #e00034; border-radius: 22px; font-size: 1.15rem; font-weight: 800; transform: rotate(-4deg); }
-.advertising-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr); gap: 22px; align-items: start; }
+.advertising-grid { display: grid; gap: 34px; }
+.advertising-grid > *, .advertising-workspace > * { min-width: 0; }
+.advertising-workspace { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr); gap: 22px; align-items: start; }
 .advertising-form { width: 100%; }
 .source-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .source-heading > div:first-child { display: grid; gap: 5px; }
@@ -155,7 +157,7 @@ button:disabled { opacity: .35; cursor: not-allowed; }
 .advertising-recovery { margin-top: 12px; color: var(--muted); font-size: .82rem; }
 .advertising-recovery summary { cursor: pointer; color: var(--text); }
 .advertising-recovery label { display: grid; gap: 8px; margin-top: 10px; line-height: 1.45; }
-.advertising-gallery { grid-column: 1 / -1; margin-top: 12px; padding: 26px; border: 1px solid var(--line); border-radius: 22px; background: var(--panel); }
+.advertising-gallery { padding: 26px; border: 1px solid var(--line); border-radius: 22px; background: var(--panel); }
 .gallery-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
 .gallery-heading h2 { margin: 0 0 8px; font-size: clamp(1.7rem, 4vw, 2.7rem); letter-spacing: -.045em; }
 .gallery-heading p { max-width: 620px; margin: 0; color: var(--muted); line-height: 1.55; }
@@ -207,7 +209,7 @@ dialog::backdrop { background: rgba(0,0,0,.82); backdrop-filter: blur(4px); }
   .record-panel { align-items: stretch; flex-direction: column; }
   .record-panel button { width: 100%; }
   .studio-tabs { grid-template-columns: repeat(2, 1fr); }
-  .advertising-grid { grid-template-columns: 1fr; }
+  .advertising-workspace { grid-template-columns: 1fr; }
   .advertising-output { position: static; }
   .source-heading { align-items: stretch; flex-direction: column; }
   .source-actions > * { flex: 1; }
