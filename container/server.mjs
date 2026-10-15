@@ -7,7 +7,7 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const PUBLIC = join(ROOT, "public");
 const PORT = Number(process.env.PORT || 3000);
 const API_ROUTES = new Set([
-  "automation", "chat", "image", "moderate", "publicidad-acceso", "publicidad-galeria",
+  "automation", "chat", "image", "moderate", "publicidad-acceso",
   "publicidad-video", "publicidad", "realtime-session", "speech", "studio", "transcribe", "vision"
 ]);
 const TYPES = {

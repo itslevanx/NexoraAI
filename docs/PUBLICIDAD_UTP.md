@@ -188,7 +188,7 @@ Los importes son aproximados. La tarifa real depende del precio vigente, la regi
 | `api/publicidad-acceso.js` | Validación del código y creación de sesión |
 | `api/publicidad.js` | Inicio y consulta de operaciones de Veo |
 | `api/publicidad-video.js` | Descarga protegida de cada toma |
-| `api/publicidad-galeria.js` | Registro, carga firmada, consulta y actualización de la galería |
+| `api/_publicidad-galeria.js` | Registro, carga firmada, consulta y actualización de la galería dentro de la función existente de Publicidad |
 | `api/_supabase.js` | Cliente administrativo aislado y validación de tipos de archivo |
 | `api/_publicidad-auth.js` | Firma HMAC, vencimiento y comparación segura |
 | `api/_gemini-video.js` | Cliente de Gemini, modelo, tokens temporales y validación de host |
@@ -204,8 +204,8 @@ Los importes son aproximados. La tarifa real depende del precio vigente, la regi
 | `POST /api/publicidad` | Foto, concepto, duración, formato y estilo | Operaciones asíncronas |
 | `GET /api/publicidad?operation=...` | Identificador de operación | Estado o enlace temporal protegido |
 | `GET /api/publicidad-video` | URI, token y sesión | Flujo binario de la toma |
-| `GET /api/publicidad-galeria` | Sesión autorizada | Registros y enlaces firmados temporales |
-| `POST /api/publicidad-galeria` | Acción y metadatos | URL de carga, cambio de estado o confirmación |
+| `GET /api/publicidad?gallery=1` | Sesión autorizada | Registros y enlaces firmados temporales |
+| `POST /api/publicidad?gallery=1` | Acción y metadatos | URL de carga, cambio de estado o confirmación |
 
 ## Cómo se garantiza la identidad UTP
 

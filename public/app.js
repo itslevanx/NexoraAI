@@ -594,7 +594,7 @@ function stopAdvertisingCamera() {
 }
 
 async function galleryRequest(action, payload = {}) {
-  const response = await fetch("/api/publicidad-galeria", {
+  const response = await fetch("/api/publicidad?gallery=1", {
     method: "POST",
     headers: advertisingHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ action, ...payload })
@@ -686,7 +686,7 @@ function createGalleryCard(item) {
 async function loadAdvertisingGallery() {
   const gallery = $("#advertisingGallery");
   gallery.innerHTML = '<div class="gallery-empty">Cargando archivos almacenados…</div>';
-  const response = await fetch("/api/publicidad-galeria", { headers: advertisingHeaders() });
+  const response = await fetch("/api/publicidad?gallery=1", { headers: advertisingHeaders() });
   if (response.status === 401) lockAdvertising("La sesión venció. Ingresa nuevamente el código.");
   if (!response.ok) throw new Error(await apiError(response));
   const { items = [] } = await response.json();

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 
-import handler, { cleanText } from "../api/publicidad-galeria.js";
+import handler, { cleanText } from "../api/_publicidad-galeria.js";
 import { createAdvertisingSession } from "../api/_publicidad-auth.js";
 import { safeStorageExtension } from "../api/_supabase.js";
 
@@ -68,4 +68,11 @@ test("la interfaz contiene una galería y el despliegue tiene contenedor web", (
   assert.match(html, /id="galleryVideos"/);
   assert.match(compose, /nexora:/);
   assert.match(compose, /SUPABASE_SECRET_KEY/);
+});
+
+test("el despliegue Hobby conserva un máximo de doce funciones públicas", () => {
+  const apiDirectory = new URL("../api/", import.meta.url);
+  const publicFunctions = readdirSync(apiDirectory)
+    .filter((name) => name.endsWith(".js") && !name.startsWith("_"));
+  assert.ok(publicFunctions.length <= 12, `Se encontraron ${publicFunctions.length} funciones públicas.`);
 });

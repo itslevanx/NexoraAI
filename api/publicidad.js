@@ -10,6 +10,7 @@ import {
   resolveGeminiApiKey
 } from "./_gemini-video.js";
 import { hasAdvertisingAccess, resolveAdvertisingAccessCode } from "./_publicidad-auth.js";
+import galleryHandler from "./_publicidad-galeria.js";
 
 const TONES = new Set(["inspirador", "tecnologico", "energetico", "institucional"]);
 const DURATIONS = new Map([
@@ -185,6 +186,7 @@ async function getStatus(body, apiKey) {
 }
 
 export default async function handler(req, res) {
+  if (req.query?.gallery === "1") return galleryHandler(req, res);
   if (rejectMethod(req, res)) return;
   const accessCode = resolveAdvertisingAccessCode();
   if (!accessCode) return res.status(503).json({ error: "El acceso a Publicidad todavía no está configurado." });

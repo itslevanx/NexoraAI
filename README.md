@@ -122,7 +122,7 @@ NexoraAI/
 │   ├── publicidad.js
 │   ├── publicidad-acceso.js
 │   ├── publicidad-video.js
-│   ├── publicidad-galeria.js
+│   ├── _publicidad-galeria.js
 │   └── resto de funciones serverless
 ├── supabase/migrations/
 ├── container/server.mjs
@@ -208,7 +208,7 @@ El archivo `.env` está excluido de Git. Nunca se debe publicar una clave real e
 | `/api/publicidad-acceso` | Acceso a Publicidad | Código del servidor y sesión HMAC |
 | `/api/publicidad` | Inicio y consulta de Veo | Sesión, foto, prompt y duración |
 | `/api/publicidad-video` | Descarga de tomas | Sesión y token temporal HMAC |
-| `/api/publicidad-galeria` | Capturas, cargas, estados y galería | Sesión HMAC, Supabase privado y enlaces firmados |
+| `/api/publicidad?gallery=1` | Capturas, cargas, estados y galería | Sesión HMAC, Supabase privado y enlaces firmados |
 
 ## Uso de Publicidad
 
