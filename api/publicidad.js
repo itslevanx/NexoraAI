@@ -54,7 +54,12 @@ function parseImage(data, mimeType) {
   return normalized;
 }
 
-function narrationFor(index, total) {
+function narrationFor(index, total, brief) {
+  const normalized = brief.toLowerCase();
+  if (total === 1 && /\b(ia|ai|inteligencia artificial|machine learning|ml)\b/.test(normalized)) {
+    return "En la UTP, convierte la inteligencia artificial en proyectos para el mundo real.";
+  }
+  if (total === 1) return "En la UTP, convierte tus ideas en acción y transforma tu futuro.";
   if (index === total - 1) return "Descubre tu próximo paso en utp punto edu punto pe.";
   return [
     "Tu futuro empieza con una decisión.",
@@ -71,25 +76,48 @@ function scenePrompt({ brief, tone, index, total }) {
     institucional: "credible, elegant, warm, premium institutional"
   }[tone];
   const sceneDirections = [
-    "Begin from the supplied image and reveal a modern Peruvian university environment with a smooth cinematic dolly movement and natural human motion.",
-    "Transform the moment into a collaborative technology and innovation scene with students building, designing and solving a real challenge.",
-    "Move through a bright contemporary campus and finish with the subject looking confidently toward a new professional future.",
-    "Create an energetic closing montage of learning, technology, teamwork and achievement with a controlled forward camera move."
+    "Use the supplied image itself as the literal opening frame and immutable visual anchor. Hold its recognizable composition briefly, then animate the same people, objects and location into one coherent eight-second story. Reveal the existing subject actively demonstrating the requested concept and finish on a confident human reaction or a clear result. Use motivated camera movement and intentional cuts, not a random montage.",
+    "Show believable collaboration around the requested concept: specific actions, clear eyelines, natural gestures and one visual focal point. Move from a medium shot to a purposeful detail and finish on the people, not on an interface.",
+    "Continue the same visual story inside a contemporary Peruvian university environment. Show practical learning, authentic teamwork and a tangible result with spatial continuity.",
+    "Deliver an emotional payoff through real people, a finished project and forward momentum. End with clean negative space suitable for a professional UTP brand signature in post-production."
   ];
   const focus = brief
     ? `Mandatory user creative direction: ${brief}. Reimagine that concept freely as the central story and visual world of this UTP advertisement; do not ignore or replace it.`
-    : "Creative direction: technology, creativity, university life and professional growth.";
+    : "Creative direction: turn a simple idea into a specific story about practical learning, creativity, university life and professional growth.";
   return [
-    `Create shot ${index + 1} of ${total} for a cinematic advertisement whose unmistakable purpose is to promote Universidad Tecnológica del Perú (UTP). The result must remain a UTP advertisement regardless of the user's creative direction.`,
+    `Act as an award-winning commercial director. Create shot ${index + 1} of ${total} for a premium cinematic advertisement whose unmistakable purpose is to promote Universidad Tecnológica del Perú (UTP). The result must remain a UTP advertisement regardless of the user's creative direction.`,
     sceneDirections[index % sceneDirections.length],
     focus,
-    `Visual direction: ${toneDirection}; cinematic lighting; realistic photography; premium commercial color grade; smooth stabilized camera; coherent anatomy; preserve the identity and essential appearance of the main subject in the supplied image.`,
-    `Audio: modern cinematic music, subtle campus ambience, and a clear adult Peruvian Spanish narrator who says exactly: "${narrationFor(index, total)}"`,
-    "Do not render captions, letters, logos or watermarks. Do not invent rankings, statistics, prices, accreditations or guarantees. The exact UTP brand and call to action will be added during editing."
+    `Image fidelity is mandatory: preserve every visible person's face, age, skin tone, body, clothing and role; preserve the main objects, product, sign or location that defines the supplied image. Do not replace the subject, invent a different presenter, or discard the photographed context. If no person is visible, animate the actual photographed object or place and do not add a new hero person. Visual direction: ${toneDirection}; contemporary Peruvian setting; cinematic but natural lighting; realistic photography; premium commercial color grade; smooth stabilized camera; coherent anatomy. Use UTP's red, black and white palette naturally in lighting or environment without turning the scene into a graphic banner.`,
+    "Art direction: make every prop and screen believable and legible as a single designed system. Avoid generic stock-video staging, floating holograms, duplicated screens, random futuristic HUD elements, distorted hands, visual clutter and abrupt transformations unless the user explicitly requests them.",
+    `Audio: original modern cinematic music that builds to a satisfying finish, subtle realistic ambience, and a warm confident adult Peruvian Spanish narrator who says exactly: "${narrationFor(index, total, brief)}"`,
+    "Do not render captions, invented words or watermarks. Do not invent rankings, statistics, prices, accreditations or guarantees. Leave clean composition space because the authentic UTP logo and exact call to action will be added during professional post-production."
   ].join(" ");
 }
 
-function buildCampaign(tone) {
+function buildCampaign(tone, brief = "") {
+  const normalized = cleanText(brief, 600).toLowerCase();
+  if (/\b(ia|ai|inteligencia artificial|machine learning|ml)\b/.test(normalized)) {
+    return {
+      headline: "IDEAS QUE ACTIVAN EL FUTURO",
+      supporting: "Convierte inteligencia artificial y machine learning en proyectos para el mundo real.",
+      cta: "Conoce más en utp.edu.pe"
+    };
+  }
+  if (/fruti|novela|historia|cine|creativ/.test(normalized)) {
+    return {
+      headline: "CREATIVIDAD QUE ROMPE EL MOLDE",
+      supporting: "En la UTP, una idea diferente puede convertirse en una historia con propósito.",
+      cta: "Conoce más en utp.edu.pe"
+    };
+  }
+  if (/deport|fútbol|futbol|atlet|compet/.test(normalized)) {
+    return {
+      headline: "TALENTO QUE SE ENTRENA",
+      supporting: "Disciplina, tecnología y trabajo en equipo para avanzar con propósito.",
+      cta: "Conoce más en utp.edu.pe"
+    };
+  }
   const base = CAMPAIGNS[tone];
   return {
     headline: base.headline,
@@ -161,7 +189,7 @@ async function startGeneration(body, apiKey) {
     generatedSeconds,
     estimatedCostUsd: Number((generatedSeconds * .10).toFixed(2)),
     model: VEO_MODEL,
-    campaign: buildCampaign(tone)
+    campaign: buildCampaign(tone, brief)
   };
 }
 

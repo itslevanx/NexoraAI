@@ -21,6 +21,7 @@ test("la galería limpia texto y limita rutas a tipos permitidos", () => {
   assert.equal(cleanText("  campaña <UTP>\n tecnológica  ", 30), "campaña UTP tecnológica");
   assert.equal(safeStorageExtension("image/jpeg"), "jpg");
   assert.equal(safeStorageExtension("video/webm"), "webm");
+  assert.equal(safeStorageExtension("video/mp4;codecs=h264,aac"), "mp4");
   assert.equal(safeStorageExtension("text/html"), "");
 });
 
@@ -60,6 +61,17 @@ test("la migración crea tabla, RLS y bucket privado", () => {
   assert.match(migration, /grant select, insert, update, delete .* service_role/);
   assert.match(migration, /'publicidad-utp'/);
   assert.match(migration, /false,/);
+});
+
+test("la galería conserva por separado la toma de Veo y el montaje final", () => {
+  const migration = readFileSync(new URL("../supabase/migrations/20261015022109_archiva_toma_veo_en_galeria.sql", import.meta.url), "utf8");
+  const galleryApi = readFileSync(new URL("../api/_publicidad-galeria.js", import.meta.url), "utf8");
+  const client = readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.match(migration, /source_video_path/);
+  assert.match(galleryApi, /preparar-toma/);
+  assert.match(galleryApi, /completar-toma/);
+  assert.match(client, /archiveGeneratedSource/);
+  assert.match(client, /"x-upsert": String\(upsert\)/);
 });
 
 test("la interfaz contiene una galería y el despliegue tiene contenedor web", () => {

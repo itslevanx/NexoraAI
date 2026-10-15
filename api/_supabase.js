@@ -19,11 +19,12 @@ export function createSupabaseAdmin() {
 }
 
 export function safeStorageExtension(mimeType) {
+  const normalized = String(mimeType || "").split(";", 1)[0].trim().toLowerCase();
   return ({
     "image/jpeg": "jpg",
     "image/png": "png",
     "image/webp": "webp",
     "video/mp4": "mp4",
     "video/webm": "webm"
-  })[mimeType] || "";
+  })[normalized] || "";
 }

@@ -29,6 +29,20 @@ test("cualquier concepto creativo se reinterpreta como publicidad UTP", () => {
   assert.match(prompt, /frutinovelas/);
   assert.match(prompt, /Universidad Tecnológica del Perú/);
   assert.match(prompt, /must remain a UTP advertisement/);
+  assert.match(prompt, /Avoid generic stock-video staging/);
+  assert.match(prompt, /authentic UTP logo/);
+});
+
+test("un prompt básico de IA recibe dirección y textos creativos", () => {
+  const campaign = buildCampaign("institucional", "expositor de IA y ML");
+  assert.equal(campaign.headline, "IDEAS QUE ACTIVAN EL FUTURO");
+  assert.match(campaign.supporting, /inteligencia artificial/);
+  const prompt = scenePrompt({ brief: "expositor de IA y ML", tone: "institucional", index: 0, total: 1 });
+  assert.match(prompt, /one coherent eight-second story/);
+  assert.match(prompt, /floating holograms/);
+  assert.match(prompt, /convierte la inteligencia artificial/);
+  assert.match(prompt, /literal opening frame/);
+  assert.match(prompt, /Do not replace the subject/);
 });
 
 test("Veo recibe la imagen con el formato de predicción compatible", () => {

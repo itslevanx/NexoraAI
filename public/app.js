@@ -21,6 +21,7 @@ const state = {
   advertisingRecordId: "",
   advertisingVideoUrl: "",
   advertisingClipUrls: [],
+  advertisingClipBlobs: [],
   advertisingCampaign: null,
   advertisingClipDurations: [],
   advertisingAccessToken: sessionStorage.getItem("nexoraPublicidadToken") || "",
@@ -604,13 +605,13 @@ async function galleryRequest(action, payload = {}) {
   return response.json();
 }
 
-async function uploadToSignedUrl(signedUrl, file) {
+async function uploadToSignedUrl(signedUrl, file, { upsert = false } = {}) {
   const form = new FormData();
   form.append("cacheControl", "3600");
   form.append("", file);
   const response = await fetch(signedUrl, {
     method: "PUT",
-    headers: { "x-upsert": "false" },
+    headers: { "x-upsert": String(upsert) },
     body: form
   });
   if (!response.ok) throw new Error("Supabase no pudo almacenar el archivo.");
@@ -626,14 +627,20 @@ function galleryStatusLabel(status) {
   })[status] || status;
 }
 
+function normalizedVideoMimeType(value) {
+  const mimeType = String(value || "").split(";", 1)[0].trim().toLowerCase();
+  return new Set(["video/mp4", "video/webm"]).has(mimeType) ? mimeType : "video/mp4";
+}
+
 function createGalleryCard(item) {
   const card = document.createElement("article");
   card.className = "gallery-card";
   const media = document.createElement("div");
   media.className = "gallery-media";
-  const preview = document.createElement(item.videoUrl ? "video" : "img");
-  preview.src = item.videoUrl || item.imageUrl;
-  if (item.videoUrl) {
+  const playableUrl = item.videoUrl || item.sourceVideoUrl;
+  const preview = document.createElement(playableUrl ? "video" : "img");
+  preview.src = playableUrl || item.imageUrl;
+  if (playableUrl) {
     preview.controls = true;
     preview.playsInline = true;
     preview.preload = "metadata";
@@ -643,13 +650,13 @@ function createGalleryCard(item) {
   }
   const status = document.createElement("span");
   status.className = `gallery-status ${item.status === "completada" ? "completed" : item.status === "error" ? "error" : ""}`;
-  status.textContent = galleryStatusLabel(item.status);
+  status.textContent = item.videoUrl ? "Video final" : item.sourceVideoUrl ? "Toma de Veo" : galleryStatusLabel(item.status);
   media.append(preview, status);
 
   const copy = document.createElement("div");
   copy.className = "gallery-copy";
   const title = document.createElement("strong");
-  title.textContent = item.videoUrl ? "Campaña audiovisual UTP" : item.source === "camara" ? "Foto tomada con cámara" : "Imagen subida";
+  title.textContent = item.videoUrl ? "Campaña audiovisual UTP" : item.sourceVideoUrl ? "Toma cinematográfica de Veo" : item.source === "camara" ? "Foto tomada con cámara" : "Imagen subida";
   const description = document.createElement("p");
   description.textContent = item.error_message || item.prompt || "Lista para crear una campaña de la UTP.";
   const meta = document.createElement("div");
@@ -669,10 +676,10 @@ function createGalleryCard(item) {
   imageLink.rel = "noopener";
   imageLink.textContent = "Ver foto";
   actions.append(imageLink);
-  if (item.videoUrl) {
+  if (playableUrl) {
     const videoLink = document.createElement("a");
     videoLink.className = "secondary link-button";
-    videoLink.href = item.videoUrl;
+    videoLink.href = playableUrl;
     videoLink.target = "_blank";
     videoLink.rel = "noopener";
     videoLink.textContent = "Abrir video";
@@ -692,7 +699,7 @@ async function loadAdvertisingGallery() {
   const { items = [] } = await response.json();
   $("#galleryTotal").textContent = items.length;
   $("#galleryPhotos").textContent = items.filter((item) => item.imageUrl).length;
-  $("#galleryVideos").textContent = items.filter((item) => item.videoUrl).length;
+  $("#galleryVideos").textContent = items.filter((item) => item.videoUrl || item.sourceVideoUrl).length;
   gallery.replaceChildren();
   if (!items.length) {
     gallery.innerHTML = '<div class="gallery-empty">Todavía no hay fotografías ni videos almacenados.</div>';
@@ -902,7 +909,19 @@ async function downloadAdvertisingClip(token, index) {
   if (!blob.size) throw new Error("Google devolvió una toma vacía.");
   const url = URL.createObjectURL(blob);
   state.advertisingClipUrls.push(url);
-  return url;
+  state.advertisingClipBlobs.push(blob);
+  return { url, blob };
+}
+
+async function archiveGeneratedSource(blob) {
+  if (!state.advertisingRecordId || !blob?.size) return false;
+  const mimeType = normalizedVideoMimeType(blob.type);
+  const extension = mimeType === "video/webm" ? "webm" : "mp4";
+  const upload = await galleryRequest("preparar-toma", { id: state.advertisingRecordId, mimeType });
+  await uploadToSignedUrl(upload.signedUrl, new File([blob], `toma-veo.${extension}`, { type: mimeType }), { upsert: true });
+  await galleryRequest("completar-toma", { id: state.advertisingRecordId, sourceVideoPath: upload.sourceVideoPath });
+  await loadAdvertisingGallery();
+  return true;
 }
 
 async function loadAdvertisingVideo(url, index) {
@@ -968,8 +987,9 @@ async function finishAdvertisingMontage() {
   $("#advertisingProgress span").style.width = "100%";
   let archived = false;
   try {
-    const upload = await galleryRequest("preparar-video", { id: state.advertisingRecordId, mimeType: blob.type });
-    await uploadToSignedUrl(upload.signedUrl, new File([blob], download.download, { type: blob.type }));
+    const mimeType = normalizedVideoMimeType(blob.type);
+    const upload = await galleryRequest("preparar-video", { id: state.advertisingRecordId, mimeType });
+    await uploadToSignedUrl(upload.signedUrl, new File([blob], download.download, { type: mimeType }), { upsert: true });
     await galleryRequest("completar-video", { id: state.advertisingRecordId, videoPath: upload.videoPath });
     await loadAdvertisingGallery();
     archived = true;
@@ -1041,6 +1061,31 @@ function drawWrappedText(context, text, x, y, maxWidth, lineHeight, maxLines = 3
   return Math.min(lines.length, maxLines);
 }
 
+function drawUtpLogo(context, x, y, short, includeName = true) {
+  const size = short * .066;
+  const letters = ["U", "T", "P"];
+  const colors = ["#e4002b", "#111111", "#e4002b"];
+  context.save();
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.font = `800 ${size * .56}px Arial, sans-serif`;
+  letters.forEach((letter, index) => {
+    const left = x + index * size;
+    context.fillStyle = colors[index];
+    context.fillRect(left, y, size, size);
+    context.fillStyle = "#ffffff";
+    context.fillText(letter, left + size / 2, y + size / 2 + size * .02);
+  });
+  if (includeName) {
+    context.textAlign = "left";
+    context.fillStyle = "#ffffff";
+    context.font = `650 ${size * .26}px Arial, sans-serif`;
+    context.fillText("UNIVERSIDAD", x + size * 3.25, y + size * .22);
+    context.fillText("TECNOLÓGICA DEL PERÚ", x + size * 3.25, y + size * .61);
+  }
+  context.restore();
+}
+
 function drawAdvertisingFrame(context, video, copy, progress, format, clipProgress) {
   const { width, height } = context.canvas;
   const short = Math.min(width, height);
@@ -1054,52 +1099,37 @@ function drawAdvertisingFrame(context, video, copy, progress, format, clipProgre
   shade.addColorStop(1, "rgba(0,0,0,.92)");
   context.fillStyle = shade;
   context.fillRect(0, 0, width, height);
-  context.fillStyle = "rgba(224,0,52,.88)";
-  context.fillRect(0, 0, Math.max(10, short * .018), height);
+  drawUtpLogo(context, margin, margin, short, true);
 
-  context.textBaseline = "top";
-  context.fillStyle = "#fff";
-  context.font = `700 ${short * .034}px Inter, Arial, sans-serif`;
-  context.letterSpacing = `${short * .003}px`;
-  context.fillText("UTP", margin, margin);
-  context.font = `500 ${short * .021}px Inter, Arial, sans-serif`;
-  context.fillStyle = "rgba(255,255,255,.82)";
-  context.fillText("UNIVERSIDAD TECNOLÓGICA DEL PERÚ", margin + short * .092, margin + short * .009);
-
-  const firstPhase = progress < .42;
-  const finalPhase = progress >= .72;
-  const phaseStart = firstPhase ? 0 : finalPhase ? .72 : .42;
-  const local = Math.min(1, Math.max(0, (progress - phaseStart) / (firstPhase ? .42 : finalPhase ? .28 : .30)));
-  const opacity = Math.min(1, local * 5, (1 - local) * 7 + (finalPhase ? 1 : 0));
-  const lift = (1 - Math.min(1, local * 3)) * short * .035;
-  context.globalAlpha = Math.max(.06, opacity);
-  const textY = height - (format === "portrait" ? short * .57 : short * .38) + lift;
-  if (firstPhase) {
+  const editorialPhase = progress >= .1 && progress < .34;
+  const finalPhase = progress >= .78;
+  if (editorialPhase) {
+    const local = Math.min(1, Math.max(0, (progress - .1) / .24));
+    context.globalAlpha = Math.min(1, local * 6, (1 - local) * 6);
+    const textY = height - (format === "portrait" ? short * .46 : short * .34);
     context.fillStyle = "#fff";
-    context.font = `700 ${short * (format === "portrait" ? .085 : .072)}px Inter, Arial, sans-serif`;
-    drawWrappedText(context, copy.headline, margin, textY, width - margin * 2, short * .102, 3);
-  } else if (!finalPhase) {
+    context.font = `780 ${short * (format === "portrait" ? .066 : .058)}px Inter, Arial, sans-serif`;
+    drawWrappedText(context, copy.headline, margin, textY, width - margin * 2, short * .08, 2);
+  }
+  if (finalPhase) {
+    const local = Math.min(1, (progress - .78) / .22);
+    context.globalAlpha = Math.min(1, local * 5);
+    const endShade = context.createLinearGradient(0, height * .45, 0, height);
+    endShade.addColorStop(0, "rgba(0,0,0,0)");
+    endShade.addColorStop(1, "rgba(0,0,0,.96)");
+    context.fillStyle = endShade;
+    context.fillRect(0, height * .38, width, height * .62);
+    const textY = height - (format === "portrait" ? short * .48 : short * .34);
     context.fillStyle = "#fff";
-    context.font = `650 ${short * (format === "portrait" ? .067 : .058)}px Inter, Arial, sans-serif`;
-    drawWrappedText(context, copy.supporting, margin, textY, width - margin * 2, short * .082, 4);
-  } else {
-    context.fillStyle = "#fff";
-    context.font = `700 ${short * (format === "portrait" ? .075 : .064)}px Inter, Arial, sans-serif`;
-    context.fillText("TU FUTURO EMPIEZA HOY", margin, textY, width - margin * 2);
+    context.font = `700 ${short * (format === "portrait" ? .057 : .052)}px Inter, Arial, sans-serif`;
+    drawWrappedText(context, copy.supporting, margin, textY, width - margin * 2, short * .07, 3);
     context.fillStyle = "#e00034";
-    context.fillRect(margin, textY + short * .115, short * .56, short * .0025 + 2);
+    context.fillRect(margin, textY + short * .22, short * .34, 3);
     context.fillStyle = "#fff";
     context.font = `600 ${short * .036}px Inter, Arial, sans-serif`;
-    context.fillText(copy.cta, margin, textY + short * .15, width - margin * 2);
+    context.fillText(copy.cta, margin, textY + short * .25, width - margin * 2);
   }
   context.globalAlpha = 1;
-  context.fillStyle = "rgba(255,255,255,.82)";
-  context.font = `500 ${short * .021}px Inter, Arial, sans-serif`;
-  context.fillText("Publicidad creada con NEXORA AI", margin, height - margin * .75);
-  context.fillStyle = "rgba(255,255,255,.24)";
-  context.fillRect(margin, height - margin * .22, width - margin * 2, 3);
-  context.fillStyle = "#e00034";
-  context.fillRect(margin, height - margin * .22, (width - margin * 2) * progress, 3);
   const transition = Math.min(1, clipProgress * 7, (1 - clipProgress) * 7);
   context.fillStyle = `rgba(0,0,0,${Math.max(0, 1 - transition)})`;
   context.fillRect(0, 0, width, height);
@@ -1209,13 +1239,17 @@ $("#advertisingForm").addEventListener("submit", async (event) => {
   try {
     state.advertisingClipUrls.forEach((url) => URL.revokeObjectURL(url));
     state.advertisingClipUrls = [];
+    state.advertisingClipBlobs = [];
     const generation = await startAdvertisingGeneration();
     $("#advertisingProgress span").style.width = "8%";
     button.textContent = "Veo está creando las tomas…";
     const tokens = await waitForAdvertisingClips(generation.operations);
     button.textContent = "Descargando tomas…";
     for (let index = 0; index < tokens.length; index += 1) {
-      await downloadAdvertisingClip(tokens[index], index);
+      const clip = await downloadAdvertisingClip(tokens[index], index);
+      if (index === 0) {
+        await archiveGeneratedSource(clip.blob).catch((error) => toast(`La toma está lista, pero no se archivó: ${error.message}`));
+      }
       $("#advertisingProgress span").style.width = `${70 + ((index + 1) / tokens.length) * 8}%`;
     }
     prepareAdvertisingMontage(generation.campaign, generation.clipDurations);

@@ -32,17 +32,21 @@ async function signedMedia(supabase, item) {
   const video = item.video_path
     ? await supabase.storage.from(PUBLICIDAD_BUCKET).createSignedUrl(item.video_path, 3600)
     : { data: null };
+  const sourceVideo = item.source_video_path
+    ? await supabase.storage.from(PUBLICIDAD_BUCKET).createSignedUrl(item.source_video_path, 3600)
+    : { data: null };
   return {
     ...item,
     imageUrl: image.data?.signedUrl || "",
-    videoUrl: video.data?.signedUrl || ""
+    videoUrl: video.data?.signedUrl || "",
+    sourceVideoUrl: sourceVideo.data?.signedUrl || ""
   };
 }
 
 async function listGallery(supabase) {
   const { data, error } = await supabase
     .from("publicidad_items")
-    .select("id,created_at,updated_at,source,status,image_path,video_path,prompt,tone,duration,format,error_message")
+    .select("id,created_at,updated_at,source,status,image_path,source_video_path,video_path,prompt,tone,duration,format,error_message")
     .order("created_at", { ascending: false })
     .limit(100);
   if (error) throw error;
@@ -114,6 +118,31 @@ async function prepareVideo(supabase, body) {
   return { id, videoPath, ...data };
 }
 
+async function prepareSourceVideo(supabase, body) {
+  const id = String(body.id || "");
+  const mimeType = String(body.mimeType || "");
+  const extension = safeStorageExtension(mimeType);
+  if (!extension || !mimeType.toLowerCase().startsWith("video/")) throw new Error("La toma de Veo debe ser MP4 o WEBM.");
+  const sourceVideoPath = `tomas/${id}.${extension}`;
+  const { data, error } = await supabase.storage.from(PUBLICIDAD_BUCKET).createSignedUploadUrl(sourceVideoPath, { upsert: true });
+  if (error) throw error;
+  return { id, sourceVideoPath, ...data };
+}
+
+async function completeSourceVideo(supabase, body) {
+  const id = String(body.id || "");
+  const sourceVideoPath = String(body.sourceVideoPath || "");
+  if (!sourceVideoPath.startsWith(`tomas/${id}.`)) throw new Error("La ruta de la toma no es válida.");
+  const { data, error } = await supabase
+    .from("publicidad_items")
+    .update({ source_video_path: sourceVideoPath, error_message: "" })
+    .eq("id", id)
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 async function completeVideo(supabase, body) {
   const id = String(body.id || "");
   const videoPath = String(body.videoPath || "");
@@ -143,6 +172,8 @@ export default async function handler(req, res) {
       "crear-captura": createCapture,
       "confirmar-captura": confirmCapture,
       "actualizar-generacion": updateGeneration,
+      "preparar-toma": prepareSourceVideo,
+      "completar-toma": completeSourceVideo,
       "preparar-video": prepareVideo,
       "completar-video": completeVideo
     };
