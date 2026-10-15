@@ -291,6 +291,30 @@ La interfaz presenta mensajes específicos para:
 - Verificar que la galería muestre la fotografía almacenada.
 - Mostrar los contenedores con `docker compose ps` sin revelar variables de entorno.
 
+### Evidencia práctica de Docker
+
+Vercel hospeda la versión pública mediante funciones serverless; por ello, la consola de Vercel no puede utilizarse como prueba de que esa URL ejecuta Docker. La prueba correcta consiste en iniciar la misma aplicación desde el `Dockerfile` del repositorio y mostrar tres evidencias independientes:
+
+```bash
+docker compose up -d --build nexora
+docker compose ps nexora
+curl http://localhost:3000/health
+```
+
+1. **Construcción:** la salida de `docker compose up` muestra que la imagen se construye desde `Dockerfile`.
+2. **Ejecución:** `docker compose ps nexora` muestra el contenedor en estado `Up` y `healthy`.
+3. **Servicio:** `curl` devuelve la respuesta JSON del endpoint `/health` y `http://localhost:3000/publicidad` presenta la interfaz desde el contenedor.
+
+Como prueba complementaria pueden mostrarse los registros del proceso:
+
+```bash
+docker compose logs --tail=20 nexora
+```
+
+Ninguno de estos pasos consume saldo de Gemini. La generación sólo se inicia al seleccionar una imagen, escribir un concepto y pulsar **Crear con Google Veo**. Para detener la demostración se ejecuta `docker compose stop nexora`.
+
+Si el criterio académico exige una URL pública ejecutada dentro de Docker, se necesita además un despliegue separado en Cloud Run, Render o Railway. El despliegue actual en Vercel demuestra la arquitectura serverless, no la ejecución del contenedor.
+
 ## Alcance de esta actualización
 
 Esta actualización implementa el almacenamiento privado, la galería, la recepción de archivos y el despliegue en contenedor, además de actualizar la documentación. Las pruebas realizadas no ejecutan Google Veo, no generan videos y no consumen saldo de las APIs de IA.

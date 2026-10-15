@@ -90,6 +90,8 @@ Usuario
 
 Vercel sirve la interfaz y las funciones serverless. Supabase conserva el historial audiovisual. La misma plataforma también puede ejecutarse en un contenedor Docker mediante `docker compose up --build`.
 
+> **Importante:** el despliegue de Vercel es serverless y no ejecuta el `Dockerfile`. El contenedor permite demostrar que la misma aplicación y su API se despliegan de forma reproducible. Si se exige que la URL pública también sea un contenedor, debe publicarse una segunda instancia en un servicio como Cloud Run, Render o Railway.
+
 ## Tecnologías
 
 | Tecnología | Uso |
@@ -184,6 +186,35 @@ SUPABASE_SECRET_KEY=sb_secret_reemplazar
 ```
 
 El archivo `.env` está excluido de Git. Nunca se debe publicar una clave real en el repositorio, una captura o la documentación.
+
+## Demostración con Docker
+
+La demostración no llama a Google Veo ni consume saldo mientras no se pulse **Crear con Google Veo**.
+
+```bash
+docker compose up -d --build nexora
+docker compose ps nexora
+curl http://localhost:3000/health
+```
+
+Después, abrir `http://localhost:3000/publicidad`. Las tres evidencias que se deben mostrar son:
+
+1. `docker compose ps nexora` presenta el servicio `nexora` como `Up` y, tras completar el chequeo, `healthy`.
+2. `/health` responde con un JSON que confirma que el servidor está activo.
+3. La interfaz de Publicidad abre desde el puerto `3000`, servido por el proceso definido en el `Dockerfile`.
+
+Para reforzar la evidencia durante una exposición:
+
+```bash
+docker compose logs --tail=20 nexora
+docker inspect nexoraai-nexora-1 --format '{{.Config.Image}} · {{.State.Health.Status}}'
+```
+
+El nombre asignado al contenedor puede variar. Si ocurre, se copia el nombre exacto mostrado por `docker compose ps`. Al terminar:
+
+```bash
+docker compose stop nexora
+```
 
 ## Despliegue en Vercel
 
