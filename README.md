@@ -43,13 +43,14 @@ NEXORA AI es una suite académica multimodal con chat, herramientas de texto, vi
 
 - Acepta una foto tomada con la cámara o un archivo JPG, PNG o WEBP de hasta 10 MB.
 - Reinterpreta cualquier concepto creativo como una campaña cinematográfica de la Universidad Tecnológica del Perú.
+- Usa la fotografía como fotograma inicial y referencia obligatoria; no debe sustituir al sujeto, el lugar ni el objeto principal por un presentador genérico.
 - Genera tomas con Google Veo 3.1 Fast, narración y música integradas.
 - Entrega videos de 10, 15, 20 o 30 segundos en formato vertical 9:16 u horizontal 16:9.
-- Añade textos e identidad UTP exactos durante el montaje local.
+- Añade el logotipo UTP de bloques rojo, negro y rojo, textos editoriales breves y cierre institucional durante el montaje local, sin mantener banners durante todo el video.
 - Muestra el costo estimado antes de generar.
 - Protege el módulo con un código validado en el servidor y una sesión firmada de ocho horas.
 - Mantiene `GEMINI_API_KEY` en Vercel; nunca la expone al navegador.
-- Guarda cada fotografía y video final en un bucket privado de Supabase.
+- Guarda cada fotografía, la toma original de Veo y el video final en un bucket privado de Supabase.
 - Presenta una galería histórica con estado, fecha, prompt, formato y duración.
 
 ![Arquitectura del módulo Publicidad UTP](docs/images/arquitectura-publicidad.png)

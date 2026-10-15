@@ -87,7 +87,7 @@ Antes de habilitar la generación, la fotografía se registra en PostgreSQL y se
 | Formato | Vertical 9:16 u horizontal 16:9 | Adapta generación y lienzo final |
 | Estilo | Inspirador, tecnológico, energético o institucional | Orienta cámara, ritmo, luz y música |
 
-El prompt interno no reemplaza la idea del usuario. La amplía con reglas de campaña: vínculo explícito con UTP, tono universitario, narración en español, cierre institucional, llamada a la acción y coherencia entre tomas.
+El prompt interno no reemplaza la idea del usuario. La amplía con reglas de campaña: vínculo explícito con UTP, tono universitario, narración en español, cierre institucional, llamada a la acción y coherencia entre tomas. Incluso ante una frase básica, el servidor actúa como director creativo y define una historia con inicio, acción y resultado.
 
 ### Etapa 4 Generación con Google Veo
 
@@ -101,6 +101,8 @@ El endpoint `/api/publicidad` utiliza el modelo `veo-3.1-fast-generate-preview`.
 - continuidad con las demás tomas;
 - una única salida de video.
 
+La fotografía es el ancla visual obligatoria: debe aparecer como el fotograma inicial y conservar rostros, vestimenta, objetos, lugar y función del sujeto. Si la foto no contiene una persona, Veo debe animar el objeto o espacio fotografiado sin inventar un presentador. También se restringen hologramas genéricos, pantallas duplicadas, interfaces futuristas sin sentido y transformaciones bruscas.
+
 La fotografía se coloca en `instances[0].image` con los campos `bytesBase64Encoded` y `mimeType`. Esta forma coincide con el esquema aceptado por el modelo configurado y evita que la imagen se interprete como un bloque `inlineData` no compatible. La configuración solo envía `aspectRatio`, `durationSeconds`, `resolution` y `personGeneration`; `durationSeconds` se envía como número entero. Se omite `numberOfVideos` porque Veo ya entrega un único video por operación y ese campo es rechazado por este modelo.
 
 La generación es asíncrona. El navegador recibe identificadores de operación y consulta su estado cada diez segundos, con un límite aproximado de siete minutos.
@@ -113,12 +115,12 @@ Cuando las tomas están listas, el navegador:
 2. crea un lienzo de 720 por 1280 o 1280 por 720;
 3. reproduce y recorta cada toma en secuencia;
 4. mezcla el audio con Web Audio;
-5. superpone textos UTP exactos y elementos de marca;
+5. superpone el logotipo UTP de tres bloques, textos editoriales breves y el cierre institucional;
 6. captura el lienzo a 30 fotogramas por segundo;
 7. codifica el resultado con `MediaRecorder`;
 8. detiene la grabación exactamente en la duración seleccionada.
 
-Esta separación evita depender de letras o logotipos dibujados por el modelo generativo. Veo produce la escena y el audio; Canvas controla la identidad textual final.
+Esta separación evita depender de letras o logotipos dibujados por el modelo generativo. Veo produce la escena y el audio; Canvas dibuja el logotipo con los bloques rojo, negro y rojo y controla la identidad textual final. El logo permanece como firma discreta; el titular sólo aparece durante una sección breve y el llamado a la acción se reserva para el cierre, evitando banners permanentes.
 
 En Safari, cuando Veo entrega la toma, la interfaz muestra **Finalizar video**. Ese segundo clic conserva la autorización de usuario que Safari exige para reproducir y grabar audio durante el montaje. Si el navegador se cerró después de descargar una toma, **Recuperar una toma de Veo ya generada** permite seleccionar el MP4 o WEBM y terminar el video sin consumir otra vez la API.
 
@@ -127,8 +129,10 @@ En Safari, cuando Veo entrega la toma, la interfaz muestra **Finalizar video**. 
 Supabase separa los datos estructurados de los archivos:
 
 - **PostgreSQL:** identificador, fecha, origen, estado, prompt, duración, formato y errores.
-- **Storage privado:** fotografía original y video final MP4 o WebM.
+- **Storage privado:** fotografía original, primera toma entregada por Veo y video final MP4 o WebM.
 - **Galería protegida:** consulta hasta los cien registros más recientes y genera enlaces firmados válidos durante una hora.
+
+La primera toma se archiva automáticamente apenas termina la descarga, antes de que Safari solicite el segundo clic para el montaje. La galería la identifica como **Toma de Veo**. Cuando se completa el montaje con marca y audio, pasa a mostrar **Video final**. Así, cerrar la pestaña antes del montaje no elimina el material que ya fue generado y cobrado.
 
 La tabla `publicidad_items` tiene RLS habilitado y revoca el acceso de `anon` y `authenticated`. Solamente las funciones del servidor utilizan `SUPABASE_SECRET_KEY`. Esa clave nunca llega al navegador. Las cargas grandes se realizan con URLs firmadas de un solo objeto y vigencia limitada.
 
@@ -211,9 +215,9 @@ Los importes son aproximados. La tarifa real depende del precio vigente, la regi
 
 La identidad de campaña se protege en dos capas.
 
-**Capa generativa.** El servidor amplía cada concepto con reglas que obligan a presentar una experiencia vinculada con UTP, mantener narración en español, usar una estética universitaria y cerrar con una invitación clara.
+**Capa generativa.** El servidor amplía cada concepto con reglas que obligan a conservar la fotografía como ancla, presentar una experiencia vinculada con UTP, mantener narración en español, usar una estética universitaria y cerrar con una invitación clara.
 
-**Capa de montaje.** El navegador añade los textos definitivos mediante Canvas. El prompt pide a Veo que no dibuje subtítulos, marcas de agua ni logotipos, porque esos elementos se incorporan después con tipografía controlada.
+**Capa de montaje.** El navegador añade el logotipo UTP y los textos definitivos mediante Canvas. El prompt pide a Veo que no dibuje subtítulos, marcas de agua ni logotipos, porque esos elementos se incorporan después con geometría, color y tipografía controlados.
 
 Por ejemplo, si el concepto es “crea una escena de frutinovelas”, el sistema puede conservar personajes, humor y dramatización, pero debe convertir la historia en un mensaje sobre aprendizaje, creatividad, futuro profesional o vida universitaria en UTP.
 
