@@ -57,6 +57,7 @@ test("la migración crea tabla, RLS y bucket privado", () => {
   assert.match(migration, /create table if not exists public\.publicidad_items/);
   assert.match(migration, /enable row level security/);
   assert.match(migration, /revoke all .* anon, authenticated/);
+  assert.match(migration, /grant select, insert, update, delete .* service_role/);
   assert.match(migration, /'publicidad-utp'/);
   assert.match(migration, /false,/);
 });

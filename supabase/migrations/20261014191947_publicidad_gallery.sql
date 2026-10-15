@@ -15,6 +15,7 @@ create table if not exists public.publicidad_items (
 
 alter table public.publicidad_items enable row level security;
 revoke all on table public.publicidad_items from anon, authenticated;
+grant select, insert, update, delete on table public.publicidad_items to service_role;
 
 create or replace function public.set_publicidad_updated_at()
 returns trigger
