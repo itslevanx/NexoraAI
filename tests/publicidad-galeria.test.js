@@ -72,6 +72,7 @@ test("la galería conserva por separado la toma de Veo y el montaje final", () =
   assert.match(galleryApi, /completar-toma/);
   assert.match(client, /archiveGeneratedSource/);
   assert.match(client, /"x-upsert": String\(upsert\)/);
+  assert.match(client, /items\[0\]\?\.id/);
 });
 
 test("la interfaz contiene una galería y el despliegue tiene contenedor web", () => {

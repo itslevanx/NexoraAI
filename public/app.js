@@ -697,6 +697,7 @@ async function loadAdvertisingGallery() {
   if (response.status === 401) lockAdvertising("La sesión venció. Ingresa nuevamente el código.");
   if (!response.ok) throw new Error(await apiError(response));
   const { items = [] } = await response.json();
+  if (!state.advertisingRecordId && items[0]?.id) state.advertisingRecordId = items[0].id;
   $("#galleryTotal").textContent = items.length;
   $("#galleryPhotos").textContent = items.filter((item) => item.imageUrl).length;
   $("#galleryVideos").textContent = items.filter((item) => item.videoUrl || item.sourceVideoUrl).length;
