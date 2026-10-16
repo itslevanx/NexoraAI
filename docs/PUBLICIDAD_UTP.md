@@ -1,8 +1,8 @@
 # Documentación del módulo Publicidad UTP
 
-## Propósito de esta guía
+## Propósito
 
-Esta guía explica el funcionamiento técnico y funcional del apartado **Publicidad** de NEXORA AI. Está preparada para una presentación: muestra el recorrido del usuario, la arquitectura, las tecnologías, la protección de acceso, el tratamiento de la imagen, la generación audiovisual, el montaje local y los puntos que deben comprobarse antes de una demostración.
+Este documento describe el apartado **Publicidad** de NEXORA AI: recorrido del usuario, arquitectura, tecnologías, control de acceso, tratamiento de la imagen, generación audiovisual, montaje local y evidencias para una demostración.
 
 El resultado esperado es un video promocional de la Universidad Tecnológica del Perú de **10, 15, 20 o 30 segundos**, creado desde una fotografía y un concepto libre. Publicidad es el único apartado de NEXORA AI que usa Google Gemini y Google Veo. El resto de la plataforma continúa utilizando OpenAI.
 
@@ -25,9 +25,9 @@ Aunque el usuario pida una escena de ficción, comedia, tecnología, telenovela 
 
 ## Vista del producto
 
-![Captura de la interfaz audiovisual de Publicidad](screenshots/nexora-publicidad-video.png)
+![Pantalla de acceso del módulo Publicidad](screenshots/publicidad-acceso-actual.png)
 
-**Figura 1.** Captura histórica tomada en Safari durante la etapa del compositor local. Sirve para mostrar la estructura visual del módulo, la selección de imagen y el panel de resultado. Los textos internos que mencionan un flujo anterior no describen la integración vigente con Google Veo.
+**Figura 1.** Pantalla de acceso de la versión publicada, tomada en Safari el 16 de octubre de 2026. El formulario aparece tanto desde el menú como al abrir directamente `/publicidad`.
 
 La interfaz actual mantiene la misma lógica de trabajo y añade:
 
@@ -38,7 +38,7 @@ La interfaz actual mantiene la misma lógica de trabajo y añade:
 - costo estimado visible;
 - confirmación antes de generar;
 - progreso de las operaciones asíncronas;
-- descarga final en MP4 o WebM según el navegador.
+- descarga final en MP4 o WebM según el navegador;
 - almacenamiento persistente en Supabase;
 - galería histórica con métricas, estados y enlaces temporales.
 
@@ -122,7 +122,7 @@ Cuando las tomas están listas, el navegador:
 
 Esta separación evita depender de letras o logotipos dibujados por el modelo generativo. Veo produce la escena y el audio; Canvas dibuja el logotipo con los bloques rojo, negro y rojo y controla la identidad textual final. El logo permanece como firma discreta; el titular sólo aparece durante una sección breve y el llamado a la acción se reserva para el cierre, evitando banners permanentes.
 
-En Safari, cuando Veo entrega la toma, la interfaz muestra **Finalizar video**. Ese segundo clic conserva la autorización de usuario que Safari exige para reproducir y grabar audio durante el montaje. Si el navegador se cerró después de descargar una toma, **Recuperar una toma de Veo ya generada** permite seleccionar el MP4 o WEBM y terminar el video sin consumir otra vez la API.
+En Safari, cuando Veo entrega la toma, la interfaz muestra **Finalizar video**. Ese segundo clic conserva la autorización de usuario que Safari exige para reproducir y grabar audio durante el montaje. El temporizador del compositor usa un reloj independiente del elemento de video, por lo que el montaje no se detiene si Safari pausa temporalmente el fotograma. Si el navegador se cerró después de descargar una toma, **Recuperar una toma de Veo ya generada** permite seleccionar el MP4 o WEBM y terminar el video sin consumir otra vez la API.
 
 ### Etapa 6 Almacenamiento y galería
 
@@ -261,7 +261,7 @@ La interfaz presenta mensajes específicos para:
 - operación de Veo fallida;
 - tiempo máximo de espera;
 - descarga de toma rechazada;
-- navegador sin soporte de codificación compatible.
+- navegador sin soporte de codificación compatible;
 - Supabase no configurado o carga firmada fallida;
 - fotografía guardada pero generación pendiente;
 - video generado localmente pero archivado remoto pendiente.
@@ -285,7 +285,7 @@ La interfaz presenta mensajes específicos para:
 
 - Confirmar que el despliegue de Vercel está disponible.
 - Verificar que las variables de entorno existen sin mostrar sus valores.
-- Abrir `/publicidad` en Chrome.
+- Abrir `/publicidad` en Safari.
 - Probar el acceso antes de la exposición.
 - Revisar permisos de cámara y reproducción de audio.
 - Llevar un video ya generado como respaldo.
@@ -318,10 +318,6 @@ docker compose logs --tail=20 nexora
 Ninguno de estos pasos consume saldo de Gemini. La generación sólo se inicia al seleccionar una imagen, escribir un concepto y pulsar **Crear con Google Veo**. Para detener la demostración se ejecuta `docker compose stop nexora`.
 
 Si el criterio académico exige una URL pública ejecutada dentro de Docker, se necesita además un despliegue separado en Cloud Run, Render o Railway. El despliegue actual en Vercel demuestra la arquitectura serverless, no la ejecución del contenedor.
-
-## Alcance de esta actualización
-
-Esta actualización implementa el almacenamiento privado, la galería, la recepción de archivos y el despliegue en contenedor, además de actualizar la documentación. Las pruebas realizadas no ejecutan Google Veo, no generan videos y no consumen saldo de las APIs de IA.
 
 ## Fuentes oficiales
 

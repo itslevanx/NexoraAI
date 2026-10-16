@@ -2,7 +2,7 @@
 
 ![Logo de NEXORA AI](assets/nexora-logo.svg)
 
-NEXORA AI es una suite académica multimodal con chat, herramientas de texto, visión, generación de imágenes, publicidad audiovisual, voz en tiempo real, síntesis de voz, transcripción y moderación. Incluye una aplicación local en Streamlit y una experiencia web serverless publicada en Vercel, sin credenciales incrustadas en el código.
+NEXORA AI es una plataforma académica multimodal con chat, herramientas de texto, visión, generación de imágenes, publicidad audiovisual, voz en tiempo real, síntesis de voz, transcripción y moderación. Incluye una aplicación local en Streamlit y una versión web publicada en Vercel. Las credenciales permanecen en variables de entorno del servidor.
 
 ## Aplicación publicada
 
@@ -23,7 +23,7 @@ NEXORA AI es una suite académica multimodal con chat, herramientas de texto, vi
 
 ## Funcionalidades
 
-### Studio IA
+### Studio
 
 - Resume, reescribe, corrige y traduce contenido.
 - Crea guías de estudio, exámenes, guiones, ideas y correos.
@@ -55,7 +55,7 @@ NEXORA AI es una suite académica multimodal con chat, herramientas de texto, vi
 
 ![Arquitectura del módulo Publicidad UTP](docs/images/arquitectura-publicidad.png)
 
-Publicidad es el único módulo que utiliza Google Gemini. Chat, Voz, Studio IA, Imágenes, Visión, Transcripción, Speech y Moderación continúan usando OpenAI.
+Publicidad es el único módulo que utiliza Google Gemini. Chat, Voz, Studio, Imágenes, Visión, Transcripción, Speech y Moderación continúan usando OpenAI.
 
 La documentación específica está disponible en:
 
@@ -105,7 +105,7 @@ Vercel sirve la interfaz y las funciones serverless. Supabase conserva el histor
 | Google Veo 3.1 Fast | Generación de tomas publicitarias desde una foto |
 | Supabase PostgreSQL | Metadatos, estados y trazabilidad de capturas |
 | Supabase Storage | Fotografías y videos en un bucket privado |
-| Docker y Docker Compose | Despliegue reproducible de la plataforma y API |
+| Docker y Docker Compose | Ejecución reproducible de la plataforma y su API |
 | Canvas API | Composición de marca, textos y transiciones |
 | Web Audio API | Mezcla del audio de las tomas |
 | MediaRecorder | Exportación del video final |
@@ -258,7 +258,7 @@ La fotografía optimizada y el concepto se envían a Google Gemini. La clave per
 
 La imagen se envía a Veo dentro de `instances[0].image` mediante `bytesBase64Encoded` y `mimeType`. Los parámetros enviados se limitan a `aspectRatio`, `durationSeconds`, `resolution` y `personGeneration`; `durationSeconds` se transmite como número. La API genera un solo video por operación sin declarar `numberOfVideos`, porque ese campo no es aceptado por el modelo configurado.
 
-## Pruebas
+## Verificación técnica
 
 ```bash
 python -m pytest -q
@@ -266,7 +266,7 @@ python -m py_compile app.py
 npm run check
 ```
 
-Las validaciones automatizadas no deben generar videos ni consumir saldo de Gemini. La verificación audiovisual final se realiza manualmente con autorización del propietario.
+Estas validaciones revisan sintaxis, rutas y servicios sin generar videos ni consumir saldo de Gemini. La revisión audiovisual se realiza por separado cuando existe autorización para usar la API.
 
 ## Seguridad y privacidad
 
@@ -280,7 +280,7 @@ Las validaciones automatizadas no deben generar videos ni consumir saldo de Gemi
 - La foto se optimiza en el navegador antes de enviarse a Gemini.
 - Los enlaces de descarga de las tomas expiran después de una hora.
 - No se deben usar datos sensibles ni fotografías sin autorización.
-- La moderación y el análisis automático requieren revisión humana.
+- La moderación y el análisis de resultados requieren revisión humana.
 
 ## Limitaciones
 
@@ -289,13 +289,13 @@ Las validaciones automatizadas no deben generar videos ni consumir saldo de Gemi
 - Veo puede tardar varios minutos por toma.
 - La generación audiovisual consume saldo de Google Gemini.
 - Safari prioriza MP4 cuando está disponible; otros navegadores pueden exportar WebM.
-- El resultado de una IA generativa requiere revisión antes de publicarse.
+- El resultado audiovisual debe revisarse antes de publicarse.
 
 ## Documentación
 
 - [Guía de Publicidad en Markdown](docs/PUBLICIDAD_UTP.md)
 - [Guía de Publicidad para presentación](docs/Documentacion_Publicidad_UTP.docx)
-- [Informe general histórico](docs/DOCUMENTACION_COMPLETA.md)
+- [Documentación general](docs/DOCUMENTACION_COMPLETA.md)
 - [Informe general en Word](docs/Documentacion_NEXORA_AI.docx)
 
 ## Fuentes oficiales
@@ -312,4 +312,4 @@ Las validaciones automatizadas no deben generar videos ni consumir saldo de Gemi
 
 ## Uso académico
 
-Proyecto preparado con fines académicos. Antes de utilizarlo con datos reales, se deben revisar las políticas de los servicios conectados, establecer límites de gasto y mantener supervisión humana sobre el contenido generado.
+Proyecto preparado con fines académicos. Antes de utilizarlo con datos reales, se deben revisar las políticas de los servicios conectados, establecer límites de gasto y verificar cada resultado antes de publicarlo.
