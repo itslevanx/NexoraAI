@@ -697,7 +697,22 @@ async function loadAdvertisingGallery() {
   if (response.status === 401) lockAdvertising("La sesión venció. Ingresa nuevamente el código.");
   if (!response.ok) throw new Error(await apiError(response));
   const { items = [] } = await response.json();
-  if (!state.advertisingRecordId && items[0]?.id) state.advertisingRecordId = items[0].id;
+  if (!state.advertisingRecordId && items[0]?.id) {
+    const latest = items[0];
+    state.advertisingRecordId = latest.id;
+    if (ADVERTISING_COSTS[Number(latest.duration)]) {
+      $("#advertisingDuration").value = String(latest.duration);
+      updateAdvertisingCost();
+    }
+    if (["portrait", "landscape"].includes(latest.format)) {
+      $("#advertisingFormat").value = latest.format;
+      updateAdvertisingFormat();
+    }
+    if (latest.tone && [...$("#advertisingTone").options].some((option) => option.value === latest.tone)) {
+      $("#advertisingTone").value = latest.tone;
+    }
+    if (latest.prompt) $("#advertisingBrief").value = latest.prompt;
+  }
   $("#galleryTotal").textContent = items.length;
   $("#galleryPhotos").textContent = items.filter((item) => item.imageUrl).length;
   $("#galleryVideos").textContent = items.filter((item) => item.videoUrl || item.sourceVideoUrl).length;
@@ -824,6 +839,10 @@ function updateAdvertisingCost() {
   const estimate = ADVERTISING_COSTS[duration];
   $("#advertisingBadge").textContent = `${duration} s`;
   $("#advertisingCost").textContent = `Costo estimado de Veo: US$${estimate.cost.toFixed(2)} · se generan ${estimate.generated} s y se entrega un video de ${duration} s`;
+  if (state.advertisingClipUrls.length) {
+    $("#finishAdvertisingVideo").textContent = `Finalizar video de ${duration} s`;
+    state.advertisingClipDurations = [duration];
+  }
 }
 
 $("#advertisingDuration").addEventListener("change", updateAdvertisingCost);
@@ -1188,14 +1207,19 @@ async function renderAdvertisingVideo(videos, copy, clipDurations) {
     video.playbackRate = playbackRate;
     await video.play();
     await new Promise((resolve) => {
+      const startedAt = performance.now();
       const draw = () => {
-        const localTime = Math.min(useSeconds, video.currentTime / playbackRate);
+        // Safari puede detener el reloj de un <video> oculto aunque play() ya se haya
+        // resuelto. El reloj monotónico evita que el montaje quede bloqueado.
+        const wallTime = (performance.now() - startedAt) / 1000;
+        const mediaTime = video.currentTime / playbackRate;
+        const localTime = Math.min(useSeconds, Math.max(wallTime, mediaTime));
         const totalProgress = Math.min(1, (elapsed + localTime) / duration);
         const clipProgress = Math.min(1, localTime / useSeconds);
         drawAdvertisingFrame(context, video, copy, totalProgress, format, clipProgress);
         progressBar.style.width = `${70 + totalProgress * 30}%`;
         $("#advertisingStatus").textContent = `Montando campaña UTP · ${Math.round(totalProgress * 100)}%`;
-        if (localTime >= useSeconds || video.ended) resolve();
+        if (localTime >= useSeconds) resolve();
         else requestAnimationFrame(draw);
       };
       requestAnimationFrame(draw);
