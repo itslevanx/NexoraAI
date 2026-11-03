@@ -19,6 +19,9 @@ function validateWebhook(value) {
 
 export default async function handler(req, res) {
   if (rejectMethod(req, res)) return;
+  if (process.env.AUTOMATION_SERVICE_URL && process.env.N8N_AUTOMATION_BASE_URL) {
+    return handleLocalAutomation(req, res);
+  }
   const configuredWebhook = resolveWebhook(req);
   if (!configuredWebhook) {
     return res.status(401).json({ error: "Configura N8N_WEBHOOK_URL en Vercel o pega el webhook en Configuración." });
@@ -48,4 +51,37 @@ export default async function handler(req, res) {
   } catch (error) {
     return res.status(502).json({ error: `No se pudo ejecutar la automatización: ${error.message}` });
   }
+}
+
+async function handleLocalAutomation(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+  const origin = req.headers.origin;
+  if (origin) {
+    try {
+      const url = new URL(origin);
+      if (url.host !== req.headers.host || !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)) {
+        return res.status(403).json({ error: "Usa las automatizaciones desde NEXORA local." });
+      }
+    } catch { return res.status(403).json({ error: "Origen inválido." }); }
+  }
+  try {
+    const payload = parseJsonBody(req);
+    const workflows = new Set(["agenda", "study", "reports"]);
+    const controls = new Set(["status", "settings"]);
+    const workflow = payload.workflow;
+    if (!workflows.has(workflow) && !controls.has(workflow)) return res.status(400).json({ error: "Automatización no válida." });
+    const base = controls.has(workflow) ? process.env.AUTOMATION_SERVICE_URL : process.env.N8N_AUTOMATION_BASE_URL;
+    const path = controls.has(workflow) ? `/${workflow}` : `/webhook/nexora-${workflow}`;
+    const response = await fetch(`${base}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-nexora-automation-key": process.env.AUTOMATION_SHARED_SECRET },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(25000)
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json({ error: data.error || data.message || "n8n no pudo ejecutar la automatización. Revisa los datos y el historial local." });
+    if (data?.ok === false && data.error) return res.status(400).json(data);
+    if (!data || data.ok !== true) return res.status(502).json({ error: "n8n no entregó un resultado válido. Verifica que los workflows estén publicados." });
+    return res.status(200).json(data);
+  } catch { return res.status(502).json({ error: "No se pudo contactar con n8n local. Inicia las automatizaciones y vuelve a intentar." }); }
 }

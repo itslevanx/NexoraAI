@@ -1,0 +1,172 @@
+{
+  "id": "nexoraTA4Agenda",
+  "name": "NEXORA TA4 · Agenda y vencimientos",
+  "active": false,
+  "nodes": [
+    {
+      "id": "cff06959-eafd-4450-8803-7decb7a8c4d3",
+      "name": "Recibir solicitud",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "bb72ba24-d0f0-4daf-af8f-5cf4228fdf10",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexora-agenda",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nexoraLocalHeader",
+          "name": "NEXORA · Acceso local"
+        }
+      }
+    },
+    {
+      "id": "13d10107-282b-4094-8fb1-873a4f7e3e40",
+      "name": "Procesar y guardar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://automation:3002/run/agenda",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ ...($json.body ?? $json), requestId: ($json.body ?? $json).requestId || ('n8n:' + $execution.id) }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nexoraLocalHeader",
+          "name": "NEXORA · Acceso local"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "3fa4c4b8-f56c-45d0-a397-05cdd30abf95",
+      "name": "Entregar resultado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "3d10c864-3cb2-4bc3-bd1f-f132da2a5adf",
+      "name": "Revisar cada minuto",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        240
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "fa59f0e2-a116-4892-826d-cf8c2c5d974b",
+      "name": "Actualizar pendientes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        240
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://automation:3002/run/agenda",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"operation\":\"tick\"}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nexoraLocalHeader",
+          "name": "NEXORA · Acceso local"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    }
+  ],
+  "connections": {
+    "Recibir solicitud": {
+      "main": [
+        [
+          {
+            "node": "Procesar y guardar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar y guardar": {
+      "main": [
+        [
+          {
+            "node": "Entregar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisar cada minuto": {
+      "main": [
+        [
+          {
+            "node": "Actualizar pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Lima",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false
+  },
+  "versionId": "2fcda855-5dc3-4872-9adb-c2324e39ddfa",
+  "tags": []
+}
