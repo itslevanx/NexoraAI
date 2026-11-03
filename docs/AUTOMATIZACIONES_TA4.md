@@ -110,3 +110,16 @@ npm run check:automations
 Las pruebas nuevas cubren fechas en Lima, persistencia, reintentos sin duplicados, transacciones de reuniones, horarios de estudio, reportes y avisos, los tres bots, acceso al servicio y cifrado del token. Una prueba HTTP usa un puerto temporal en 127.0.0.1.
 
 Referencias: [n8n Community](https://docs.n8n.io/deploy/host-n8n/community-edition-features.md), [CLI n8n](https://docs.n8n.io/deploy/host-n8n/configure-n8n/use-the-command-line.md), [Telegram getUpdates](https://core.telegram.org/bots/api#getupdates).
+
+### Comprobación con Telegram real · 3 de noviembre de 2026
+
+Se verificó desde Safari y Telegram Web, con n8n y el receptor ejecutándose en Docker local y la Mac conectada a Internet mediante datos móviles:
+
+- `/ayuda`: respuesta y teclado del bot recibidos.
+- Tareas: creación con `/agregar`, consulta con `/pendientes` y cierre con `/hecho`; los cambios se comprobaron en el almacenamiento de NEXORA.
+- Estudio: plan creado desde la API local de NEXORA, consulta con `/estudio`, reprogramación en horario de Lima y finalización de dos sesiones con `/estudiado`.
+- Reuniones: acuerdo y responsable registrados con `/acuerdo` y cierre con `/acuerdohecho`; `/reuniones` confirmó que no quedaron acuerdos pendientes.
+- Reportes diario y semanal: reflejaron dos tareas y dos sesiones completadas, sin tareas de prueba pendientes. También se recibió la agenda diaria por Telegram.
+- Persistencia: se reinició solo el servicio receptor; conservó la configuración y los datos, y el bot volvió a responder `/pendientes` sin introducir nuevamente el token.
+
+No se usaron n8n Cloud, túneles ni una URL pública de webhook. La conexión anterior presentó tiempos de espera hacia la API de Telegram; con datos móviles las pruebas terminaron sin errores de entrega y con la bandeja de salida vacía. Los registros de prueba están identificados como «PRUEBA TA4 móvil» y quedaron completados. No se incluyen tokens ni identificadores privados en esta documentación.
