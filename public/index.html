@@ -323,8 +323,78 @@
           <div class="intro compact">
             <p class="kicker">Productividad</p>
             <h1 id="automateTitle">Automatiza con n8n</h1>
-            <p>Ejecuta acciones locales verificables y revisa los correos en el buzón de demostración.</p>
+            <p>Organiza entregas, estudio y acuerdos con n8n local. Consulta los mismos pendientes desde NEXORA o tu bot de Telegram.</p>
           </div>
+          <div id="automationHub">
+            <p id="nxAutoStatus" role="status">Comprobando conexión local…</p>
+            <div class="nx-auto-grid">
+              <form id="nxTask" class="form-card">
+                <h2>Agenda y entregas</h2>
+                <label>Tarea<input name="title" required maxlength="200" placeholder="Entregar informe" /></label>
+                <label>Curso o proyecto<input name="course" maxlength="100" placeholder="Programación" /></label>
+                <label>Fecha y hora · Lima<input name="due" type="datetime-local" required /></label>
+                <label>Prioridad<select name="priority"><option value="normal">Normal</option><option value="alta">Alta</option><option value="baja">Baja</option></select></label>
+                <button class="primary" type="submit">Guardar tarea</button>
+              </form>
+              <form id="nxStudy" class="form-card">
+                <h2>Plan de estudio</h2>
+                <label>Tema<input name="topic" required maxlength="200" placeholder="Examen de bases de datos" /></label>
+                <label>Fecha y hora del examen · Lima<input name="exam" type="datetime-local" required /></label>
+                <label>Minutos por sesión<input name="minutes" type="number" min="20" max="120" value="40" required /></label>
+                <label>Hora diaria · Lima<input name="dailyTime" type="time" value="18:00" required /></label>
+                <button class="primary" type="submit">Crear plan y repasos</button>
+              </form>
+              <form id="nxMeeting" class="form-card">
+                <h2>Acuerdos de reunión</h2>
+                <label>Reunión<input name="title" required maxlength="200" placeholder="Avance del proyecto" /></label>
+                <label>Notas o contexto<textarea name="notes" maxlength="10000" rows="2"></textarea></label>
+                <label>Acuerdo<input name="taskTitle" required maxlength="200" placeholder="Revisar el prototipo" /></label>
+                <label>Responsable<input name="owner" required maxlength="100" /></label>
+                <label>Fecha de entrega · Lima<input name="due" type="datetime-local" required /></label>
+                <button class="primary" type="submit">Guardar reunión y acuerdo</button>
+              </form>
+            </div>
+            <div class="nx-auto-toolbar">
+              <button id="nxRefresh" class="secondary" type="button">Actualizar pendientes</button>
+              <button id="nxDaily" class="secondary" type="button">Reporte diario</button>
+              <button id="nxWeekly" class="secondary" type="button">Reporte semanal</button>
+              <a class="secondary link-button" href="http://localhost:5678" target="_blank" rel="noreferrer">Abrir n8n local</a>
+            </div>
+            <p id="nxAutoMessage" role="status" aria-live="polite"></p>
+            <h2>Mis tareas y acuerdos</h2><div id="nxTasks" class="nx-auto-list"></div>
+            <h2>Sesiones de estudio</h2><p>Reprograma una sesión eligiendo otro horario antes del examen. Se muestran las próximas 30.</p><div id="nxSessions" class="nx-auto-list"></div>
+            <h2>Reportes</h2><p>La agenda diaria se prepara desde las 08:00 y el reporte semanal los domingos desde las 18:00, hora de Lima. Al reiniciar, se recupera el reporte del día.</p><div id="nxReports" class="nx-auto-list"></div>
+            <details class="form-card">
+              <summary>Conectar el bot de Telegram</summary>
+              <p>Crea un bot con @BotFather y envíale /start en Telegram. Pega su token aquí y pulsa «Buscar mi chat». Solo el chat autorizado podrá ejecutar comandos. La Mac debe estar encendida y conectada.</p>
+              <form id="nxTelegram">
+                <label>Token de BotFather<input name="token" type="password" autocomplete="off" placeholder="Solo se guarda cifrado en esta instalación local" /></label>
+                <button id="nxDiscover" class="secondary" type="button">Buscar mi chat</button>
+                <label>Identificador numérico del chat<input name="chat" inputmode="numeric" required placeholder="Aparece al buscar después de enviar /start" /></label>
+                <div id="nxChats"></div>
+                <button class="primary" type="submit">Conectar Telegram</button>
+                <button id="nxDisconnect" class="secondary" type="button">Pausar Telegram</button>
+              </form>
+              <p>Un solo bot incluye tareas, estudio y reuniones. Envía /ayuda para ver los comandos. Telegram se consulta desde tu Mac; no necesitas un túnel.</p>
+            </details>
+            <details class="form-card"><summary>Historial y estado</summary><pre id="nxEvents" class="automation-result"></pre></details>
+          </div>
+          <style>
+            #automationHub .nx-auto-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+            #automationHub h2 { font-size:1.15rem; margin:20px 0 12px; }
+            #automationHub .form-card { margin:16px 0; }
+            #automationHub .nx-auto-toolbar { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0; }
+            #automationHub .nx-auto-list { display:grid; gap:10px; margin:12px 0 24px; }
+            #automationHub .nx-auto-row { border:1px solid #333; border-radius:12px; padding:14px; display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+            #automationHub .nx-auto-row span { flex:1; min-width:160px; white-space:pre-line; overflow-wrap:anywhere; }
+            #automationHub input, #automationHub select, #automationHub textarea { width:100%; }
+            #automationHub .nx-auto-row input { width:auto; max-width:100%; }
+            #automationHub [data-error="true"] { color:#ff9999; }
+            #automationHub summary { cursor:pointer; padding:8px 0; }
+            #automationHub #nxTelegram { display:grid; gap:12px; }
+          </style>
+          <script type="module" src="/automation-local.js"></script>
+          <details><summary>Acciones de demostración anteriores</summary>
           <form id="automationForm" class="form-card">
             <label>Acción
               <select id="automationAction">
@@ -352,6 +422,7 @@
             <a class="secondary link-button" href="http://localhost:5678" target="_blank" rel="noreferrer">Abrir n8n</a>
           </div>
           <pre id="automationResult" class="automation-result">El resultado del workflow aparecerá aquí.</pre>
+          </details>
         </section>
       </main>
 
