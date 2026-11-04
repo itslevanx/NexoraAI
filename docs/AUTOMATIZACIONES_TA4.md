@@ -2,6 +2,8 @@
 
 Este cambio solo amplía Automatizaciones y añade su infraestructura local. No cambia chat, voz, Studio, publicidad, transcripción ni sus APIs. No necesita una API de IA de pago.
 
+Para el uso diario y la configuración paso a paso, consulta el **manual de usuario**: [PDF](manuales/NEXORA-Manual-de-Automatizaciones.pdf), [Word editable](manuales/NEXORA-Manual-de-Automatizaciones.docx) o [texto](manuales/NEXORA-Manual-de-Automatizaciones.md).
+
 ## Inicio
 
 Requisitos: Docker Desktop iniciado, Node.js 24 para preparar la configuración y ejecutar pruebas, y los puertos 3000 y 5678 disponibles.
