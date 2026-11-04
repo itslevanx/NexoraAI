@@ -1,0 +1,10 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+mkdirSync('n8n-local/bootstrap',{recursive:true});
+const path='n8n-local/.env';
+if(!existsSync(path)) writeFileSync(path, `AUTOMATION_SHARED_SECRET=${randomBytes(32).toString('hex')}\nN8N_ENCRYPTION_KEY=${randomBytes(32).toString('hex')}\n`,{mode:0o600});
+chmodSync(path,0o600);
+const env=Object.fromEntries(readFileSync(path,'utf8').split('\n').filter(Boolean).map(line=>{const i=line.indexOf('=');return [line.slice(0,i),line.slice(i+1)];}));
+if(!env.AUTOMATION_SHARED_SECRET || !env.N8N_ENCRYPTION_KEY) throw new Error('Configuración local incompleta.');
+writeFileSync('n8n-local/bootstrap/credentials.json',JSON.stringify([{id:'nexoraLocalHeader',name:'NEXORA · Acceso local',type:'httpHeaderAuth',data:{name:'x-nexora-automation-key',value:env.AUTOMATION_SHARED_SECRET}}]),{mode:0o600});
+console.log('Configuración local preparada; secretos excluidos de Git.');

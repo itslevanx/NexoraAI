@@ -1,0 +1,172 @@
+{
+  "id": "nexoraTA4Reports",
+  "name": "NEXORA TA4 · Reporte diario y semanal",
+  "active": false,
+  "nodes": [
+    {
+      "id": "04fbb71c-7292-4826-9c36-ea1142c281bd",
+      "name": "Recibir solicitud",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "257420ce-f765-404e-aac8-347f695b3e5f",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexora-reports",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nexoraLocalHeader",
+          "name": "NEXORA · Acceso local"
+        }
+      }
+    },
+    {
+      "id": "7f7976be-544f-4854-a75e-905dae1b8248",
+      "name": "Procesar y guardar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://automation:3002/run/reports",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ ...($json.body ?? $json), requestId: ($json.body ?? $json).requestId || ('n8n:' + $execution.id) }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nexoraLocalHeader",
+          "name": "NEXORA · Acceso local"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "ee8f2e6f-f0c2-4380-a2ee-ac4f1469319d",
+      "name": "Entregar resultado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "d5306740-9f25-411a-b1a6-fe39af4ce787",
+      "name": "Revisar cada minuto",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        240
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a30d68e5-5234-4d13-90eb-3b2d01d3fad8",
+      "name": "Preparar reportes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        240
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://automation:3002/run/reports",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"operation\":\"tick\"}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nexoraLocalHeader",
+          "name": "NEXORA · Acceso local"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    }
+  ],
+  "connections": {
+    "Recibir solicitud": {
+      "main": [
+        [
+          {
+            "node": "Procesar y guardar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar y guardar": {
+      "main": [
+        [
+          {
+            "node": "Entregar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisar cada minuto": {
+      "main": [
+        [
+          {
+            "node": "Preparar reportes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Lima",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false
+  },
+  "versionId": "6585f590-1159-41bd-b422-ee3f97ad9b5b",
+  "tags": []
+}

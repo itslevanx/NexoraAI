@@ -9,6 +9,7 @@
   "rewrites": [
     { "source": "/", "destination": "/public/index.html" },
     { "source": "/publicidad", "destination": "/" },
+    { "source": "/automation-local.js", "destination": "/public/automation-local.js" },
     { "source": "/app.js", "destination": "/public/app.js" },
     { "source": "/styles.css", "destination": "/public/styles.css" },
     { "source": "/favicon.svg", "destination": "/public/favicon.svg" }

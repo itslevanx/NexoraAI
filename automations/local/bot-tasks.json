@@ -1,0 +1,110 @@
+{
+  "id": "nexoraTA4Bottasks",
+  "name": "NEXORA TA4 · Bot · Gestor de tareas",
+  "active": false,
+  "nodes": [
+    {
+      "id": "418b8821-92cd-441b-8769-c8fd4ef7cd80",
+      "name": "Recibir solicitud",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "f9d26d78-a64c-48c1-b65f-d2bb95585e82",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexora-bot-tasks",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nexoraLocalHeader",
+          "name": "NEXORA · Acceso local"
+        }
+      }
+    },
+    {
+      "id": "818586b4-60fe-4b02-80b9-1f7301522449",
+      "name": "Procesar y guardar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://automation:3002/run/bot-tasks",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ ...($json.body ?? $json), requestId: ($json.body ?? $json).requestId || ('n8n:' + $execution.id) }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nexoraLocalHeader",
+          "name": "NEXORA · Acceso local"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "3ffe2fb0-91e5-4052-814c-0c177e3ea95f",
+      "name": "Entregar resultado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Recibir solicitud": {
+      "main": [
+        [
+          {
+            "node": "Procesar y guardar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar y guardar": {
+      "main": [
+        [
+          {
+            "node": "Entregar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Lima",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false
+  },
+  "versionId": "060e8ec5-501b-4552-88e4-971563027ba0",
+  "tags": []
+}

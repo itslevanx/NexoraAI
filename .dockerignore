@@ -6,3 +6,5 @@ node_modules
 docs
 tests
 *.log
+
+n8n-local

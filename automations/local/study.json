@@ -1,0 +1,110 @@
+{
+  "id": "nexoraTA4Study",
+  "name": "NEXORA TA4 · Planificador de estudio",
+  "active": false,
+  "nodes": [
+    {
+      "id": "04bfae76-0235-4c71-b867-d20ce169221f",
+      "name": "Recibir solicitud",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "c4eb8750-9c1e-46cd-9776-f2e4dfb5d9c8",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nexora-study",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nexoraLocalHeader",
+          "name": "NEXORA · Acceso local"
+        }
+      }
+    },
+    {
+      "id": "220b3b2f-459f-4f12-b572-3ae0cde3ddd4",
+      "name": "Procesar y guardar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://automation:3002/run/study",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ ...($json.body ?? $json), requestId: ($json.body ?? $json).requestId || ('n8n:' + $execution.id) }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "nexoraLocalHeader",
+          "name": "NEXORA · Acceso local"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "3f9ad5ea-d219-4a85-9a8f-9ad7a4e464a5",
+      "name": "Entregar resultado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Recibir solicitud": {
+      "main": [
+        [
+          {
+            "node": "Procesar y guardar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar y guardar": {
+      "main": [
+        [
+          {
+            "node": "Entregar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Lima",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false
+  },
+  "versionId": "65c1044c-b092-4c9d-80d8-1581240f7d94",
+  "tags": []
+}
