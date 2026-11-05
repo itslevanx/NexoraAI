@@ -5,15 +5,22 @@
   "type": "module",
   "scripts": {
     "check": "node --check public/app.js && node --check api/realtime-session.js && node --check api/chat.js && node --check api/transcribe.js && node --check api/automation.js && node --check api/studio.js && node --check api/publicidad.js && node --check api/publicidad-video.js && node --check api/publicidad-acceso.js && node --check api/_publicidad-galeria.js && node --check api/_publicidad-auth.js && node --check api/_gemini-video.js && node --check api/_supabase.js && node --check api/speech.js && node --check api/image.js && node --check api/vision.js && node --check api/moderate.js && node --check local-mailer/server.mjs && node --check container/server.mjs && node --test tests/realtime-session.test.js tests/local-mailer.test.js tests/publicidad.test.js tests/publicidad-galeria.test.js",
-    "check:automations": "node --check public/automation-local.js && node --check local-automation/engine.mjs && node --check local-automation/server.mjs && node --test tests/automation-local.test.js"
+    "check:automations": "node --check public/automation-local.js && node --check local-automation/engine.mjs && node --check local-automation/server.mjs && node --check api/_automation-report-export.js && node --test tests/automation-local.test.js tests/automation-reports.test.js"
   },
   "engines": {
     "node": ">=22"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.117.3"
+    "@supabase/supabase-js": "2.117.3",
+    "exceljs": "4.4.0",
+    "pdfkit": "0.20.2"
   },
   "devDependencies": {
     "supabase": "2.121.0"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
   }
 }
