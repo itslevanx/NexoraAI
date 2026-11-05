@@ -19,9 +19,9 @@ if (hub) {
     const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;
     b.addEventListener('click',()=>perform(b,callback));return b;
   }
-  async function perform(button, callback) {
+  async function perform(button, callback, success='Listo. Los cambios están guardados localmente.') {
     button.disabled=true;message('Procesando…');
-    try { await callback();message('Listo. Los cambios están guardados localmente.'); }
+    try { await callback();message(success); }
     catch(error) {message(error.message,true);}
     finally {button.disabled=false;}
   }
@@ -65,6 +65,17 @@ if (hub) {
     await status();
   }));
   const telegram=$('#nxTelegram');
+  for (const [selector,format] of [['#nxDownloadPdf','pdf'],['#nxDownloadExcel','xlsx']]) {
+    $(selector).addEventListener('click',event=>perform(event.currentTarget,async()=>{
+      const response=await fetch('/api/automation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workflow:'reports',operation:'export',period:$('#nxReportPeriod').value,format})});
+      if(!response.ok) { const data=await response.json();throw new Error(data.error || 'No se pudo descargar el reporte.'); }
+      const blob=await response.blob();
+      const url=URL.createObjectURL(blob), link=document.createElement('a');
+      link.href=url;link.download=response.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1] || `NEXORA-reporte.${format}`;
+      document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
+    },'Reporte preparado. Revisa las descargas de tu navegador.'));
+  }
   telegram.addEventListener('submit',event=>{event.preventDefault();perform(event.submitter,async()=>{await request('settings',{...Object.fromEntries(new FormData(telegram)),enabled:true});telegram.elements.token.value='';await status();});});
   $('#nxDiscover').addEventListener('click',event=>perform(event.currentTarget,async()=>{
     const {chats}=await request('settings',{token:telegram.elements.token.value,discover:true});$('#nxChats').replaceChildren();
