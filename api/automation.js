@@ -70,6 +70,10 @@ async function handleLocalAutomation(req, res) {
     const controls = new Set(["status", "settings"]);
     const workflow = payload.workflow;
     if (!workflows.has(workflow) && !controls.has(workflow)) return res.status(400).json({ error: "Automatización no válida." });
+    const exporting = workflow === "reports" && payload.operation === "export";
+    if (exporting && (!["pdf", "xlsx"].includes(payload.format) || !["daily", "weekly", "all"].includes(payload.period))) {
+      return res.status(400).json({ error: "Elige PDF o Excel y un período válido." });
+    }
     const base = controls.has(workflow) ? process.env.AUTOMATION_SERVICE_URL : process.env.N8N_AUTOMATION_BASE_URL;
     const path = controls.has(workflow) ? `/${workflow}` : `/webhook/nexora-${workflow}`;
     const response = await fetch(`${base}${path}`, {
@@ -82,6 +86,19 @@ async function handleLocalAutomation(req, res) {
     if (!response.ok) return res.status(response.status).json({ error: data.error || data.message || "n8n no pudo ejecutar la automatización. Revisa los datos y el historial local." });
     if (data?.ok === false && data.error) return res.status(400).json(data);
     if (!data || data.ok !== true) return res.status(502).json({ error: "n8n no entregó un resultado válido. Verifica que los workflows estén publicados." });
+    if (exporting) {
+      let file;
+      try {
+        const { exportAutomationReport } = await import("./_automation-report-export.js");
+        file = await exportAutomationReport(data.snapshot, payload.format);
+      } catch {
+        return res.status(500).json({ error: "No se pudo preparar el archivo del reporte. Vuelve a intentarlo." });
+      }
+      res.setHeader("Content-Type", file.contentType);
+      res.setHeader("Content-Disposition", `attachment; filename="${file.filename}"`);
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      return res.status(200).send(file.buffer);
+    }
     return res.status(200).json(data);
   } catch { return res.status(502).json({ error: "No se pudo contactar con n8n local. Inicia las automatizaciones y vuelve a intentar." }); }
 }

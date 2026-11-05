@@ -98,6 +98,7 @@ export function createEngine(path = ':memory:', clock = () => new Date()) {
     return { generatedAt: now(), period, pendingTasks: tasks.filter(t => t.status === 'pending'), overdueTasks: tasks.filter(t => t.status === 'pending' && t.due < now()), completedTasks: tasks.filter(t => t.completedAt >= start).length, completedSessions: sessions.filter(s => s.completedAt >= start).length, upcomingSessions: sessions.filter(s => s.status === 'pending').slice(0, 20) };
   }
   function reports(p) {
+    if (p.operation === 'export') return { snapshot: reportSnapshot(p.period) };
     if (p.operation === 'tick') {
       const day = limaDay(clock());
       const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Lima', hour:'2-digit', hourCycle:'h23' }).format(clock()));
@@ -112,6 +113,38 @@ export function createEngine(path = ':memory:', clock = () => new Date()) {
       }
     } else if (p.operation && p.operation !== 'generate') throw new Error('Operación de reporte no válida.');
     return { report: report(p.period === 'weekly' ? 'weekly' : 'daily'), history: all('report').slice(-14) };
+  }
+  function reportSnapshot(period = 'weekly') {
+    if (!['daily', 'weekly', 'all'].includes(period)) throw new Error('Elige un período válido para el reporte.');
+    const generatedAt = now();
+    const start = period === 'all' ? null : new Date(Date.parse(generatedAt) - (period === 'daily' ? 1 : 7) * 86400000).toISOString();
+    const inPeriod = at => Boolean(at && (!start || at >= start) && at <= generatedAt);
+    const tasks = all('task'), sessions = all('session'), plans = all('plan'), meetings = all('meeting');
+    // Current pending work is always included; the period applies to creation and completion activity.
+    const selectedTasks = tasks.filter(t => t.status === 'pending' || inPeriod(t.completedAt) || inPeriod(t.createdAt)).sort((a,b) => a.due.localeCompare(b.due));
+    const selectedSessions = sessions.filter(s => s.status === 'pending' || inPeriod(s.completedAt)).sort((a,b) => a.at.localeCompare(b.at));
+    const completedTasks = tasks.filter(t => t.status === 'done' && inPeriod(t.completedAt));
+    const completedSessions = sessions.filter(s => s.status === 'done' && inPeriod(s.completedAt));
+    return {
+      version: 1, generatedAt, period, start, timeZone: 'America/Lima',
+      summary: {
+        totalTasks: tasks.length, pendingTasks: tasks.filter(t => t.status === 'pending').length,
+        overdueTasks: tasks.filter(t => t.status === 'pending' && t.due < generatedAt).length,
+        createdTasks: tasks.filter(t => inPeriod(t.createdAt)).length, completedTasks: completedTasks.length,
+        pendingAgreements: tasks.filter(t => t.meetingId && t.status === 'pending').length,
+        completedAgreements: completedTasks.filter(t => t.meetingId).length,
+        totalSessions: sessions.length, pendingSessions: sessions.filter(s => s.status === 'pending').length,
+        dueSessions: sessions.filter(s => s.status === 'pending' && s.at <= generatedAt).length,
+        completedSessions: completedSessions.length,
+        completedMinutes: completedSessions.reduce((sum,s) => sum + s.minutes, 0),
+        createdPlans: plans.filter(p => inPeriod(p.createdAt)).length,
+        createdMeetings: meetings.filter(m => inPeriod(m.createdAt)).length
+      },
+      tasks: selectedTasks,
+      sessions: selectedSessions,
+      plans: plans.filter(p => inPeriod(p.createdAt) || selectedSessions.some(s => s.planId === p.id)),
+      meetings: meetings.filter(m => inPeriod(m.createdAt) || selectedTasks.some(t => t.meetingId === m.id))
+    };
   }
   function bot(kind, p) {
     const input = String(p.text || '').trim();

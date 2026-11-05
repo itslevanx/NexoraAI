@@ -2,6 +2,8 @@
 
 Este cambio solo amplía Automatizaciones y añade su infraestructura local. No cambia chat, voz, Studio, publicidad, transcripción ni sus APIs. No necesita una API de IA de pago.
 
+Para el uso diario y la configuración paso a paso, consulta el **manual de usuario**: [PDF](manuales/NEXORA-Manual-de-Automatizaciones.pdf), [Word editable](manuales/NEXORA-Manual-de-Automatizaciones.docx) o [texto](manuales/NEXORA-Manual-de-Automatizaciones.md).
+
 ## Inicio
 
 Requisitos: Docker Desktop iniciado, Node.js 24 para preparar la configuración y ejecutar pruebas, y los puertos 3000 y 5678 disponibles.
@@ -36,10 +38,23 @@ Todos los horarios sin zona explícita se interpretan en America/Lima (UTC-05:00
 1. **Agenda:** título, curso, fecha/hora y prioridad. Guardar y completar desde la lista.
 2. **Estudio:** tema, examen, minutos y hora diaria. El calendario se guarda y se muestran las primeras 30 sesiones pendientes. Para reprogramar, elegir otro horario futuro que termine antes del examen y no choque con otra sesión.
 3. **Reuniones:** título, contexto, acuerdo, responsable y fecha. El acuerdo aparece como tarea compartida con el bot.
-4. **Reportes:** los botones consultan las últimas 24 horas o 7 días. Los reportes automáticos quedan en el historial.
+4. **Reportes:** los botones consultan las últimas 24 horas o 7 días. Los reportes automáticos quedan en el historial. Para guardar un archivo, elegir el período y pulsar **Descargar PDF** o **Descargar Excel**.
 5. **Historial y estado:** ejecuciones recientes y errores de conexión de Telegram. Los textos de tareas no se guardan en el registro de eventos.
 
 Las acciones anteriores de demostración se conservan en un desplegable y requieren la infraestructura anterior; no son parte de estos seis workflows.
+
+## Descargar reportes en PDF y Excel
+
+1. Iniciar Docker Desktop y ejecutar el script de inicio indicado arriba.
+2. Abrir NEXORA local y entrar en **Automatizar → Reportes**.
+3. Elegir **Últimas 24 horas**, **Últimos 7 días** o **Todo el historial**.
+4. Pulsar **Descargar PDF** o **Descargar Excel**. El archivo aparece en las descargas del navegador; se puede repetir la descarga para obtener el estado actualizado.
+
+El reporte incluye un resumen de lo creado, completado, pendiente y vencido; tareas y acuerdos con responsables y fechas; sesiones con minutos completados; planes y reuniones con sus notas. Los acuerdos ya están incluidos en las cifras de tareas y no deben sumarse de nuevo. Los minutos corresponden a la duración programada de las sesiones marcadas como completadas.
+
+El período se cuenta hacia atrás desde la descarga. Todos los pendientes actuales se incluyen aunque se hayan creado antes; los planes y reuniones relacionados se incluyen como contexto. El Excel contiene cinco hojas con filtros y fechas reales en hora de Lima (UTC-5). El PDF incluye el mismo detalle paginado. La descarga pasa por el workflow de reportes existente y no requiere Telegram ni una cuenta de pago.
+
+Verificación: `npm run check:automations` comprueba los límites del período, pendientes sin truncar, reportes vacíos, notas largas, fechas y contenido del Excel, paginación del PDF y respuestas binarias de la API. Las dependencias de exportación se cargan únicamente al descargar un reporte; `uuid` se fija en 11.1.1 para corregir la alerta de su versión indirecta en ExcelJS.
 
 ## Conectar Telegram sin túnel
 
